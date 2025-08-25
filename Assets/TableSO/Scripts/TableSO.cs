@@ -14,12 +14,26 @@ namespace TableSO.Scripts
         
         protected Dictionary<TKey, TData> dataDict;
 
+        private void Awake()
+        {
+            isUpdated = false;
+            CacheData();
+        }
+
         public virtual TData GetData(TKey key)
         {
             if (isUpdated) CacheData();
-            return dataDict[key];   
+            if (IsContains(key))
+                return dataDict[key];
+            else
+                return null;
         }
-        
+
+        public bool IsContains(TKey ID)
+        {
+            return dataDict.ContainsKey(ID);
+        }
+
         public virtual void CacheData()
         {
             dataDict = new Dictionary<TKey, TData>();
@@ -30,10 +44,20 @@ namespace TableSO.Scripts
                 if (!dataDict.ContainsKey(item.ID))
                     dataDict.Add(item.ID, item); // Key = ID, Value = 객체
                 else
-                    Debug.LogWarning($"Duplicate key detected: {item.ID}");
+                    Debug.LogWarning($"[TableSO] Duplicate key detected: {item.ID}");
             }
 
             isUpdated = false;
+        }
+        
+        protected virtual void OnDataUpdated()
+        {
+            
+        }
+
+        private void OnEnable()
+        {
+            CacheData();
         }
     }
 }

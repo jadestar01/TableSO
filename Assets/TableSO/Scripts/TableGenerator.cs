@@ -6,6 +6,7 @@ using TableSO.FileUtility;
 using UnityEditor;
 using UnityEngine;
 using System.Reflection;
+using System.Linq;
 
 namespace TableSO.Scripts.Generator
 {
@@ -217,44 +218,61 @@ namespace TableSO.Scripts.Generator
                    normalizedType == "double";
         }
 
+        // **수정된 부분: 더 정확한 enum 타입 검증**
         private static bool ValidateEnumType(string enumTypeName)
         {
-            // Try to find enum type at runtime
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            // 사용자 정의 enum만 찾기 (Unity 내부 타입 제외)
+            var userDefinedEnums = FindUserDefinedEnumTypes(enumTypeName);
+            
+            if (userDefinedEnums.Count > 0)
             {
-                // Find by exact type name
-                Type type = assembly.GetType(enumTypeName);
-                if (type != null && type.IsEnum)
+                if (userDefinedEnums.Count == 1)
                 {
-                    Debug.Log($"[TableSO] Enum type '{enumTypeName}' confirmed");
+                    var foundEnum = userDefinedEnums[0];
+                    Debug.Log($"[TableSO] Enum type '{enumTypeName}' confirmed (full name: {foundEnum.FullName})");
                     return true;
                 }
-                
-                // Find without namespace
-                foreach (Type assemblyType in assembly.GetTypes())
+                else
                 {
-                    if (assemblyType.IsEnum && assemblyType.Name == enumTypeName)
+                    // 여러 개의 enum이 발견된 경우 사용자가 선택하도록
+                    string enumList = string.Join("\n", userDefinedEnums.Select(e => $"- {e.FullName}"));
+                    
+                    bool continueAnyway = EditorUtility.DisplayDialog(
+                        "Multiple Enum Types Found",
+                        $"Multiple enum types named '{enumTypeName}' found:\n\n{enumList}\n\n" +
+                        "Do you want to use the first one and continue?",
+                        "Yes",
+                        "No");
+                    
+                    if (continueAnyway)
                     {
-                        Debug.Log($"[TableSO] Enum type '{enumTypeName}' confirmed (full name: {assemblyType.FullName})");
+                        Debug.Log($"[TableSO] Using enum type: {userDefinedEnums[0].FullName}");
                         return true;
+                    }
+                    else
+                    {
+                        Debug.Log("[TableSO] User cancelled generation due to multiple enum types");
+                        return false;
                     }
                 }
             }
             
-            // If enum not found, provide user choice
-            Debug.LogWarning($"[TableSO] Cannot find enum type '{enumTypeName}' in current assemblies");
+            // enum을 찾지 못한 경우 사용자가 계속 진행할지 선택
+            Debug.LogWarning($"[TableSO] Cannot find user-defined enum type '{enumTypeName}' in current assemblies");
             
-            // Let user choose whether to continue with custom enum
-            bool continueAnyway = EditorUtility.DisplayDialog(
-                "Enum Type Confirmation", 
+            bool continueWithoutEnum = EditorUtility.DisplayDialog(
+                "Enum Type Not Found", 
                 $"Cannot find enum type '{enumTypeName}'.\n\n" +
-                "Do you want to continue?\n" +
-                "- Yes: Assume custom enum is correct and continue\n" +
-                "- No: Cancel generation", 
-                "Yes", 
-                "No");
+                "This might be because:\n" +
+                "- The enum hasn't been created yet\n" +
+                "- The enum is in a different namespace\n" +
+                "- There's a typo in the enum name\n\n" +
+                "Do you want to continue anyway?\n" +
+                "(The code will be generated assuming the enum exists)",
+                "Continue", 
+                "Cancel");
                 
-            if (continueAnyway)
+            if (continueWithoutEnum)
             {
                 Debug.Log($"[TableSO] User choice: Continue with enum type '{enumTypeName}' assumption");
                 return true;
@@ -264,6 +282,59 @@ namespace TableSO.Scripts.Generator
                 Debug.Log("[TableSO] User choice: Cancel generation");
                 return false;
             }
+        }
+
+        // **새로 추가된 메서드: 사용자 정의 enum 타입만 찾기**
+        private static List<Type> FindUserDefinedEnumTypes(string enumTypeName)
+        {
+            List<Type> userDefinedEnums = new List<Type>();
+            
+            // Unity 내부 어셈블리 제외 목록
+            HashSet<string> excludedAssemblies = new HashSet<string>
+            {
+                "UnityEngine",
+                "UnityEditor",
+                "Unity.Collections",
+                "Unity.Mathematics",
+                "Unity.Burst",
+                "Unity.Jobs",
+                "UnityEngine.UI",
+                "UnityEngine.CoreModule",
+                "UnityEditor.CoreModule"
+            };
+
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                try
+                {
+                    // Unity 내부 어셈블리 건너뛰기
+                    string assemblyName = assembly.GetName().Name;
+                    if (excludedAssemblies.Any(excluded => assemblyName.StartsWith(excluded)))
+                    {
+                        continue;
+                    }
+
+                    // 어셈블리의 모든 타입 검사
+                    foreach (Type type in assembly.GetTypes())
+                    {
+                        if (type.IsEnum && type.Name == enumTypeName)
+                        {
+                            // 추가 필터링: 중첩 타입이거나 내부 타입 제외
+                            if (!type.IsNested && type.IsPublic)
+                            {
+                                userDefinedEnums.Add(type);
+                            }
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    // 어셈블리 로딩 오류는 무시하고 계속 진행
+                    Debug.LogWarning($"[TableSO] Error loading types from assembly {assembly.FullName}: {e.Message}");
+                }
+            }
+            
+            return userDefinedEnums;
         }
 
         private static void GenerateDataClass(string className, string[] fieldNames, string[] fieldTypes)
@@ -337,7 +408,7 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine();
             tableCode.AppendLine("namespace Table");
             tableCode.AppendLine("{");
-            tableCode.AppendLine($"    public class {className}TableSO : TableSO.Scripts.TableSO<{ConvertToValidType(idType)}, {className}>");
+            tableCode.AppendLine($"    public class {className}TableSO : TableSO.Scripts.TableSO<{ConvertToValidType(idType)}, TableData.{className}>");
             tableCode.AppendLine("    {");
             tableCode.AppendLine("    }");
             tableCode.AppendLine("}");
