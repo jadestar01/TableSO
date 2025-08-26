@@ -9,9 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5d77c618a7593df41bec57c0541937b8, type: 3}
-  m_Name: TableCenter
+  m_Script: {fileID: 11500000, guid: 5834b5087d578d24c926ce20cd31e6d6, type: 3}
+  m_Name: Default Local Group_ContentUpdateGroupSchema
   m_EditorClassIdentifier: 
-  registeredTables:
-  - {fileID: 11400000, guid: 1f74dc98f85ea0840bc1e3d2e52051d8, type: 2}
-  - {fileID: 11400000, guid: 04bcb9b66f050ab48a1256f7569712e6, type: 2}
+  m_Group: {fileID: 11400000, guid: 3e54cd8d0291e6740968f01bd4a1711f, type: 2}
+  m_StaticContent: 0
