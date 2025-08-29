@@ -1,0 +1,315 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2f11e3c484164469e8abe139d2cde7, type: 3}
+  m_Name: ItemDataTableSO
+  m_EditorClassIdentifier: 
+  isUpdated: 1
+  dataList:
+  - <ID>k__BackingField: 1101
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 50~100
+    <UpgradeCount>k__BackingField: 5
+    <Health>k__BackingField: 20
+    <Spirit>k__BackingField: 10
+    <Swift>k__BackingField: 1
+    <Haste>k__BackingField: 0
+    <PhysicalDamage>k__BackingField: 5~12
+    <PhysicalCritRate>k__BackingField: 0
+    <PhysicalCritDamage>k__BackingField: 0
+    <PhysicalAttackSpeed>k__BackingField: 0
+    <PhysicalPenetration>k__BackingField: 0
+    <MagicalDamage>k__BackingField: 
+    <MagicalCritRate>k__BackingField: 0
+    <MagicalCritDamage>k__BackingField: 0
+    <MagicalAttackSpeed>k__BackingField: 0
+    <MagicalPenetration>k__BackingField: 0
+    <Armor>k__BackingField: 5
+    <Resistance>k__BackingField: 0
+    <Dodge>k__BackingField: 0
+  - <ID>k__BackingField: 1102
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 50~100
+    <UpgradeCount>k__BackingField: 3
+    <Health>k__BackingField: 30
+    <Spirit>k__BackingField: 10
+    <Swift>k__BackingField: 1
+    <Haste>k__BackingField: 0
+    <PhysicalDamage>k__BackingField: 4~8
+    <PhysicalCritRate>k__BackingField: 0
+    <PhysicalCritDamage>k__BackingField: 0
+    <PhysicalAttackSpeed>k__BackingField: 0
+    <PhysicalPenetration>k__BackingField: 0
+    <MagicalDamage>k__BackingField: 
+    <MagicalCritRate>k__BackingField: 0
+    <MagicalCritDamage>k__BackingField: 0
+    <MagicalAttackSpeed>k__BackingField: 0
+    <MagicalPenetration>k__BackingField: 0
+    <Armor>k__BackingField: 0
+    <Resistance>k__BackingField: 0
+    <Dodge>k__BackingField: 0
+  - <ID>k__BackingField: 1201
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 80~160
+    <UpgradeCount>k__BackingField: 4
+    <Health>k__BackingField: 20
+    <Spirit>k__BackingField: 10
+    <Swift>k__BackingField: 1
+    <Haste>k__BackingField: 0
+    <PhysicalDamage>k__BackingField: 10~16
+    <PhysicalCritRate>k__BackingField: 0
+    <PhysicalCritDamage>k__BackingField: 0
+    <PhysicalAttackSpeed>k__BackingField: 0
+    <PhysicalPenetration>k__BackingField: 10
+    <MagicalDamage>k__BackingField: 
+    <MagicalCritRate>k__BackingField: 0
+    <MagicalCritDamage>k__BackingField: 0
+    <MagicalAttackSpeed>k__BackingField: 0
+    <MagicalPenetration>k__BackingField: 0
+    <Armor>k__BackingField: 10
+    <Resistance>k__BackingField: 0
+    <Dodge>k__BackingField: 0
+  - <ID>k__BackingField: 1301
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 150~220
+    <UpgradeCount>k__BackingField: 5
+    <Health>k__BackingField: 30
+    <Spirit>k__BackingField: 5
+    <Swift>k__BackingField: 1
+    <Haste>k__BackingField: 0
+    <PhysicalDamage>k__BackingField: 6~18
+    <PhysicalCritRate>k__BackingField: 0
+    <PhysicalCritDamage>k__BackingField: 50
+    <PhysicalAttackSpeed>k__BackingField: 0
+    <PhysicalPenetration>k__BackingField: 20
+    <MagicalDamage>k__BackingField: 
+    <MagicalCritRate>k__BackingField: 0
+    <MagicalCritDamage>k__BackingField: 0
+    <MagicalAttackSpeed>k__BackingField: 0
+    <MagicalPenetration>k__BackingField: 0
+    <Armor>k__BackingField: 0
+    <Resistance>k__BackingField: 0
+    <Dodge>k__BackingField: 0
+  - <ID>k__BackingField: 1401
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 200~280
+    <UpgradeCount>k__BackingField: 6
+    <Health>k__BackingField: 40
+    <Spirit>k__BackingField: 20
+    <Swift>k__BackingField: 2
+    <Haste>k__BackingField: 0
+    <PhysicalDamage>k__BackingField: 20~28
+    <PhysicalCritRate>k__BackingField: 20
+    <PhysicalCritDamage>k__BackingField: 50
+    <PhysicalAttackSpeed>k__BackingField: 20
+    <PhysicalPenetration>k__BackingField: 0
+    <MagicalDamage>k__BackingField: 
+    <MagicalCritRate>k__BackingField: 0
+    <MagicalCritDamage>k__BackingField: 0
+    <MagicalAttackSpeed>k__BackingField: 0
+    <MagicalPenetration>k__BackingField: 0
+    <Armor>k__BackingField: 5
+    <Resistance>k__BackingField: 0
+    <Dodge>k__BackingField: 10
+  - <ID>k__BackingField: 2101
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 50~100
+    <UpgradeCount>k__BackingField: 3
+    <Health>k__BackingField: 10
+    <Spirit>k__BackingField: 20
+    <Swift>k__BackingField: 0
+    <Haste>k__BackingField: 5
+    <PhysicalDamage>k__BackingField: 
+    <PhysicalCritRate>k__BackingField: 0
+    <PhysicalCritDamage>k__BackingField: 0
+    <PhysicalAttackSpeed>k__BackingField: 0
+    <PhysicalPenetration>k__BackingField: 0
+    <MagicalDamage>k__BackingField: 5~10
+    <MagicalCritRate>k__BackingField: 0
+    <MagicalCritDamage>k__BackingField: 0
+    <MagicalAttackSpeed>k__BackingField: 0
+    <MagicalPenetration>k__BackingField: 0
+    <Armor>k__BackingField: 0
+    <Resistance>k__BackingField: 0
+    <Dodge>k__BackingField: 0
+  - <ID>k__BackingField: 2301
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 150~220
+    <UpgradeCount>k__BackingField: 3
+    <Health>k__BackingField: 30
+    <Spirit>k__BackingField: 30
+    <Swift>k__BackingField: 0
+    <Haste>k__BackingField: 0
+    <PhysicalDamage>k__BackingField: 
+    <PhysicalCritRate>k__BackingField: 0
+    <PhysicalCritDamage>k__BackingField: 0
+    <PhysicalAttackSpeed>k__BackingField: 0
+    <PhysicalPenetration>k__BackingField: 0
+    <MagicalDamage>k__BackingField: 10~16
+    <MagicalCritRate>k__BackingField: 0
+    <MagicalCritDamage>k__BackingField: 0
+    <MagicalAttackSpeed>k__BackingField: 0
+    <MagicalPenetration>k__BackingField: 0
+    <Armor>k__BackingField: 15
+    <Resistance>k__BackingField: 0
+    <Dodge>k__BackingField: 0
+  - <ID>k__BackingField: 2401
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 200~280
+    <UpgradeCount>k__BackingField: 5
+    <Health>k__BackingField: 0
+    <Spirit>k__BackingField: 40
+    <Swift>k__BackingField: 0
+    <Haste>k__BackingField: 5
+    <PhysicalDamage>k__BackingField: 
+    <PhysicalCritRate>k__BackingField: 0
+    <PhysicalCritDamage>k__BackingField: 0
+    <PhysicalAttackSpeed>k__BackingField: 0
+    <PhysicalPenetration>k__BackingField: 0
+    <MagicalDamage>k__BackingField: 12~20
+    <MagicalCritRate>k__BackingField: 20
+    <MagicalCritDamage>k__BackingField: 50
+    <MagicalAttackSpeed>k__BackingField: 10
+    <MagicalPenetration>k__BackingField: 10
+    <Armor>k__BackingField: 0
+    <Resistance>k__BackingField: 0
+    <Dodge>k__BackingField: 0
+  - <ID>k__BackingField: 2501
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 300~400
+    <UpgradeCount>k__BackingField: 6
+    <Health>k__BackingField: 30
+    <Spirit>k__BackingField: 50
+    <Swift>k__BackingField: 0
+    <Haste>k__BackingField: 10
+    <PhysicalDamage>k__BackingField: 
+    <PhysicalCritRate>k__BackingField: 0
+    <PhysicalCritDamage>k__BackingField: 0
+    <PhysicalAttackSpeed>k__BackingField: 0
+    <PhysicalPenetration>k__BackingField: 0
+    <MagicalDamage>k__BackingField: 22~32
+    <MagicalCritRate>k__BackingField: 20
+    <MagicalCritDamage>k__BackingField: 50
+    <MagicalAttackSpeed>k__BackingField: 20
+    <MagicalPenetration>k__BackingField: 20
+    <Armor>k__BackingField: 10
+    <Resistance>k__BackingField: 10
+    <Dodge>k__BackingField: 10
+  - <ID>k__BackingField: 3101
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 50~100
+    <UpgradeCount>k__BackingField: 2
+    <Health>k__BackingField: 20
+    <Spirit>k__BackingField: 0
+    <Swift>k__BackingField: 0
+    <Haste>k__BackingField: 0
+    <PhysicalDamage>k__BackingField: 
+    <PhysicalCritRate>k__BackingField: 0
+    <PhysicalCritDamage>k__BackingField: 0
+    <PhysicalAttackSpeed>k__BackingField: 0
+    <PhysicalPenetration>k__BackingField: 0
+    <MagicalDamage>k__BackingField: 
+    <MagicalCritRate>k__BackingField: 0
+    <MagicalCritDamage>k__BackingField: 0
+    <MagicalAttackSpeed>k__BackingField: 0
+    <MagicalPenetration>k__BackingField: 0
+    <Armor>k__BackingField: 0
+    <Resistance>k__BackingField: 0
+    <Dodge>k__BackingField: 0
+  - <ID>k__BackingField: 3301
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 150~220
+    <UpgradeCount>k__BackingField: 4
+    <Health>k__BackingField: 0
+    <Spirit>k__BackingField: 0
+    <Swift>k__BackingField: 0
+    <Haste>k__BackingField: 0
+    <PhysicalDamage>k__BackingField: 
+    <PhysicalCritRate>k__BackingField: 0
+    <PhysicalCritDamage>k__BackingField: 0
+    <PhysicalAttackSpeed>k__BackingField: 20
+    <PhysicalPenetration>k__BackingField: 0
+    <MagicalDamage>k__BackingField: 
+    <MagicalCritRate>k__BackingField: 0
+    <MagicalCritDamage>k__BackingField: 0
+    <MagicalAttackSpeed>k__BackingField: 20
+    <MagicalPenetration>k__BackingField: 0
+    <Armor>k__BackingField: 0
+    <Resistance>k__BackingField: 0
+    <Dodge>k__BackingField: 0
+  - <ID>k__BackingField: 3302
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 150~220
+    <UpgradeCount>k__BackingField: 4
+    <Health>k__BackingField: 0
+    <Spirit>k__BackingField: 5
+    <Swift>k__BackingField: 0
+    <Haste>k__BackingField: 0
+    <PhysicalDamage>k__BackingField: 10
+    <PhysicalCritRate>k__BackingField: 10
+    <PhysicalCritDamage>k__BackingField: 10
+    <PhysicalAttackSpeed>k__BackingField: 0
+    <PhysicalPenetration>k__BackingField: 0
+    <MagicalDamage>k__BackingField: 10
+    <MagicalCritRate>k__BackingField: 10
+    <MagicalCritDamage>k__BackingField: 10
+    <MagicalAttackSpeed>k__BackingField: 0
+    <MagicalPenetration>k__BackingField: 0
+    <Armor>k__BackingField: 0
+    <Resistance>k__BackingField: 0
+    <Dodge>k__BackingField: 0
+  - <ID>k__BackingField: 3401
+    <ItemType>k__BackingField: 0
+    <ItemQuality>k__BackingField: 0
+    <DropRate>k__BackingField: 1
+    <Price>k__BackingField: 200~280
+    <UpgradeCount>k__BackingField: 5
+    <Health>k__BackingField: 0
+    <Spirit>k__BackingField: 0
+    <Swift>k__BackingField: 20
+    <Haste>k__BackingField: 20
+    <PhysicalDamage>k__BackingField: 
+    <PhysicalCritRate>k__BackingField: 0
+    <PhysicalCritDamage>k__BackingField: 0
+    <PhysicalAttackSpeed>k__BackingField: 10
+    <PhysicalPenetration>k__BackingField: 0
+    <MagicalDamage>k__BackingField: 
+    <MagicalCritRate>k__BackingField: 0
+    <MagicalCritDamage>k__BackingField: 0
+    <MagicalAttackSpeed>k__BackingField: 10
+    <MagicalPenetration>k__BackingField: 0
+    <Armor>k__BackingField: 0
+    <Resistance>k__BackingField: 0
+    <Dodge>k__BackingField: 20

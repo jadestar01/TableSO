@@ -55,7 +55,7 @@ namespace TableSO.Scripts
             
         }
 
-        private void OnEnable()
+        protected virtual void OnEnable()
         {
             CacheData();
         }

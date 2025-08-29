@@ -110,6 +110,53 @@ namespace TableSO.Scripts
             InitializeCache();
             Debug.Log("[TableSO] TableCenter cache refreshed");
         }
+
+        public int GetAssetTableCount()
+        {
+            int i = 0;
+            foreach (var table in registeredTables)
+            {
+                if (table != null &&
+                    table.GetType().IsGenericType &&
+                    table.GetType().GetGenericTypeDefinition() == typeof(AssetTableSO<>))
+                    i++;
+            }
+
+            return i++;
+        }
+
+        public int GetCsvTableCount()
+        {
+            int i = 0;
+            foreach (var table in registeredTables)
+            {
+                if (table != null &&
+                    table.GetType().IsGenericType &&
+                    table.GetType().GetGenericTypeDefinition() == typeof(TableSO<,>) &&
+                    table.GetType().GetGenericTypeDefinition() != typeof(AssetTableSO<>))
+                    i++;
+            }
+
+            return i++;
+        }
+
+        public int GetRefTableCount()
+        {
+            return 0;
+        }
+
+        public int GetTableCount()
+        {
+            int i = 0;
+            
+            foreach (var table in registeredTables)
+            {
+                if (table != null)
+                    i++;
+            }
+
+            return i;
+        }
     }
 
     // Editor extension for automatic registration to TableCenter

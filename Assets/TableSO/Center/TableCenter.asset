@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: TableCenter
   m_EditorClassIdentifier: 
   registeredTables:
-  - {fileID: 11400000, guid: 1f74dc98f85ea0840bc1e3d2e52051d8, type: 2}
-  - {fileID: 11400000, guid: 04bcb9b66f050ab48a1256f7569712e6, type: 2}
+  - {fileID: 11400000, guid: f7ac160c1404de945aebe6c9f9a943dd, type: 2}
+  - {fileID: 11400000, guid: 972f0712fdef014488ff7116e6ca2cb4, type: 2}

@@ -29,7 +29,11 @@ namespace TableSO.Scripts.Generator
             
             foreach (string csvPath in csvFiles)
             {
-                sos.Add(LoadCSVDataToTableSO(csvPath, tableOutputPath));
+                var tableSO = LoadCSVDataToTableSO(csvPath, tableOutputPath);
+                if (tableSO != null)
+                {
+                    sos.Add(tableSO);
+                }
             }
             
             RegisterTablesToCenter(sos);
@@ -98,6 +102,12 @@ namespace TableSO.Scripts.Generator
                 // Load CSV data
                 List<object> dataList = LoadCSVData(csvPath, fileName);
                 
+                if (dataList == null)
+                {
+                    Debug.LogError($"[TableSO] Failed to load CSV data for {fileName}");
+                    return null;
+                }
+                
                 // Set data to TableSO's dataList field
                 SetTableSOData(tableSO, dataList);
                 
@@ -106,7 +116,8 @@ namespace TableSO.Scripts.Generator
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TableSO] Error loading {fileName} CSV: {e.Message}");
+                Debug.LogError($"[TableSO] Error loading {fileName} CSV: {e.Message}\nStack trace: {e.StackTrace}");
+                return null;
             }
             
             return tableSO;
@@ -126,26 +137,24 @@ namespace TableSO.Scripts.Generator
             string[] fieldNames = ParseCSVLine(lines[0]);
             string[] fieldTypes = ParseCSVLine(lines[1]);
             
+            Debug.Log($"[TableSO] {className} - Field names: [{string.Join(", ", fieldNames)}]");
+            Debug.Log($"[TableSO] {className} - Field types: [{string.Join(", ", fieldTypes)}]");
+            
             // Find data class type
             Type dataType = FindDataClassType(className);
             if (dataType == null)
             {
                 Debug.LogError($"[TableSO] Cannot find {className} data class");
-                return dataList;
+                return null;
             }
 
-            // Find constructor
-            Type[] constructorTypes = new Type[fieldTypes.Length];
-            for (int i = 0; i < fieldTypes.Length; i++)
-            {
-                constructorTypes[i] = GetTypeFromString(fieldTypes[i]);
-            }
-            
-            ConstructorInfo constructor = dataType.GetConstructor(constructorTypes);
+            Debug.Log($"[TableSO] Found data type: {dataType.FullName}");
+
+            // Find matching constructor
+            ConstructorInfo constructor = FindMatchingConstructor(dataType, fieldTypes, fieldNames, className);
             if (constructor == null)
             {
-                Debug.LogError($"[TableSO] Cannot find constructor for {className}");
-                return dataList;
+                return null; // 에러 메시지는 FindMatchingConstructor 내에서 출력
             }
 
             // Process data rows (starting from row 3)
@@ -157,7 +166,7 @@ namespace TableSO.Scripts.Generator
                 
                 if (values.Length != fieldNames.Length)
                 {
-                    Debug.LogWarning($"[TableSO] {className}.csv row {i+1}: Field count mismatch");
+                    Debug.LogWarning($"[TableSO] {className}.csv row {i+1}: Field count mismatch. Expected: {fieldNames.Length}, Got: {values.Length}");
                     continue;
                 }
 
@@ -168,11 +177,115 @@ namespace TableSO.Scripts.Generator
                     constructorArgs[j] = ConvertValue(values[j], fieldTypes[j]);
                 }
                 
-                object dataInstance = constructor.Invoke(constructorArgs);
-                dataList.Add(dataInstance);
+                try
+                {
+                    object dataInstance = constructor.Invoke(constructorArgs);
+                    dataList.Add(dataInstance);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[TableSO] Error creating instance for {className} row {i+1}: {e.Message}");
+                    Debug.LogError($"[TableSO] Constructor args: [{string.Join(", ", constructorArgs.Select(arg => arg?.ToString() ?? "null"))}]");
+                }
             }
             
             return dataList;
+        }
+
+        private static ConstructorInfo FindMatchingConstructor(Type dataType, string[] fieldTypes, string[] fieldNames, string className)
+        {
+            ConstructorInfo[] constructors = dataType.GetConstructors();
+            
+            if (constructors.Length == 0)
+            {
+                Debug.LogError($"[TableSO] No public constructors found for {className}");
+                return null;
+            }
+
+            Debug.Log($"[TableSO] {className} available constructors:");
+            for (int i = 0; i < constructors.Length; i++)
+            {
+                var parameters = constructors[i].GetParameters();
+                string paramInfo = string.Join(", ", parameters.Select(p => $"{p.ParameterType.Name} {p.Name}"));
+                Debug.Log($"[TableSO]   Constructor {i + 1}: ({paramInfo})");
+            }
+
+            // 1. 매개변수 개수가 일치하는 생성자부터 찾기
+            var matchingCountConstructors = constructors.Where(c => c.GetParameters().Length == fieldTypes.Length).ToArray();
+            
+            if (matchingCountConstructors.Length == 0)
+            {
+                Debug.LogError($"[TableSO] No constructor with {fieldTypes.Length} parameters found for {className}. " +
+                              $"CSV has {fieldTypes.Length} fields but available constructors have: {string.Join(", ", constructors.Select(c => $"{c.GetParameters().Length}"))} parameters");
+                return null;
+            }
+
+            // 2. 타입이 정확히 일치하는 생성자 찾기
+            foreach (var constructor in matchingCountConstructors)
+            {
+                var parameters = constructor.GetParameters();
+                bool typeMatch = true;
+                
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    Type expectedType = GetTypeFromString(fieldTypes[i]);
+                    Type paramType = parameters[i].ParameterType;
+                    
+                    if (!IsTypeCompatible(expectedType, paramType))
+                    {
+                        Debug.LogWarning($"[TableSO] Type mismatch at parameter {i}: expected {expectedType?.Name ?? "null"}, got {paramType.Name}");
+                        typeMatch = false;
+                        break;
+                    }
+                }
+                
+                if (typeMatch)
+                {
+                    Debug.Log($"[TableSO] Found exact matching constructor for {className}");
+                    return constructor;
+                }
+            }
+
+            // 3. 타입이 완전히 일치하지 않는 경우, 첫 번째 생성자 사용하고 경고 출력
+            var fallbackConstructor = matchingCountConstructors[0];
+            var fallbackParams = fallbackConstructor.GetParameters();
+            
+            Debug.LogWarning($"[TableSO] No exact type match found for {className} constructor. Using fallback constructor:");
+            Debug.LogWarning($"Expected types: [{string.Join(", ", fieldTypes)}]");
+            Debug.LogWarning($"Constructor types: [{string.Join(", ", fallbackParams.Select(p => p.ParameterType.Name))}]");
+            
+            return fallbackConstructor;
+        }
+
+        private static bool IsTypeCompatible(Type expectedType, Type actualType)
+        {
+            if (expectedType == actualType) return true;
+            
+            // null 허용
+            if (expectedType == null || actualType == null) return false;
+            
+            // 배열 타입 검사
+            if (expectedType.IsArray && actualType.IsArray)
+            {
+                return IsTypeCompatible(expectedType.GetElementType(), actualType.GetElementType());
+            }
+            
+            // 기본 타입 변환 가능한지 검사
+            try
+            {
+                if (actualType.IsAssignableFrom(expectedType)) return true;
+                if (expectedType.IsAssignableFrom(actualType)) return true;
+                
+                // 숫자 타입 간 호환성 검사
+                var numericTypes = new[] { typeof(int), typeof(float), typeof(double), typeof(decimal), typeof(long), typeof(short), typeof(byte) };
+                if (numericTypes.Contains(expectedType) && numericTypes.Contains(actualType)) return true;
+            }
+            catch
+            {
+                // 예외 발생 시 false 반환
+            }
+            
+            return false;
         }
 
         private static string[] ParseCSVLine(string line)
@@ -206,26 +319,76 @@ namespace TableSO.Scripts.Generator
 
         private static Type FindTableSOType(string typeName)
         {
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            Type type = null;
+            
+            // 첫 번째 시도
+            type = FindTypeInAssemblies($"Table.{typeName}");
+            
+            if (type == null)
             {
-                Type type = assembly.GetType($"Table.{typeName}");
-                if (type != null) return type;
+                // 어셈블리 새로고침 후 재시도
+                Debug.LogWarning($"[TableSO] Type {typeName} not found, refreshing assemblies...");
+                AssetDatabase.Refresh();
+                System.Threading.Thread.Sleep(1000); // 잠시 대기
+                
+                type = FindTypeInAssemblies($"Table.{typeName}");
             }
-            return null;
+            
+            return type;
         }
 
         private static Type FindDataClassType(string className)
         {
+            Type type = null;
+            
+            // 1. 기본 네임스페이스로 시도
+            type = FindTypeInAssemblies($"TableData.{className}");
+            
+            if (type == null)
+            {
+                // 2. 네임스페이스 없이 시도
+                type = FindTypeInAssemblies(className);
+            }
+            
+            if (type == null)
+            {
+                // 3. 어셈블리 새로고침 후 재시도
+                Debug.LogWarning($"[TableSO] Type {className} not found, refreshing assemblies...");
+                AssetDatabase.Refresh();
+                System.Threading.Thread.Sleep(1000);
+                
+                type = FindTypeInAssemblies($"TableData.{className}");
+                if (type == null)
+                {
+                    type = FindTypeInAssemblies(className);
+                }
+            }
+            
+            return type;
+        }
+
+        private static Type FindTypeInAssemblies(string typeName)
+        {
             foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
-                Type type = assembly.GetType($"TableData.{className}");
-                if (type != null) return type;
+                try
+                {
+                    Type type = assembly.GetType(typeName);
+                    if (type != null) return type;
+                }
+                catch (Exception e)
+                {
+                    // 어셈블리 로딩 오류는 무시하고 계속 진행
+                    Debug.LogWarning($"[TableSO] Error loading type from assembly {assembly.FullName}: {e.Message}");
+                }
             }
             return null;
         }
 
         private static Type GetTypeFromString(string typeString)
         {
+            if (string.IsNullOrEmpty(typeString)) return typeof(string);
+            
             // Handle array types
             if (typeString.EndsWith("[]"))
             {
@@ -243,6 +406,8 @@ namespace TableSO.Scripts.Generator
 
         private static Type GetSingleTypeFromString(string typeString)
         {
+            if (string.IsNullOrEmpty(typeString)) return typeof(string);
+            
             string normalizedType = typeString.ToLower().Trim();
             
             switch (normalizedType)
@@ -258,23 +423,83 @@ namespace TableSO.Scripts.Generator
                 case "double":
                     return typeof(double);
                 default:
-                    // Handle enum or custom types
-                    foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+                    // Handle enum or custom types - 사용자 정의 타입만 찾기
+                    Type foundType = FindUserDefinedType(typeString);
+                    return foundType ?? typeof(string); // Default value
+            }
+        }
+
+        private static Type FindUserDefinedType(string typeName)
+        {
+            // Unity 내부 어셈블리 제외 목록
+            HashSet<string> excludedAssemblies = new HashSet<string>
+            {
+                "UnityEngine",
+                "UnityEditor", 
+                "Unity.Collections",
+                "Unity.Mathematics",
+                "Unity.Burst",
+                "Unity.Jobs",
+                "UnityEngine.UI",
+                "UnityEngine.CoreModule",
+                "UnityEditor.CoreModule"
+            };
+
+            List<Type> candidateTypes = new List<Type>();
+
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                try
+                {
+                    // Unity 내부 어셈블리 건너뛰기
+                    string assemblyName = assembly.GetName().Name;
+                    if (excludedAssemblies.Any(excluded => assemblyName.StartsWith(excluded)))
                     {
-                        Type type = assembly.GetType(typeString);
-                        if (type != null) return type;
-                        
-                        // Find without namespace
-                        foreach (Type assemblyType in assembly.GetTypes())
+                        continue;
+                    }
+
+                    // 정확한 타입 이름으로 찾기
+                    Type type = assembly.GetType(typeName);
+                    if (type != null && type.IsPublic && !type.IsNested)
+                    {
+                        candidateTypes.Add(type);
+                    }
+                    
+                    // 네임스페이스 없이 타입 이름으로 찾기
+                    foreach (Type assemblyType in assembly.GetTypes())
+                    {
+                        if (assemblyType.Name == typeName && assemblyType.IsPublic && !assemblyType.IsNested)
                         {
-                            if (assemblyType.Name == typeString)
+                            if (!candidateTypes.Contains(assemblyType))
                             {
-                                return assemblyType;
+                                candidateTypes.Add(assemblyType);
                             }
                         }
                     }
-                    return typeof(string); // Default value
+                }
+                catch (Exception e)
+                {
+                    // 어셈블리 로딩 오류는 무시하고 계속 진행
+                    Debug.LogWarning($"[TableSO] Error loading types from assembly {assembly.FullName}: {e.Message}");
+                }
             }
+
+            if (candidateTypes.Count > 0)
+            {
+                // 첫 번째 후보 사용 (가장 적합한 것으로 추정)
+                Type selectedType = candidateTypes[0];
+                Debug.Log($"[TableSO] Found user-defined type '{typeName}': {selectedType.FullName}");
+                
+                if (candidateTypes.Count > 1)
+                {
+                    Debug.LogWarning($"[TableSO] Multiple types found for '{typeName}', using: {selectedType.FullName}");
+                }
+                
+                return selectedType;
+            }
+
+            Debug.LogWarning($"[TableSO] Cannot find user-defined type '{typeName}'");
+            return null;
         }
 
         private static object ConvertValue(string value, string targetType)
@@ -439,12 +664,27 @@ namespace TableSO.Scripts.Generator
                 
                 dataListField.SetValue(tableSO, newList);
                 
-                // Set isUpdated flag
-                FieldInfo isUpdatedField = currentType?.GetField("isUpdated", BindingFlags.Public | BindingFlags.Instance);
-                if (isUpdatedField != null)
+                // Set isUpdated flag - 현재 타입에서 찾기
+                Type searchType = tableSOType;
+                while (searchType != null)
                 {
-                    isUpdatedField.SetValue(tableSO, true);
+                    FieldInfo isUpdatedField = searchType.GetField("isUpdated", BindingFlags.Public | BindingFlags.Instance);
+                    if (isUpdatedField != null)
+                    {
+                        isUpdatedField.SetValue(tableSO, true);
+                        break;
+                    }
+                    searchType = searchType.BaseType;
                 }
+
+                MethodInfo onDataUpdatedMethod = tableSOType.GetMethod("OnDataUpdated",
+                    BindingFlags.NonPublic | BindingFlags.Instance);
+
+                if (onDataUpdatedMethod != null)
+                {
+                    onDataUpdatedMethod.Invoke(tableSO, null);
+                }
+
             }
             else
             {

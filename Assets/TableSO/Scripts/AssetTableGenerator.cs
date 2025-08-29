@@ -37,101 +37,9 @@ namespace TableSO.Scripts.Generator
         {
             GetWindow<AssetTableGenerator>("Asset Table Generator");
         }
-
-        private void OnGUI()
-        {
-            GUILayout.Label("Asset Table Generator", EditorStyles.boldLabel);
-            EditorGUILayout.Space();
-
-            // Folder Selection
-            EditorGUILayout.LabelField("Target Folder", EditorStyles.boldLabel);
-            EditorGUILayout.BeginHorizontal();
-            selectedFolderPath = EditorGUILayout.TextField("Folder Path", selectedFolderPath);
-            if (GUILayout.Button("Browse", GUILayout.Width(80)))
-            {
-                string path = EditorUtility.OpenFolderPanel("Select Asset Folder", "Assets", "");
-                if (!string.IsNullOrEmpty(path))
-                {
-                    if (path.StartsWith(Application.dataPath))
-                    {
-                        selectedFolderPath = "Assets" + path.Substring(Application.dataPath.Length);
-                    }
-                }
-            }
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.Space();
-
-            // Asset Type Selection
-            EditorGUILayout.LabelField("Asset Type", EditorStyles.boldLabel);
-            string[] typeNames = supportedTypes.Keys.ToArray();
-            int selectedIndex = Array.IndexOf(typeNames, selectedAssetType.Name);
-            if (selectedIndex == -1) selectedIndex = 0;
-            
-            selectedIndex = EditorGUILayout.Popup("Type", selectedIndex, typeNames);
-            selectedAssetType = supportedTypes[typeNames[selectedIndex]];
-
-            EditorGUILayout.Space();
-
-            // Table Name
-            EditorGUILayout.LabelField("Table Settings", EditorStyles.boldLabel);
-            tableName = EditorGUILayout.TextField("Table Name", tableName);
-            
-            if (string.IsNullOrEmpty(tableName))
-            {
-                string folderName = Path.GetFileName(selectedFolderPath);
-                if (!string.IsNullOrEmpty(folderName))
-                {
-                    tableName = $"{folderName}Asset";
-                }
-            }
-
-            EditorGUILayout.Space();
-
-            // Options
-            EditorGUILayout.LabelField("Options", EditorStyles.boldLabel);
-            autoRegisterToTableCenter = EditorGUILayout.Toggle("Auto Register to TableCenter", autoRegisterToTableCenter);
-            createAddressableGroup = EditorGUILayout.Toggle("Create Addressable Group", createAddressableGroup);
-            
-            if (createAddressableGroup)
-            {
-                addressableGroupName = EditorGUILayout.TextField("Addressable Group Name", 
-                    string.IsNullOrEmpty(addressableGroupName) ? tableName : addressableGroupName);
-            }
-
-            EditorGUILayout.Space();
-
-            // Preview
-            if (!string.IsNullOrEmpty(selectedFolderPath) && Directory.Exists(selectedFolderPath))
-            {
-                var assets = GetAssetsInFolder(selectedFolderPath, selectedAssetType);
-                EditorGUILayout.LabelField($"Found Assets: {assets.Count}", EditorStyles.helpBox);
-                
-                if (assets.Count > 0 && assets.Count <= 10)
-                {
-                    EditorGUILayout.LabelField("Preview (showing first 10):");
-                    foreach (var asset in assets.Take(10))
-                    {
-                        EditorGUILayout.LabelField($"  • {GetAssetName(asset)} -> {asset.name}");
-                    }
-                }
-            }
-
-            EditorGUILayout.Space();
-
-            // Generate Button
-            GUI.enabled = !string.IsNullOrEmpty(selectedFolderPath) && 
-                         !string.IsNullOrEmpty(tableName) && 
-                         Directory.Exists(selectedFolderPath);
-                         
-            if (GUILayout.Button("Generate Asset Table", GUILayout.Height(30)))
-            {
-                GenerateAssetTable();
-            }
-            GUI.enabled = true;
-        }
-
-        private void GenerateAssetTable()
+        
+        public static void GenerateAssetTable(string selectedFolderPath ,string tableName,
+            Type selectedAssetType, bool createAddressableGroup,string addressableGroupName, bool autoRegister)
         {
             try
             {
@@ -155,7 +63,7 @@ namespace TableSO.Scripts.Generator
                 // Wait for compilation and then create ScriptableObject
                 EditorApplication.delayCall += () =>
                 {
-                    CreateAssetTableSO(tableName, assets);
+                    CreateAssetTableSO(tableName, assets, autoRegister);
                     
                     if (createAddressableGroup)
                     {
@@ -173,7 +81,7 @@ namespace TableSO.Scripts.Generator
             }
         }
 
-        private List<UnityEngine.Object> GetAssetsInFolder(string folderPath, Type assetType)
+        private static List<UnityEngine.Object> GetAssetsInFolder(string folderPath, Type assetType)
         {
             List<UnityEngine.Object> assets = new List<UnityEngine.Object>();
             
@@ -192,12 +100,12 @@ namespace TableSO.Scripts.Generator
             return assets.OrderBy(a => a.name).ToList();
         }
 
-        private string GetAssetName(UnityEngine.Object asset)
+        private static string GetAssetName(UnityEngine.Object asset)
         {
             return Path.GetFileNameWithoutExtension(AssetDatabase.GetAssetPath(asset));
         }
 
-        private void GenerateAssetDataClass(string className, Type assetType)
+        private static void GenerateAssetDataClass(string className, Type assetType)
         {
             StringBuilder classCode = new StringBuilder();
             
@@ -234,7 +142,7 @@ namespace TableSO.Scripts.Generator
             File.WriteAllText(classFilePath, classCode.ToString());
         }
 
-        private void GenerateAssetTableSO(string className, Type assetType)
+        private static void GenerateAssetTableSO(string className, Type assetType)
         {
             StringBuilder tableCode = new StringBuilder();
             
@@ -299,7 +207,7 @@ namespace TableSO.Scripts.Generator
             File.WriteAllText(tableFilePath, tableCode.ToString());
         }
 
-        private void CreateAssetTableSO(string className, List<UnityEngine.Object> assets)
+        private static void CreateAssetTableSO(string className, List<UnityEngine.Object> assets, bool autoRegisterToTableCenter)
         {
             try
             {
@@ -377,7 +285,7 @@ namespace TableSO.Scripts.Generator
             }
         }
 
-        private void RegisterToTableCenter(ScriptableObject tableInstance)
+        private static void RegisterToTableCenter(ScriptableObject tableInstance)
         {
             try
             {
@@ -406,7 +314,7 @@ namespace TableSO.Scripts.Generator
             }
         }
 
-        private void CreateAddressableGroup(List<UnityEngine.Object> assets, string groupName)
+        private static void CreateAddressableGroup(List<UnityEngine.Object> assets, string groupName)
         {
             try
             {
@@ -443,7 +351,7 @@ namespace TableSO.Scripts.Generator
             }
         }
 
-        private void EnsureDirectoryExists(string path)
+        private static void EnsureDirectoryExists(string path)
         {
             if (!Directory.Exists(path))
             {

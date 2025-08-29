@@ -19,3 +19,19 @@ public class Test : MonoBehaviour
     {
     }
 }
+
+public enum ItemQuality
+{
+    Melee,
+    Magic,
+    Accessary
+}
+
+public enum ItemType
+{
+    Common,
+    Uncommon,
+    Rare,
+    Epic,
+    Legendary
+}

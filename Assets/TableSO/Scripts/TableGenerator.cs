@@ -38,7 +38,7 @@ namespace TableSO.Scripts.Generator
             Debug.Log($"[TableSO] Generated <{csvFiles.Length}> tables");
         }
 
-        private static void GenerateTableFromCSV(string csvPath)
+        public static void GenerateTableFromCSV(string csvPath)
         {
             string fileName = Path.GetFileNameWithoutExtension(csvPath);
             
