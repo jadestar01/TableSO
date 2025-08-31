@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ItemIconAsset
   m_EditorClassIdentifier: 
   m_GroupName: ItemIconAsset
-  m_GUID: 869e176c9071a844e8103ddb2b1f8371
+  m_GUID: 32ff3976778dffc4799b520c2072b79b
   m_SerializeEntries:
   - m_GUID: 056dd6a0683d4d94f8b4dc89fff06f42
     m_Address: 3101

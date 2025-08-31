@@ -4,9 +4,11 @@ using System.Collections.Generic;
 
 namespace TableSO.Scripts
 {
-    public class TableSO<TKey, TData> : ScriptableObject
+    public class TableSO<TKey, TData> : ScriptableObject, ITableType, IUpdatable
         where TData : class, IIdentifiable<TKey> where TKey : IConvertible
     {
+        public TableType tableType { get; set; }
+
         public bool isUpdated = true;
         
         [SerializeField] 
@@ -17,6 +19,7 @@ namespace TableSO.Scripts
         private void Awake()
         {
             isUpdated = false;
+            
             CacheData();
         }
 
@@ -55,8 +58,16 @@ namespace TableSO.Scripts
             
         }
 
+        public virtual void UpdateData()
+        {
+            
+            
+            CacheData();
+        }
+
         protected virtual void OnEnable()
         {
+            tableType = TableType.Data;
             CacheData();
         }
     }

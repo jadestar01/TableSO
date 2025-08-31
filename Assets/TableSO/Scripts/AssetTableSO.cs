@@ -1,19 +1,30 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading.Tasks;
 using System.Linq;
 using TableSO.Scripts.Utility;
+using UnityEditor;
+using Object = UnityEngine.Object;
 
 namespace TableSO.Scripts
 {
-    public abstract class AssetTableSO<TData> : TableSO<string, TData> 
+    public abstract class AssetTableSO<TData> : TableSO<string, TData>, ITableType
         where TData : class, IIdentifiable<string>
     {
+        public TableType tableType { get; set; }
+
         [Header("Asset Table Settings")]
         [SerializeField] protected bool preloadOnAwake = false;
         [SerializeField] protected bool useAddressableLoading = true;
         
         protected bool isPreloaded = false;
+        
+        protected override void OnEnable()
+        {
+            tableType = TableType.Asset;
+            CacheData();
+        }
 
         protected virtual void Start()
         {
@@ -161,6 +172,11 @@ namespace TableSO.Scripts
             isPreloaded = false; // Reset preload status when data is updated
         }
         
+        public override void UpdateData()
+        {
+            base.UpdateData();
+        }
+
         [ContextMenu("Validate Asset References")]
         public virtual void ValidateAssetReferences()
         {
@@ -191,5 +207,30 @@ namespace TableSO.Scripts
             
             Debug.Log($"[TableSO] Validation complete - Valid: {validCount}, Invalid: {invalidCount}");
         }
+    }
+}
+
+public static class AssetLoader
+{
+    public static List<T> LoadAssetsFromFolder<T>(string folderPath) where T : UnityEngine.Object
+    {
+        var result = new List<T>();
+
+        // 폴더 안의 모든 asset GUID 가져오기
+        string[] guids = AssetDatabase.FindAssets("", new[] { folderPath });
+
+        foreach (var guid in guids)
+        {
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+
+            // 지정된 타입(T)으로 로드 시도
+            var asset = AssetDatabase.LoadAssetAtPath<T>(path);
+            if (asset != null)
+            {
+                result.Add(asset);
+            }
+        }
+
+        return result;
     }
 }

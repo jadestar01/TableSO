@@ -33,6 +33,7 @@ namespace TableSO.Scripts
             Debug.LogError($"[TableSO] Cannot find table type {tableType.Name}. Please check if it's registered in TableCenter");
             return null;
         }
+        
 
         public void RegisterTable(ScriptableObject table)
         {
@@ -115,34 +116,30 @@ namespace TableSO.Scripts
         {
             int i = 0;
             foreach (var table in registeredTables)
-            {
-                if (table != null &&
-                    table.GetType().IsGenericType &&
-                    table.GetType().GetGenericTypeDefinition() == typeof(AssetTableSO<>))
+                if (table != null && ((ITableType)table).tableType == TableType.Asset)
                     i++;
-            }
-
-            return i++;
+            
+            return i;
         }
 
         public int GetCsvTableCount()
         {
             int i = 0;
             foreach (var table in registeredTables)
-            {
-                if (table != null &&
-                    table.GetType().IsGenericType &&
-                    table.GetType().GetGenericTypeDefinition() == typeof(TableSO<,>) &&
-                    table.GetType().GetGenericTypeDefinition() != typeof(AssetTableSO<>))
+                if (table != null && ((ITableType)table).tableType == TableType.Data)
                     i++;
-            }
 
-            return i++;
+            return i;
         }
 
         public int GetRefTableCount()
         {
-            return 0;
+            int i = 0;
+            foreach (var table in registeredTables)
+                if (table != null && ((ITableType)table).tableType == TableType.Reference)
+                    i++;
+
+            return i;
         }
 
         public int GetTableCount()

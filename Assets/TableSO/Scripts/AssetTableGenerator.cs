@@ -55,21 +55,15 @@ namespace TableSO.Scripts.Generator
                 GenerateAssetDataClass(tableName, selectedAssetType);
                 
                 // Generate TableSO Class
-                GenerateAssetTableSO(tableName, selectedAssetType);
+                GenerateAssetTableSO(tableName, selectedAssetType, selectedFolderPath);
                 
+                if (createAddressableGroup)
+                {
+                    CreateAddressableGroup(assets, addressableGroupName);
+                }
+
                 // Refresh to compile new scripts
                 AssetDatabase.Refresh();
-                
-                // Wait for compilation and then create ScriptableObject
-                EditorApplication.delayCall += () =>
-                {
-                    CreateAssetTableSO(tableName, assets, autoRegister);
-                    
-                    if (createAddressableGroup)
-                    {
-                        CreateAddressableGroup(assets, addressableGroupName);
-                    }
-                };
                 
                 Debug.Log($"[TableSO] Asset table '{tableName}' generated successfully with {assets.Count} assets");
                 EditorUtility.DisplayDialog("Success", $"Asset table '{tableName}' generated successfully!", "OK");
@@ -142,7 +136,7 @@ namespace TableSO.Scripts.Generator
             File.WriteAllText(classFilePath, classCode.ToString());
         }
 
-        private static void GenerateAssetTableSO(string className, Type assetType)
+        private static void GenerateAssetTableSO(string className, Type assetType, string folderPath)
         {
             StringBuilder tableCode = new StringBuilder();
             
@@ -150,12 +144,60 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine("using TableData;");
             tableCode.AppendLine("using System.Threading.Tasks;");
             tableCode.AppendLine("using System.Linq;");
+            tableCode.AppendLine("using System;");
+            tableCode.AppendLine("using System.Collections.Generic;");
+            tableCode.AppendLine("using UnityEditor;");
+            tableCode.AppendLine("using System.IO;");
+            tableCode.AppendLine("using TableSO.Scripts;");
             tableCode.AppendLine();
             tableCode.AppendLine("namespace Table");
             tableCode.AppendLine("{");
-            tableCode.AppendLine("    [CreateAssetMenu(fileName = \"" + className + "TableSO\", menuName = \"TableSO/Asset Tables/" + className + "\")]");
-            tableCode.AppendLine($"    public class {className}TableSO : TableSO.Scripts.AssetTableSO<TableData.{className}>");
+            tableCode.AppendLine($"    [CreateAssetMenu(fileName = \"{className}TableSO\", menuName = \"TableSO/AssetTable/{className}Table\")]");
+            tableCode.AppendLine($"    public class {className}TableSO : TableSO.Scripts.AssetTableSO<TableData.{className}>, IAssetData");
             tableCode.AppendLine("    {");
+            tableCode.AppendLine($"        [SerializeField] private string assetFolderPath = \"{folderPath}\";");
+            tableCode.AppendLine($"        public string fileName => \"{className}TableSO\";");
+            tableCode.AppendLine($"        public Type assetType => typeof({assetType.Name});");
+            tableCode.AppendLine();
+            tableCode.AppendLine("        protected override void OnEnable()");
+            tableCode.AppendLine("        {");
+            tableCode.AppendLine("            base.OnEnable();");
+            tableCode.AppendLine("            LoadAllAssetsFromFolder();");
+            tableCode.AppendLine("        }");
+            tableCode.AppendLine();
+            tableCode.AppendLine("        private void LoadAllAssetsFromFolder()");
+            tableCode.AppendLine("        {");
+            tableCode.AppendLine("#if UNITY_EDITOR");
+            tableCode.AppendLine("            if (dataList == null)");
+            tableCode.AppendLine($"                dataList = new List<TableData.{className}>();");
+            tableCode.AppendLine();
+            tableCode.AppendLine("            dataList.Clear();");
+            tableCode.AppendLine();
+            tableCode.AppendLine($"            // Load all {assetType.Name} assets from the specified folder");
+            tableCode.AppendLine($"            string[] guids = AssetDatabase.FindAssets(\"t:{assetType.Name}\", new[] {{ assetFolderPath }});");
+            tableCode.AppendLine();
+            tableCode.AppendLine("            foreach (string guid in guids)");
+            tableCode.AppendLine("            {");
+            tableCode.AppendLine("                string assetPath = AssetDatabase.GUIDToAssetPath(guid);");
+            tableCode.AppendLine($"                var asset = AssetDatabase.LoadAssetAtPath<{assetType.Name}>(assetPath);");
+            tableCode.AppendLine();
+            tableCode.AppendLine("                if (asset != null)");
+            tableCode.AppendLine("                {");
+            tableCode.AppendLine("                    string assetName = Path.GetFileNameWithoutExtension(assetPath);");
+            tableCode.AppendLine($"                    var assetData = new TableData.{className}(assetName, asset, assetName);");
+            tableCode.AppendLine("                    dataList.Add(assetData);");
+            tableCode.AppendLine("                }");
+            tableCode.AppendLine("            }");
+            tableCode.AppendLine();
+            tableCode.AppendLine("            // Sort by name for consistency");
+            tableCode.AppendLine("            dataList = dataList.OrderBy(data => data.ID).ToList();");
+            tableCode.AppendLine("            ");
+            tableCode.AppendLine("            // Mark as updated to refresh cache");
+            tableCode.AppendLine("            isUpdated = true;");
+            tableCode.AppendLine("            CacheData();");
+            tableCode.AppendLine("#endif");
+            tableCode.AppendLine("        }");
+            tableCode.AppendLine();
             tableCode.AppendLine($"        /// <summary>");
             tableCode.AppendLine($"        /// Get {assetType.Name} asset by ID (direct reference)");
             tableCode.AppendLine($"        /// </summary>");
@@ -197,6 +239,19 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine("        {");
             tableCode.AppendLine("            if (isUpdated) CacheData();");
             tableCode.AppendLine($"            return dataDict.Values.Select(data => data.Asset).Where(asset => asset != null).ToArray();");
+            tableCode.AppendLine("        }");
+            tableCode.AppendLine();
+            tableCode.AppendLine("        /// <summary>");
+            tableCode.AppendLine("        /// Manually refresh assets from folder (Editor only)");
+            tableCode.AppendLine("        /// </summary>");
+            tableCode.AppendLine("        [ContextMenu(\"Refresh Assets from Folder\")]");
+            tableCode.AppendLine("        public void RefreshAssetsFromFolder()");
+            tableCode.AppendLine("        {");
+            tableCode.AppendLine("#if UNITY_EDITOR");
+            tableCode.AppendLine("            LoadAllAssetsFromFolder();");
+            tableCode.AppendLine("            EditorUtility.SetDirty(this);");
+            tableCode.AppendLine("            Debug.Log($\"[TableSO] Refreshed {dataList.Count} assets for {name}\");");
+            tableCode.AppendLine("#endif");
             tableCode.AppendLine("        }");
             tableCode.AppendLine("    }");
             tableCode.AppendLine("}");

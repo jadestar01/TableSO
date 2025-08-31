@@ -55,7 +55,6 @@ namespace TableSO.Scripts.Generator
             {
                 string path = AssetDatabase.GUIDToAssetPath(guids[0]);
                 tableCenter = AssetDatabase.LoadAssetAtPath<TableCenter>(path);
-                tableCenter.ClearRegisteredTables();
             }
             
             if (tableCenter == null)

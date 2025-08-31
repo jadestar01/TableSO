@@ -2,12 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using TableSO.FileUtility;
 using UnityEditor;
 using UnityEngine;
-using UnityEditor.AddressableAssets;
-using UnityEditor.AddressableAssets.Settings;
 using System.Reflection;
 using TableSO.Scripts.Generator;
 
@@ -124,7 +120,7 @@ namespace TableSO.Scripts.Editor
                 currentTab = Tab.AssetTable;
             }
 
-            GUI.enabled = false; // RefTable is not implemented yet
+            GUI.enabled = false;
             if (GUILayout.Button("RefTable", currentTab == Tab.RefTable ? activeButtonStyle : buttonStyle))
             {
                 currentTab = Tab.RefTable;

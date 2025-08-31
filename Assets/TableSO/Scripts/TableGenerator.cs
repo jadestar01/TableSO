@@ -74,7 +74,7 @@ namespace TableSO.Scripts.Generator
                 GenerateDataClass(fileName, fieldNames, fieldTypes);
                 
                 // Generate TableSO
-                GenerateTableSO(fileName, fieldTypes[0]);
+                GenerateTableSO(fileName, fieldTypes[0], fileName);
                 
                 Debug.Log($"[TableSO] {fileName} table generated successfully");
             }
@@ -399,7 +399,7 @@ namespace TableSO.Scripts.Generator
             return parameters;
         }
 
-        private static void GenerateTableSO(string className, string idType)
+        private static void GenerateTableSO(string className, string idType, string fileName)
         {
             StringBuilder tableCode = new StringBuilder();
             
@@ -410,6 +410,7 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine("{");
             tableCode.AppendLine($"    public class {className}TableSO : TableSO.Scripts.TableSO<{ConvertToValidType(idType)}, TableData.{className}>");
             tableCode.AppendLine("    {");
+            tableCode.AppendLine($"        public string fileName = \"{fileName}\";");
             tableCode.AppendLine("    }");
             tableCode.AppendLine("}");
 
