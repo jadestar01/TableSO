@@ -7,13 +7,14 @@ using System.Collections.Generic;
 using TableSO.Scripts;
 using System.IO;
 using TableSO.Scripts.Generator;
+using Unity.VisualScripting;
 
 [InitializeOnLoad]
 public static class AssemblyReloadHandler
 {
     private const string GENERATED_TABLES_FOLDER = "Assets/TableSO/Table";
     private const string GENERATED_CODE_FOLDER = "Assets/TableSO/Scripts/TableClass";
-    
+
     static AssemblyReloadHandler()
     {
         AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
@@ -28,15 +29,9 @@ public static class AssemblyReloadHandler
     private static void OnAfterAssemblyReload()
     {
         Debug.Log("[TableSO] Try to find Tables..");
-        
+
         // 더 긴 딜레이로 어셈블리가 완전히 로드될 때까지 대기
-        EditorApplication.delayCall += () =>
-        {
-            EditorApplication.delayCall += () =>
-            {
-                InitializeGeneratedTables();
-            };
-        };
+        EditorApplication.delayCall += () => { EditorApplication.delayCall += () => { InitializeGeneratedTables(); }; };
     }
 
     private static void SaveCurrentTableState()
@@ -55,7 +50,7 @@ public static class AssemblyReloadHandler
         {
             // 먼저 생성된 .cs 파일들을 확인
             var generatedFiles = FindGeneratedTableFiles();
-            
+
             if (generatedFiles.Count == 0)
             {
                 return;
@@ -63,7 +58,7 @@ public static class AssemblyReloadHandler
 
             // 타입 찾기 (여러 방법 시도)
             var tableSoTypes = FindAllTableSOTypes();
-            
+
             var tableCenter = FindOrCreateTableCenter();
             if (tableCenter == null)
             {
@@ -72,7 +67,7 @@ public static class AssemblyReloadHandler
 
             int createdCount = 0;
             int registeredCount = 0;
-            
+
             tableCenter.ClearRegisteredTables();
 
             foreach (var tableType in tableSoTypes)
@@ -105,18 +100,41 @@ public static class AssemblyReloadHandler
                 }
             }
 
+            // RefTableSO들의 참조 테이블 자동 할당
+            foreach (var tableType in tableSoTypes)
+            {
+                try
+                {
+                    // IReferencable을 구현하는 RefTableSO인지 확인
+                    if (typeof(IReferencable).IsAssignableFrom(tableType))
+                    {
+                        string assetName = tableType.Name;
+                        string assetPath = Path.Combine(GENERATED_TABLES_FOLDER, $"{assetName}.asset");
+                        var refTableAsset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(assetPath);
+
+                        if (refTableAsset != null && refTableAsset is IReferencable referencable)
+                        {
+                            AssignReferencesToRefTable(tableCenter, refTableAsset, referencable);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[TableSO] RefTable {tableType.Name} 참조 할당 중 오류: {e.Message}");
+                }
+            }
+
             if (createdCount > 0 || registeredCount > 0)
             {
                 EditorUtility.SetDirty(tableCenter);
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
-                
             }
             else
             {
                 Debug.Log("[TableSO] 처리할 새로운 테이블이 없습니다.");
             }
-            
+
             CSVDataLoader.LoadAllCSVData();
         }
         catch (Exception e)
@@ -125,27 +143,184 @@ public static class AssemblyReloadHandler
         }
     }
 
-    private static void Noe()
+    private static void AssignReferencesToRefTable(TableCenter tableCenter, ScriptableObject refTableAsset,
+        IReferencable referencable)
     {
-        /*
-        
-        foreach (var asset in assets)
+        try
         {
-            string assetPath = AssetDatabase.GetAssetPath(asset);
-            string assetGUID = AssetDatabase.AssetPathToGUID(assetPath);
-                    
-            var entry = settings.CreateOrMoveEntry(assetGUID, group, false, false);
-            entry.address = GetAssetName(asset); // Use filename as address
+            Debug.Log($"[TableSO] RefTable {refTableAsset.name}의 참조 테이블 할당 시작...");
+
+            // IReferencable에서 필요한 참조 테이블 타입들 가져오기
+            var requiredTableTypes = referencable.refTableTypes;
+
+            if (requiredTableTypes == null || requiredTableTypes.Count == 0)
+            {
+                Debug.LogWarning($"[TableSO] RefTable {refTableAsset.name}에 필요한 참조 타입이 없습니다.");
+                return;
+            }
+
+            int assignedCount = 0;
+
+            foreach (var requiredType in requiredTableTypes)
+            {
+                // TableCenter에서 해당 타입의 테이블 찾기
+                var foundTable = FindTableInTableCenter(tableCenter, requiredType);
+
+                if (foundTable != null)
+                {
+                    // Reflection을 사용하여 RefTable의 필드에 참조 할당
+                    AssignTableReference(refTableAsset, foundTable, requiredType);
+                    assignedCount++;
+                    Debug.Log($"[TableSO] {refTableAsset.name}에 {foundTable.name} ({requiredType.Name}) 할당 완료");
+                }
+                else
+                {
+                    Debug.LogWarning(
+                        $"[TableSO] RefTable {refTableAsset.name}에서 필요한 {requiredType.Name} 타입의 테이블을 찾을 수 없습니다.");
+                }
+            }
+
+            if (assignedCount > 0)
+            {
+                // RefTable의 참조 리스트도 업데이트
+                UpdateRefTableReferences(refTableAsset);
+
+                EditorUtility.SetDirty(refTableAsset);
+                Debug.Log($"[TableSO] RefTable {refTableAsset.name}에 {assignedCount}개의 참조 테이블이 할당되었습니다.");
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[TableSO] RefTable {refTableAsset.name} 참조 할당 중 오류: {e.Message}");
+        }
+    }
+
+    private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, Type targetType)
+    {
+        var tableCenterType = tableCenter.GetType();
+        string[] listFieldNames = { "csvTables", "assetTables", "refTables" };
+
+        foreach (var fieldName in listFieldNames)
+        {
+            var field = tableCenterType.GetField(fieldName,
+                BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+
+            if (field != null)
+            {
+                var list = field.GetValue(tableCenter) as System.Collections.IList;
+                if (list != null)
+                {
+                    foreach (var item in list)
+                    {
+                        var scriptableObject = item as ScriptableObject;
+                        if (scriptableObject != null && scriptableObject.GetType() == targetType)
+                        {
+                            return scriptableObject;
+                        }
+                    }
+                }
+            }
         }
 
-        settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, null, true);
-*/
+        return null;
+    }
+
+    private static void AssignTableReference(ScriptableObject refTable, ScriptableObject targetTable, Type targetType)
+    {
+        try
+        {
+            var refTableType = refTable.GetType();
+
+            // 필드 이름 생성 (예: CharacterTableSO -> characterTable)
+            string fieldName = GetTableFieldName(targetType.Name);
+
+            // private 필드 찾기
+            var field = refTableType.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (field != null && field.FieldType == targetType)
+            {
+                field.SetValue(refTable, targetTable);
+                Debug.Log($"[TableSO] 필드 {fieldName}에 {targetTable.name} 할당 완료");
+            }
+            else
+            {
+                Debug.LogWarning($"[TableSO] RefTable {refTable.name}에서 {fieldName} 필드를 찾을 수 없거나 타입이 맞지 않습니다.");
+
+                // 모든 필드 출력 (디버깅용)
+                var allFields =
+                    refTableType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                Debug.Log($"[TableSO] 사용 가능한 필드들: {string.Join(", ", allFields.Select(f => f.Name))}");
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[TableSO] 테이블 참조 할당 중 오류: {e.Message}");
+        }
+    }
+
+    private static string GetTableFieldName(string typeName)
+    {
+        // "TableSO" 접미사 제거
+        string baseName = typeName;
+        if (baseName.EndsWith("TableSO"))
+        {
+            baseName = baseName.Substring(0, baseName.Length - 7);
+        }
+
+        // 첫 글자를 소문자로 만들고 "Table" 접미사 추가
+        if (!string.IsNullOrEmpty(baseName))
+        {
+            baseName = char.ToLower(baseName[0]) + baseName.Substring(1) + "Table";
+        }
+
+        return baseName;
+    }
+
+    private static void UpdateRefTableReferences(ScriptableObject refTable)
+    {
+        try
+        {
+            // RefTableSO의 referencedTables 리스트 업데이트
+            var refTableType = refTable.GetType();
+            var referencedTablesField = refTableType.BaseType?.GetField("referencedTables",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (referencedTablesField != null)
+            {
+                var referencedTablesList = referencedTablesField.GetValue(refTable) as List<ScriptableObject>;
+                if (referencedTablesList != null)
+                {
+                    referencedTablesList.Clear();
+
+                    // 할당된 테이블들을 referencedTables 리스트에 추가
+                    var fields = refTableType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
+                    foreach (var field in fields)
+                    {
+                        if (field.FieldType.IsSubclassOf(typeof(ScriptableObject)) &&
+                            field.Name.EndsWith("Table"))
+                        {
+                            var tableValue = field.GetValue(refTable) as ScriptableObject;
+                            if (tableValue != null && !referencedTablesList.Contains(tableValue))
+                            {
+                                referencedTablesList.Add(tableValue);
+                            }
+                        }
+                    }
+
+                    Debug.Log($"[TableSO] {refTable.name}의 referencedTables 리스트에 {referencedTablesList.Count}개 테이블 추가");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[TableSO] RefTable 참조 리스트 업데이트 중 오류: {e.Message}");
+        }
     }
 
     private static List<string> FindGeneratedTableFiles()
     {
         var files = new List<string>();
-        
+
         if (!Directory.Exists(GENERATED_CODE_FOLDER))
         {
             Debug.LogWarning($"[TableSO] 생성 폴더가 존재하지 않습니다: {GENERATED_CODE_FOLDER}");
@@ -154,7 +329,7 @@ public static class AssemblyReloadHandler
 
         // .cs 파일들 찾기
         var csFiles = Directory.GetFiles(GENERATED_CODE_FOLDER, "*.cs", SearchOption.AllDirectories);
-        
+
         foreach (var file in csFiles)
         {
             string relativePath = file.Replace('\\', '/');
@@ -162,7 +337,7 @@ public static class AssemblyReloadHandler
             {
                 relativePath = "Assets" + relativePath.Substring(Application.dataPath.Length);
             }
-            
+
             // 파일 내용을 확인해서 TableSO를 상속받는지 확인
             if (IsTableSOFile(file))
             {
@@ -178,9 +353,9 @@ public static class AssemblyReloadHandler
         try
         {
             string content = File.ReadAllText(filePath);
-            
+
             // TableSO 상속 패턴 확인
-            return content.Contains("TableSO<") || 
+            return content.Contains("TableSO<") ||
                    content.Contains("AssetTableSO<") ||
                    content.Contains(": TableSO") ||
                    content.Contains(": AssetTableSO");
@@ -194,34 +369,34 @@ public static class AssemblyReloadHandler
     private static List<Type> FindAllTableSOTypes()
     {
         var tableSoTypes = new List<Type>();
-        
+
         try
         {
             // 먼저 생성된 파일들을 기반으로 타입 이름 수집
             var generatedFiles = FindGeneratedTableFiles();
             var expectedTypeNames = new HashSet<string>();
-            
+
             foreach (var file in generatedFiles)
             {
                 string fileName = Path.GetFileNameWithoutExtension(file);
                 expectedTypeNames.Add(fileName);
             }
-            
+
             // Assembly-CSharp에서만 검색
             var assemblies = AppDomain.CurrentDomain.GetAssemblies()
                 .Where(a => a.FullName.StartsWith("Assembly-CSharp"))
                 .ToList();
-            
+
             foreach (var assembly in assemblies)
             {
                 try
                 {
                     var types = assembly.GetTypes()
-                        .Where(t => !t.IsAbstract && 
-                                   !t.IsGenericTypeDefinition && 
-                                   IsGeneratedTableSOType(t, expectedTypeNames))
+                        .Where(t => !t.IsAbstract &&
+                                    !t.IsGenericTypeDefinition &&
+                                    IsGeneratedTableSOType(t, expectedTypeNames))
                         .ToList();
-                    
+
                     foreach (var type in types)
                     {
                         tableSoTypes.Add(type);
@@ -232,10 +407,10 @@ public static class AssemblyReloadHandler
                     // 로드 가능한 타입들만 처리
                     if (ex.Types != null)
                     {
-                        var loadableTypes = ex.Types.Where(t => t != null && 
-                                                                 !t.IsAbstract && 
-                                                                 !t.IsGenericTypeDefinition && 
-                                                                 IsGeneratedTableSOType(t, expectedTypeNames));
+                        var loadableTypes = ex.Types.Where(t => t != null &&
+                                                                !t.IsAbstract &&
+                                                                !t.IsGenericTypeDefinition &&
+                                                                IsGeneratedTableSOType(t, expectedTypeNames));
                         tableSoTypes.AddRange(loadableTypes);
                     }
                 }
@@ -256,7 +431,7 @@ public static class AssemblyReloadHandler
     private static bool IsGeneratedTableSOType(Type type, HashSet<string> expectedTypeNames)
     {
         if (type == null) return false;
-        
+
         try
         {
             // 1. 예상되는 타입 이름 목록에 있는지 확인 (가장 정확한 방법)
@@ -283,7 +458,7 @@ public static class AssemblyReloadHandler
     private static bool IsTableSOType(Type type)
     {
         if (type == null) return false;
-        
+
         try
         {
             // TableSO<,> 또는 AssetTableSO<> 상속 확인
@@ -293,12 +468,13 @@ public static class AssemblyReloadHandler
                 if (baseType.IsGenericType)
                 {
                     var genericDef = baseType.GetGenericTypeDefinition();
-                    if (genericDef.Name.StartsWith("TableSO") || 
+                    if (genericDef.Name.StartsWith("TableSO") ||
                         genericDef.Name.StartsWith("AssetTableSO"))
                     {
                         return true;
                     }
                 }
+
                 baseType = baseType.BaseType;
             }
 
@@ -377,7 +553,7 @@ public static class AssemblyReloadHandler
             if (!(tableAsset is ITableType tableInterface))
             {
                 Debug.LogWarning($"[TableSO] {tableAsset.name}은 ITableType을 구현하지 않습니다.");
-                
+
                 // AssetTableSO인지 확인해서 강제로 Asset 타입으로 등록
                 if (IsAssetTableType(tableAsset.GetType()))
                 {
@@ -413,8 +589,10 @@ public static class AssemblyReloadHandler
             {
                 return true;
             }
+
             baseType = baseType.BaseType;
         }
+
         return false;
     }
 
@@ -427,10 +605,10 @@ public static class AssemblyReloadHandler
     {
         var tableCenterType = tableCenter.GetType();
         string[] listFieldNames = { "csvTables", "assetTables", "refTables" };
-        
+
         foreach (var fieldName in listFieldNames)
         {
-            var field = tableCenterType.GetField(fieldName, 
+            var field = tableCenterType.GetField(fieldName,
                 BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
             if (field != null)
             {
@@ -459,7 +637,7 @@ public static class AssemblyReloadHandler
     private static TableCenter FindTableCenter()
     {
         string[] guids = AssetDatabase.FindAssets("t:TableCenter");
-        
+
         if (guids.Length == 0)
         {
             Debug.Log("[TableSO] 기존 TableCenter를 찾을 수 없습니다.");
@@ -476,7 +654,7 @@ public static class AssemblyReloadHandler
         try
         {
             var instance = ScriptableObject.CreateInstance<TableCenter>();
-            
+
             EnsureDirectoryExists("Assets/TableSO");
             string assetPath = "Assets/TableSO/TableCenter.asset";
 
@@ -516,24 +694,25 @@ public static class AssemblyReloadHandler
     public static void PrintAllTypes()
     {
         Debug.Log("[TableSO] 현재 도메인의 모든 TableSO 관련 타입:");
-        
+
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
             if (assembly.FullName.Contains("Assembly-CSharp"))
             {
                 Debug.Log($"어셈블리: {assembly.FullName}");
-                
+
                 try
                 {
                     var types = assembly.GetTypes()
-                        .Where(t => t.Namespace?.Contains("TableSO") == true || 
-                                   t.Name.Contains("Table"))
+                        .Where(t => t.Namespace?.Contains("TableSO") == true ||
+                                    t.Name.Contains("Table"))
                         .ToList();
-                    
+
                     foreach (var type in types)
                     {
-                        Debug.Log($"  - {type.FullName} (Abstract: {type.IsAbstract}, Generic: {type.IsGenericTypeDefinition})");
-                        
+                        Debug.Log(
+                            $"  - {type.FullName} (Abstract: {type.IsAbstract}, Generic: {type.IsGenericTypeDefinition})");
+
                         if (type.BaseType != null)
                         {
                             Debug.Log($"    BaseType: {type.BaseType.Name}");
@@ -572,13 +751,13 @@ public static class AssemblyReloadHandler
         }
 
         Debug.Log("[TableSO] 등록된 테이블 목록:");
-        
+
         var tableCenterType = tableCenter.GetType();
         string[] listFieldNames = { "csvTables", "assetTables", "refTables" };
-        
+
         foreach (var fieldName in listFieldNames)
         {
-            var field = tableCenterType.GetField(fieldName, 
+            var field = tableCenterType.GetField(fieldName,
                 BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
             if (field != null)
             {
@@ -615,9 +794,9 @@ public static class AssemblyReloadHandler
     [MenuItem("TableSO/Clean Generated Table Assets")]
     public static void CleanGeneratedAssets()
     {
-        if (EditorUtility.DisplayDialog("Confirm", 
-            "생성된 모든 TableSO 에셋을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.", 
-            "삭제", "취소"))
+        if (EditorUtility.DisplayDialog("Confirm",
+                "생성된 모든 TableSO 에셋을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.",
+                "삭제", "취소"))
         {
             CleanupGeneratedAssets();
         }
@@ -630,7 +809,7 @@ public static class AssemblyReloadHandler
             if (Directory.Exists(GENERATED_TABLES_FOLDER))
             {
                 var assetFiles = Directory.GetFiles(GENERATED_TABLES_FOLDER, "*.asset", SearchOption.AllDirectories);
-                
+
                 foreach (var file in assetFiles)
                 {
                     string relativePath = file.Replace('\\', '/');
@@ -638,6 +817,7 @@ public static class AssemblyReloadHandler
                     {
                         relativePath = "Assets" + relativePath.Substring(Application.dataPath.Length);
                     }
+
                     AssetDatabase.DeleteAsset(relativePath);
                 }
 
@@ -650,7 +830,6 @@ public static class AssemblyReloadHandler
             Debug.LogError($"[TableSO] 에셋 정리 중 오류: {e.Message}");
         }
     }
-
     // 잘못 등록된 테이블들을 제거하는 메뉴 (null 참조 등)
     [MenuItem("TableSO/Debug/Clean Invalid Table References")]
     public static void CleanInvalidTableReferences()
@@ -699,4 +878,5 @@ public static class AssemblyReloadHandler
             Debug.Log("[TableSO] 제거할 잘못된 참조가 없습니다.");
         }
     }
+
 }

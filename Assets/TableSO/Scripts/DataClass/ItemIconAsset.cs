@@ -1,4 +1,5 @@
 using System;
+using TableSO.Scripts;
 using UnityEngine;
 
 /// <summary>

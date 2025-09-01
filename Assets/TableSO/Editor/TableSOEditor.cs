@@ -47,6 +47,14 @@ namespace TableSO.Scripts.Editor
             {"ScriptableObject", typeof(ScriptableObject)},
             {"TextAsset", typeof(TextAsset)}
         };
+        
+        private string refTableName = "";
+        private bool refAutoRegister = true;
+        private List<ScriptableObject> selectedReferenceTables = new List<ScriptableObject>();
+        private List<CustomOperation> customOperations = new List<CustomOperation>();
+        private bool showAdvancedOptions = false;
+        private Vector2 operationsScrollPosition;
+        private Vector2 tablesScrollPosition;
 
         [MenuItem("TableSO/TableSO Editor")]
         public static void ShowWindow()
@@ -92,7 +100,7 @@ namespace TableSO.Scripts.Editor
         private void DrawTabButtons()
         {
             EditorGUILayout.BeginHorizontal();
-            
+    
             var buttonStyle = new GUIStyle(GUI.skin.button)
             {
                 fontSize = 12,
@@ -120,18 +128,17 @@ namespace TableSO.Scripts.Editor
                 currentTab = Tab.AssetTable;
             }
 
-            GUI.enabled = false;
+            // RefTable 버튼 활성화 (GUI.enabled = false; 제거)
             if (GUILayout.Button("RefTable", currentTab == Tab.RefTable ? activeButtonStyle : buttonStyle))
             {
                 currentTab = Tab.RefTable;
             }
-            GUI.enabled = true;
 
             EditorGUILayout.EndHorizontal();
-            
+    
             EditorGUILayout.Space(10);
         }
-
+        
         private void DrawContent()
         {
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
@@ -448,29 +455,224 @@ namespace TableSO.Scripts.Editor
         }
 
         private void DrawRefTableTab()
-        {
-            var titleStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                fontSize = 16,
-                margin = new RectOffset(0, 0, 10, 5)
-            };
+{
+    var titleStyle = new GUIStyle(EditorStyles.boldLabel)
+    {
+        fontSize = 16,
+        margin = new RectOffset(0, 0, 10, 5)
+    };
 
-            EditorGUILayout.LabelField("Reference Table Generator", titleStyle);
-            
-            EditorGUILayout.Space(20);
-            
-            DrawInfoBox("RefTable functionality will be implemented in future updates.", MessageType.Info);
-            
-            EditorGUILayout.Space(10);
-            
-            var placeholderStyle = new GUIStyle(EditorStyles.helpBox)
+    EditorGUILayout.LabelField("Reference Table Generator", titleStyle);
+
+    DrawSectionHeader("Table Settings");
+    refTableName = EditorGUILayout.TextField("RefTable Name", refTableName);
+    
+    EditorGUILayout.Space();
+
+    DrawSectionHeader("Referenced Tables");
+    DrawReferencedTablesSelection();
+    
+    EditorGUILayout.Space();
+
+    DrawSectionHeader("Custom Operations");
+    DrawCustomOperations();
+    
+    EditorGUILayout.Space();
+
+    DrawSectionHeader("Options");
+    refAutoRegister = EditorGUILayout.Toggle("Auto Register to TableCenter", refAutoRegister);
+    
+    showAdvancedOptions = EditorGUILayout.Foldout(showAdvancedOptions, "Advanced Options");
+    if (showAdvancedOptions)
+    {
+        EditorGUILayout.HelpBox("Advanced options for RefTable generation", MessageType.Info);
+        // 추후 고급 옵션들 추가 가능
+    }
+
+    EditorGUILayout.Space(20);
+
+    // Generate button
+    GUI.enabled = !string.IsNullOrEmpty(refTableName) && 
+                 selectedReferenceTables.Count > 0;
+
+    if (GUILayout.Button("Generate Reference Table", GUILayout.Height(40)))
+    {
+        GenerateRefTable();
+    }
+    GUI.enabled = true;
+}
+
+private void DrawReferencedTablesSelection()
+{
+    var availableTables = RefTableGenerator.GetAllAvailableTables();
+    
+    if (availableTables.Count == 0)
+    {
+        DrawInfoBox("No tables found in the project. Please create some TableSO or AssetTableSO first.", MessageType.Warning);
+        return;
+    }
+
+    EditorGUILayout.BeginVertical(GUI.skin.box);
+    
+    var headerStyle = new GUIStyle(EditorStyles.boldLabel)
+    {
+        fontSize = 12
+    };
+    
+    EditorGUILayout.LabelField($"Available Tables ({availableTables.Count} found)", headerStyle);
+    
+    tablesScrollPosition = EditorGUILayout.BeginScrollView(tablesScrollPosition, GUILayout.MaxHeight(150));
+    
+    foreach (var table in availableTables)
+    {
+        if (table == null) continue;
+        
+        EditorGUILayout.BeginHorizontal();
+        
+        bool isSelected = selectedReferenceTables.Contains(table);
+        bool newSelection = EditorGUILayout.Toggle(isSelected, GUILayout.Width(20));
+        
+        if (newSelection != isSelected)
+        {
+            if (newSelection)
             {
-                padding = new RectOffset(20, 20, 20, 20),
-                fontSize = 12
-            };
-            
-            EditorGUILayout.LabelField("Planned Features:\n• Cross-table references\n• Foreign key relationships\n• Dynamic data linking\n• Reference validation", placeholderStyle);
+                selectedReferenceTables.Add(table);
+            }
+            else
+            {
+                selectedReferenceTables.Remove(table);
+            }
         }
+        
+        string tableInfo = RefTableGenerator.GetTableInfo(table);
+        EditorGUILayout.LabelField(tableInfo);
+        
+        EditorGUILayout.EndHorizontal();
+    }
+    
+    EditorGUILayout.EndScrollView();
+    
+    EditorGUILayout.BeginHorizontal();
+    if (GUILayout.Button("Select All", GUILayout.Width(80)))
+    {
+        selectedReferenceTables.Clear();
+        selectedReferenceTables.AddRange(availableTables);
+    }
+    
+    if (GUILayout.Button("Clear All", GUILayout.Width(80)))
+    {
+        selectedReferenceTables.Clear();
+    }
+    
+    EditorGUILayout.EndHorizontal();
+    
+    if (selectedReferenceTables.Count > 0)
+    {
+        DrawInfoBox($"{selectedReferenceTables.Count} table(s) selected", MessageType.Info);
+    }
+    
+    EditorGUILayout.EndVertical();
+}
+
+private void DrawCustomOperations()
+{
+    EditorGUILayout.BeginVertical(GUI.skin.box);
+    
+    var headerStyle = new GUIStyle(EditorStyles.boldLabel)
+    {
+        fontSize = 12
+    };
+    
+    EditorGUILayout.BeginHorizontal();
+    EditorGUILayout.LabelField($"Custom Operations ({customOperations.Count})", headerStyle);
+    
+    if (GUILayout.Button("Add Operation", GUILayout.Width(100)))
+    {
+        customOperations.Add(new CustomOperation("", "", "string", ""));
+    }
+    
+    EditorGUILayout.EndHorizontal();
+    
+    if (customOperations.Count > 0)
+    {
+        operationsScrollPosition = EditorGUILayout.BeginScrollView(operationsScrollPosition, GUILayout.MaxHeight(200));
+        
+        for (int i = customOperations.Count - 1; i >= 0; i--)
+        {
+            var operation = customOperations[i];
+            
+            EditorGUILayout.BeginVertical(GUI.skin.box);
+            
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField($"Operation {i + 1}", EditorStyles.boldLabel);
+            
+            if (GUILayout.Button("Remove", GUILayout.Width(60)))
+            {
+                customOperations.RemoveAt(i);
+                continue;
+            }
+            
+            EditorGUILayout.EndHorizontal();
+            
+            operation.name = EditorGUILayout.TextField("Method Name", operation.name);
+            operation.description = EditorGUILayout.TextField("Description", operation.description);
+            
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField("Return Type", GUILayout.Width(80));
+            
+            string[] returnTypes = { "string", "int", "float", "bool", "List<string>", "string[]", "int[]", "float[]" };
+            int selectedIndex = Array.IndexOf(returnTypes, operation.returnType);
+            if (selectedIndex == -1) selectedIndex = 0;
+            
+            selectedIndex = EditorGUILayout.Popup(selectedIndex, returnTypes);
+            operation.returnType = returnTypes[selectedIndex];
+            
+            EditorGUILayout.EndHorizontal();
+            
+            operation.parameters = EditorGUILayout.TextField("Parameters (e.g., string id, int count)", operation.parameters);
+            
+            EditorGUILayout.EndVertical();
+        }
+        
+        EditorGUILayout.EndScrollView();
+    }
+    else
+    {
+        EditorGUILayout.HelpBox("Add custom operations to define specific behaviors for your RefTable.", MessageType.Info);
+    }
+    
+    EditorGUILayout.EndVertical();
+}
+
+private void GenerateRefTable()
+{
+    try
+    {
+        // Validate input
+        if (!RefTableGenerator.ValidateTableReferences(selectedReferenceTables))
+        {
+            EditorUtility.DisplayDialog("Error", "Invalid table references detected. Please check your selections.", "OK");
+            return;
+        }
+
+        // Filter out invalid operations
+        var validOperations = customOperations.Where(op => 
+            !string.IsNullOrEmpty(op.name) && 
+            !string.IsNullOrEmpty(op.returnType)).ToList();
+
+        RefTableGenerator.GenerateRefTable(refTableName, selectedReferenceTables, validOperations, refAutoRegister);
+        
+        // Clear form after successful generation
+        refTableName = "";
+        selectedReferenceTables.Clear();
+        customOperations.Clear();
+    }
+    catch (Exception e)
+    {
+        Debug.LogError($"[TableSO] Error in RefTable generation: {e.Message}");
+        EditorUtility.DisplayDialog("Error", $"Failed to generate RefTable:\n{e.Message}", "OK");
+    }
+}
 
         private void DrawSectionHeader(string title)
         {

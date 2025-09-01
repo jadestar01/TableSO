@@ -344,6 +344,7 @@ namespace TableSO.Scripts.Generator
             classCode.AppendLine("using System;");
             classCode.AppendLine("using System.Collections.Generic;");
             classCode.AppendLine("using UnityEngine;");
+            classCode.AppendLine("using TableSO.Scripts;");
             classCode.AppendLine();
             classCode.AppendLine("/// <summary>");
             classCode.AppendLine("/// Made by TableSO TableGenerator");
@@ -405,6 +406,7 @@ namespace TableSO.Scripts.Generator
             
             tableCode.AppendLine("using UnityEngine;");
             tableCode.AppendLine("using TableData;");
+            tableCode.AppendLine("using TableSO.Scripts;");
             tableCode.AppendLine();
             tableCode.AppendLine("namespace Table");
             tableCode.AppendLine("{");

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TableSO.Scripts;
 using UnityEngine;
 
 /// <summary>

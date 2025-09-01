@@ -105,6 +105,7 @@ namespace TableSO.Scripts.Generator
             
             classCode.AppendLine("using System;");
             classCode.AppendLine("using UnityEngine;");
+            classCode.AppendLine("using TableSO.Scripts;");
             classCode.AppendLine();
             classCode.AppendLine("/// <summary>");
             classCode.AppendLine("/// Asset Data Class - Made by TableSO AssetTableGenerator");
