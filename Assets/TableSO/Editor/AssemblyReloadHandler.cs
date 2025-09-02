@@ -30,7 +30,7 @@ public static class AssemblyReloadHandler
     {
         Debug.Log("[TableSO] Try to find Tables..");
 
-        // 더 긴 딜레이로 어셈블리가 완전히 로드될 때까지 대기
+        // Wait with a longer delay until the assembly is fully loaded
         EditorApplication.delayCall += () => { EditorApplication.delayCall += () => { InitializeGeneratedTables(); }; };
     }
 
@@ -47,7 +47,7 @@ private static void InitializeGeneratedTables()
 {
     try
     {
-        // 먼저 생성된 .cs 파일들을 확인
+        // First, check the generated .cs files
         var generatedFiles = FindGeneratedTableFiles();
 
         if (generatedFiles.Count == 0)
@@ -55,7 +55,7 @@ private static void InitializeGeneratedTables()
             return;
         }
 
-        // 타입 찾기 (여러 방법 시도)
+        // Find types (try multiple ways)
         var tableSoTypes = FindAllTableSOTypes();
 
         var tableCenter = FindOrCreateTableCenter();
@@ -69,7 +69,7 @@ private static void InitializeGeneratedTables()
 
         tableCenter.ClearRegisteredTables();
 
-        // 1단계: 모든 TableSO들을 먼저 생성하고 등록
+        // Step 1: Create and register all TableSOs first
         foreach (var tableType in tableSoTypes)
         {
             try
@@ -78,7 +78,7 @@ private static void InitializeGeneratedTables()
                 if (assetCreated.created)
                 {
                     createdCount++;
-                    Debug.Log($"[TableSO] 새 에셋 생성: {tableType.Name}");
+                    Debug.Log($"[TableSO] New asset created: {tableType.Name}");
                 }
 
                 if (assetCreated.asset != null)
@@ -87,7 +87,7 @@ private static void InitializeGeneratedTables()
                     if (registered)
                     {
                         registeredCount++;
-                        Debug.Log($"[TableSO] TableCenter에 등록: {tableType.Name}");
+                        Debug.Log($"[TableSO] Registered to TableCenter: {tableType.Name}");
                     }
 
                     if (assetCreated.asset is IUpdatable updatable)
@@ -96,11 +96,11 @@ private static void InitializeGeneratedTables()
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TableSO] {tableType.Name} 처리 중 오류: {e.Message}");
+                Debug.LogError($"[TableSO] Error while processing {tableType.Name}: {e.Message}");
             }
         }
 
-        // 2단계: RefTableSO들의 참조 테이블 자동 할당 (모든 테이블이 등록된 후)
+        // Step 2: Automatically assign references for RefTableSOs (after all tables are registered)
         EditorApplication.delayCall += () => {
             AssignRefTableReferences(tableCenter, tableSoTypes);
             
@@ -116,20 +116,20 @@ private static void InitializeGeneratedTables()
     }
     catch (Exception e)
     {
-        Debug.LogError($"[TableSO] 초기화 중 오류: {e.Message}");
+        Debug.LogError($"[TableSO] Error during initialization: {e.Message}");
     }
 }
 private static void AssignRefTableReferences(TableCenter tableCenter, List<Type> tableSoTypes)
 {
     try
     {
-        Debug.Log("[TableSO] RefTable 참조 할당 단계 시작...");
+        Debug.Log("[TableSO] Starting RefTable reference assignment...");
         
         foreach (var tableType in tableSoTypes)
         {
             try
             {
-                // IReferencable을 구현하는 RefTableSO인지 확인
+                // Check if this is a RefTableSO implementing IReferencable
                 if (typeof(IReferencable).IsAssignableFrom(tableType))
                 {
                     string assetName = tableType.Name;
@@ -140,34 +140,34 @@ private static void AssignRefTableReferences(TableCenter tableCenter, List<Type>
                     {
                         AssignReferencesToRefTable(tableCenter, refTableAsset, referencable);
                         
-                        // RefTableSO의 OnRefreshFromReferencedTables 호출하여 초기 데이터 설정
+                        // Call RefTableSO's OnRefreshFromReferencedTables to initialize data
                         try
                         {
                             var refreshMethod = refTableAsset.GetType().GetMethod("RefreshFromReferencedTables");
                             if (refreshMethod != null)
                             {
                                 refreshMethod.Invoke(refTableAsset, null);
-                                Debug.Log($"[TableSO] RefTable {refTableAsset.name} 초기 데이터 새로고침 완료");
+                                Debug.Log($"[TableSO] RefTable {refTableAsset.name} initial data refresh complete");
                             }
                         }
                         catch (Exception refreshEx)
                         {
-                            Debug.LogWarning($"[TableSO] RefTable {refTableAsset.name} 새로고침 중 오류: {refreshEx.Message}");
+                            Debug.LogWarning($"[TableSO] Error while refreshing RefTable {refTableAsset.name}: {refreshEx.Message}");
                         }
                     }
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TableSO] RefTable {tableType.Name} 참조 할당 중 오류: {e.Message}");
+                Debug.LogError($"[TableSO] Error assigning references for RefTable {tableType.Name}: {e.Message}");
             }
         }
         
-        Debug.Log("[TableSO] RefTable 참조 할당 완료");
+        Debug.Log("[TableSO] RefTable reference assignment completed");
     }
     catch (Exception e)
     {
-        Debug.LogError($"[TableSO] RefTable 참조 할당 단계 중 전체 오류: {e.Message}");
+        Debug.LogError($"[TableSO] Fatal error during RefTable reference assignment stage: {e.Message}");
     }
 }
 
@@ -176,15 +176,11 @@ private static void AssignReferencesToRefTable(TableCenter tableCenter, Scriptab
 {
     try
     {
-        Debug.Log($"[TableSO] RefTable {refTableAsset.name}의 참조 테이블 할당 시작...");
+        Debug.Log($"[TableSO] Starting reference table assignment for RefTable {refTableAsset.name}...");
 
-        // IReferencable에서 필요한 참조 테이블 타입들 가져오기
+        // Get the required reference table types from IReferencable
         var requiredTableTypes = referencable.refTableTypes;
         
-        Debug.Log($"@ 참조 테이블 개수 : {referencable.refTableTypes.Count}");
-        foreach (var type in referencable.refTableTypes)
-            Debug.Log($"@ {type}");
-
         int assignedCount = 0;
         foreach (var type in referencable.refTableTypes)
         {
@@ -209,11 +205,11 @@ private static void AssignReferencesToRefTable(TableCenter tableCenter, Scriptab
 
 
         EditorUtility.SetDirty(refTableAsset);
-        Debug.Log($"[TableSO] RefTable {refTableAsset.name}에 {assignedCount}개의 참조 테이블이 할당되었습니다.");
+        Debug.Log($"[TableSO] {assignedCount} reference tables assigned to RefTable {refTableAsset.name}");
     }
     catch (Exception e)
     {
-        Debug.LogError($"[TableSO] RefTable {refTableAsset.name} 참조 할당 중 오류: {e.Message}");
+        Debug.LogError($"[TableSO] Error while assigning references to RefTable {refTableAsset.name}: {e.Message}");
     }
 }
 
@@ -258,27 +254,27 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
         {
             var refTableType = refTable.GetType();
 
-            // 필드 이름 생성 (예: CharacterTableSO -> characterTable)
+            // Generate field name (e.g. CharacterTableSO -> characterTable)
             string fieldName = GetTableFieldName(targetType.Name);
 
-            // private 필드 찾기
+            // Find private field
             var field = refTableType.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
 
             if (field != null && field.FieldType == targetType)
             {
                 field.SetValue(refTable, targetTable);
-                Debug.Log($"[TableSO] 필드 {fieldName}에 {targetTable.name} 할당 완료");
+                Debug.Log($"[TableSO] Field {fieldName} successfully assigned with {targetTable.name}");
                 return true;
             }
             else
             {
-                Debug.LogWarning($"[TableSO] RefTable {refTable.name}에서 {fieldName} 필드를 찾을 수 없거나 타입이 맞지 않습니다.");
+                Debug.LogWarning($"[TableSO] Field {fieldName} not found in RefTable {refTable.name} or type mismatch.");
 
-                // 디버깅을 위해 모든 필드 출력
+                // Print all fields for debugging
                 var allFields = refTableType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-                Debug.Log($"[TableSO] 사용 가능한 필드들: {string.Join(", ", allFields.Select(f => $"{f.Name}({f.FieldType.Name})"))}");
+                Debug.Log($"[TableSO] Available fields: {string.Join(", ", allFields.Select(f => $"{f.Name}({f.FieldType.Name})"))}");
             
-                // 대안적 방법: 타입 이름 기반으로 다시 시도
+                // Alternative approach: retry based on type name
                 var alternativeField = allFields.FirstOrDefault(f => 
                     f.FieldType == targetType && 
                     f.Name.ToLower().Contains(GetTablePropertyName(targetType.Name).ToLower()));
@@ -286,7 +282,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
                 if (alternativeField != null)
                 {
                     alternativeField.SetValue(refTable, targetTable);
-                    Debug.Log($"[TableSO] 대안 필드 {alternativeField.Name}에 {targetTable.name} 할당 완료");
+                    Debug.Log($"[TableSO] Alternative field {alternativeField.Name} successfully assigned with {targetTable.name}");
                     return true;
                 }
             }
@@ -295,7 +291,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TableSO] 테이블 참조 할당 중 오류: {e.Message}");
+            Debug.LogError($"[TableSO] Error while assigning table reference: {e.Message}");
             return false;
         }
     }
@@ -303,14 +299,14 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
 
     private static string GetTableFieldName(string typeName)
     {
-        // "TableSO" 접미사 제거
+        // Remove "TableSO" suffix
         string baseName = typeName;
         if (baseName.EndsWith("TableSO"))
         {
             baseName = baseName.Substring(0, baseName.Length - 7);
         }
 
-        // 첫 글자를 소문자로 만들고 "Table" 접미사 추가
+        // Make the first letter lowercase and add "Table" suffix
         if (!string.IsNullOrEmpty(baseName))
         {
             baseName = char.ToLower(baseName[0]) + baseName.Substring(1) + "Table";
@@ -324,7 +320,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
     {
         try
         {
-            // RefTableSO의 referencedTables 리스트 업데이트
+            // Update RefTableSO's referencedTables list
             var refTableType = refTable.GetType();
             var referencedTablesField = refTableType.BaseType?.GetField("referencedTables",
                 BindingFlags.NonPublic | BindingFlags.Instance);
@@ -336,7 +332,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
                 {
                     referencedTablesList.Clear();
 
-                    // 할당된 테이블들을 referencedTables 리스트에 추가
+                    // Add assigned tables to the referencedTables list
                     var fields = refTableType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
                     foreach (var field in fields)
                     {
@@ -351,13 +347,13 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
                         }
                     }
 
-                    Debug.Log($"[TableSO] {refTable.name}의 referencedTables 리스트에 {referencedTablesList.Count}개 테이블 추가");
+                    Debug.Log($"[TableSO] {refTable.name} added {referencedTablesList.Count} tables to referencedTables list");
                 }
             }
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TableSO] RefTable 참조 리스트 업데이트 중 오류: {e.Message}");
+            Debug.LogError($"[TableSO] Error while updating RefTable reference list: {e.Message}");
         }
     }
 
@@ -367,11 +363,11 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
 
         if (!Directory.Exists(GENERATED_CODE_FOLDER))
         {
-            Debug.LogWarning($"[TableSO] 생성 폴더가 존재하지 않습니다: {GENERATED_CODE_FOLDER}");
+            Debug.LogWarning($"[TableSO] Generated folder does not exist: {GENERATED_CODE_FOLDER}");
             return files;
         }
 
-        // .cs 파일들 찾기
+        // Find .cs files
         var csFiles = Directory.GetFiles(GENERATED_CODE_FOLDER, "*.cs", SearchOption.AllDirectories);
 
         foreach (var file in csFiles)
@@ -382,7 +378,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
                 relativePath = "Assets" + relativePath.Substring(Application.dataPath.Length);
             }
 
-            // 파일 내용을 확인해서 TableSO를 상속받는지 확인
+            // Check file content for TableSO inheritance
             if (IsTableSOFile(file))
             {
                 files.Add(relativePath);
@@ -398,7 +394,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
         {
             string content = File.ReadAllText(filePath);
 
-            // TableSO 상속 패턴 확인
+            // Check for TableSO inheritance pattern
             return content.Contains("TableSO<") ||
                    content.Contains("AssetTableSO<") ||
                    content.Contains(": TableSO") ||
@@ -416,7 +412,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
 
         try
         {
-            // 먼저 생성된 파일들을 기반으로 타입 이름 수집
+            // Collect expected type names based on generated files
             var generatedFiles = FindGeneratedTableFiles();
             var expectedTypeNames = new HashSet<string>();
 
@@ -426,7 +422,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
                 expectedTypeNames.Add(fileName);
             }
 
-            // Assembly-CSharp에서만 검색
+            // Search only in Assembly-CSharp
             var assemblies = AppDomain.CurrentDomain.GetAssemblies()
                 .Where(a => a.FullName.StartsWith("Assembly-CSharp"))
                 .ToList();
@@ -448,7 +444,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
                 }
                 catch (ReflectionTypeLoadException ex)
                 {
-                    // 로드 가능한 타입들만 처리
+                    // Process only loadable types
                     if (ex.Types != null)
                     {
                         var loadableTypes = ex.Types.Where(t => t != null &&
@@ -460,13 +456,13 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[TableSO] 어셈블리 {assembly.FullName} 처리 중 오류: {ex.Message}");
+                    Debug.LogWarning($"[TableSO] Error while processing assembly {assembly.FullName}: {ex.Message}");
                 }
             }
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TableSO] 타입 검색 중 치명적 오류: {e.Message}");
+            Debug.LogError($"[TableSO] Fatal error during type search: {e.Message}");
         }
 
         return tableSoTypes;
@@ -478,13 +474,13 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
 
         try
         {
-            // 1. 예상되는 타입 이름 목록에 있는지 확인 (가장 정확한 방법)
+            // 1. Check if type name is in expected list (most accurate method)
             if (!expectedTypeNames.Contains(type.Name))
             {
                 return false;
             }
 
-            // 2. TableSO 상속 확인
+            // 2. Check TableSO inheritance
             if (!IsTableSOType(type))
             {
                 return false;
@@ -505,7 +501,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
 
         try
         {
-            // TableSO<,> 또는 AssetTableSO<> 상속 확인
+            // Check if inherits from TableSO<,> or AssetTableSO<>
             var baseType = type.BaseType;
             while (baseType != null)
             {
@@ -522,7 +518,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
                 baseType = baseType.BaseType;
             }
 
-            // ITableType 인터페이스 구현 확인
+            // Check if implements ITableType interface
             if (type.GetInterfaces().Any(i => i.Name == "ITableType"))
             {
                 return true;
@@ -530,7 +526,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
         }
         catch (Exception e)
         {
-            Debug.LogWarning($"[TableSO] 타입 {type.Name} 확인 중 오류: {e.Message}");
+            Debug.LogWarning($"[TableSO] Error while checking type {type.Name}: {e.Message}");
         }
 
         return false;
@@ -541,40 +537,39 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
         string assetName = tableType.Name;
         string assetPath = Path.Combine(GENERATED_TABLES_FOLDER, $"{assetName}.asset");
 
-        // 이미 존재하는지 확인
+        // Check if it already exists
         var existingAsset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(assetPath);
         if (existingAsset != null)
         {
-            Debug.Log($"[TableSO] 기존 에셋 발견: {assetPath}");
             return (false, existingAsset);
         }
 
-        // 폴더 생성
+        // Ensure folder exists
         EnsureDirectoryExists(GENERATED_TABLES_FOLDER);
 
         try
         {
-            // ScriptableObject 인스턴스 생성
+            // Create ScriptableObject instance
             var instance = ScriptableObject.CreateInstance(tableType);
             if (instance == null)
             {
-                Debug.LogError($"[TableSO] {tableType.Name}의 인스턴스를 생성할 수 없습니다.");
+                Debug.LogError($"[TableSO] Failed to create instance of {tableType.Name}");
                 return (false, null);
             }
 
-            // 이름 설정
+            // Set name
             instance.name = assetName;
 
-            // Asset으로 저장
+            // Save as Asset
             AssetDatabase.CreateAsset(instance, assetPath);
             AssetDatabase.SaveAssets();
 
-            Debug.Log($"[TableSO] ScriptableObject 생성 완료: {assetPath}");
+            Debug.Log($"[TableSO] ScriptableObject created: {assetPath}");
             return (true, instance);
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TableSO] {tableType.Name} 인스턴스 생성 실패: {e.Message}");
+            Debug.LogError($"[TableSO] Failed to create instance of {tableType.Name}: {e.Message}");
             return (false, null);
         }
     }
@@ -584,21 +579,21 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
         if (tableCenter == null || tableAsset == null)
             return false;
 
-        // TableCenter에 해당 테이블이 이미 등록되어 있는지 확인
+        // Check if this table is already registered in TableCenter
         if (IsAlreadyRegistered(tableCenter, tableAsset))
         {
-            Debug.Log($"[TableSO] {tableAsset.name}은 이미 등록되어 있습니다.");
+            Debug.Log($"[TableSO] {tableAsset.name} is already registered.");
             return false;
         }
 
         try
         {
-            // ITableType 인터페이스를 구현하는지 확인
+            // Check if it implements ITableType interface
             if (!(tableAsset is ITableType tableInterface))
             {
-                Debug.LogWarning($"[TableSO] {tableAsset.name}은 ITableType을 구현하지 않습니다.");
+                Debug.LogWarning($"[TableSO] {tableAsset.name} does not implement ITableType.");
 
-                // AssetTableSO인지 확인해서 강제로 Asset 타입으로 등록
+                // Force register as Asset type if it's AssetTableSO
                 if (IsAssetTableType(tableAsset.GetType()))
                 {
                     RegisterTableByType(tableCenter, tableAsset);
@@ -611,7 +606,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
                 }
             }
 
-            // TableType에 따라 적절한 리스트에 추가
+            // Register to the correct list depending on TableType
             var tableType = tableInterface.tableType;
             RegisterTableByType(tableCenter, tableAsset);
 
@@ -619,7 +614,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TableSO] {tableAsset.name} 등록 중 오류: {e.Message}");
+            Debug.LogError($"[TableSO] Error while registering {tableAsset.name}: {e.Message}");
             return false;
         }
     }
@@ -684,7 +679,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
 
         if (guids.Length == 0)
         {
-            Debug.Log("[TableSO] 기존 TableCenter를 찾을 수 없습니다.");
+            Debug.Log("[TableSO] Cannot find TableCenter");
             return null;
         }
 
@@ -706,12 +701,12 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log($"[TableSO] TableCenter 생성 완료: {assetPath}");
+            Debug.Log($"[TableSO] TableCenter Generated : {assetPath}");
             return instance;
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TableSO] TableCenter 생성 실패: {e.Message}");
+            Debug.LogError($"[TableSO] Cannot Generate TableCenter");
             return null;
         }
     }

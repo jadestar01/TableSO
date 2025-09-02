@@ -51,13 +51,11 @@ namespace TableSO.Scripts
             if (!registeredTables.Contains(table))
             {
                 registeredTables.Add(table);
-                
+
                 if (isCacheInitialized)
                 {
                     tableCache[table.GetType()] = table;
                 }
-                
-                Debug.Log($"[TableSO] Table {table.GetType().Name} registered to TableCenter");
             }
         }
 
@@ -70,7 +68,6 @@ namespace TableSO.Scripts
                     tableCache.Remove(table.GetType());
                 }
                 
-                Debug.Log($"[TableSO] Table {table?.GetType().Name} removed from TableCenter");
             }
         }
 
