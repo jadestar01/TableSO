@@ -12,32 +12,6 @@ namespace TableSO.Scripts.Generator
 {
     public class TableGenerator : Editor
     {
-        [MenuItem("TableSO/Generate All Tables")]
-        public static void GenerateAllTables()
-        {
-            if (!Directory.Exists(FilePath.CSV_PATH))
-            {
-                Debug.LogError($"[TableSO] Cannot find CSV path: {FilePath.CSV_PATH}");
-                return;
-            }
-
-            string[] csvFiles = Directory.GetFiles(FilePath.CSV_PATH, "*.csv");
-            
-            if (csvFiles.Length == 0)
-            {
-                Debug.LogWarning("[TableSO] Cannot find CSV files");
-                return;
-            }
-
-            foreach (string csvPath in csvFiles)
-            {
-                GenerateTableFromCSV(csvPath);
-            }
-            
-            AssetDatabase.Refresh();
-            Debug.Log($"[TableSO] Generated <{csvFiles.Length}> tables");
-        }
-
         public static void GenerateTableFromCSV(string csvPath)
         {
             string fileName = Path.GetFileNameWithoutExtension(csvPath);
@@ -459,30 +433,6 @@ namespace TableSO.Scripts.Generator
             {
                 Directory.CreateDirectory(path);
             }
-        }
-
-        [MenuItem("TableSO/Generate From Selected CSV")]
-        public static void GenerateFromSelectedCSV()
-        {
-            string[] guids = Selection.assetGUIDs;
-            
-            if (guids.Length == 0)
-            {
-                Debug.LogWarning("[TableSO] Please select CSV files");
-                return;
-            }
-
-            foreach (string guid in guids)
-            {
-                string assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                
-                if (Path.GetExtension(assetPath).ToLower() == ".csv")
-                {
-                    GenerateTableFromCSV(assetPath);
-                }
-            }
-            
-            AssetDatabase.Refresh();
         }
     }
 }

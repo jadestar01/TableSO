@@ -11,7 +11,6 @@ namespace TableSO.Scripts.Generator
 {
     public static class CSVDataLoader
     {
-        [MenuItem("TableSO/Load CSV Data to TableSO")]
         public static void LoadAllCSVData()
         {
             string csvDataPath = FilePath.CSV_PATH;

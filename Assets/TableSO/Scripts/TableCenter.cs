@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using TableSO.FileUtility;
+using UnityEditor;
 using UnityEngine;
 
 namespace TableSO.Scripts
@@ -8,6 +10,9 @@ namespace TableSO.Scripts
     [CreateAssetMenu(fileName = "TableCenter", menuName = "TableSO/TableCenter")]
     public class TableCenter : ScriptableObject
     {
+        private const string GENERATED_TABLES_FOLDER = "Assets/TableSO/Table";
+        private const string GENERATED_CODE_FOLDER = "Assets/TableSO/Scripts/TableClass";
+        
         [Header("Registered Tables")]
         [SerializeField] private List<ScriptableObject> registeredTables = new();
         
@@ -161,6 +166,9 @@ namespace TableSO.Scripts
     [UnityEditor.CustomEditor(typeof(TableCenter))]
     public class TableCenterEditor : UnityEditor.Editor
     {
+        private const string GENERATED_TABLES_FOLDER = "Assets/TableSO/Table";
+        private const string GENERATED_CODE_FOLDER = "Assets/TableSO/Scripts/TableClass";
+        
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
@@ -200,6 +208,46 @@ namespace TableSO.Scripts
             UnityEditor.EditorUtility.SetDirty(tableCenter);
             Debug.Log($"[TableSO] {registeredCount} tables automatically registered");
         }
+        
+        public void CleanGeneratedAssets()
+        {
+            if (EditorUtility.DisplayDialog("Confirm",
+                    "생성된 모든 TableSO 에셋을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.",
+                    "삭제", "취소"))
+            {
+                CleanupGeneratedAssets();
+            }
+        }
+
+        private void CleanupGeneratedAssets()
+        {
+            try
+            {
+                if (Directory.Exists(GENERATED_TABLES_FOLDER))
+                {
+                    var assetFiles = Directory.GetFiles(GENERATED_TABLES_FOLDER, "*.asset", SearchOption.AllDirectories);
+
+                    foreach (var file in assetFiles)
+                    {
+                        string relativePath = file.Replace('\\', '/');
+                        if (relativePath.StartsWith(Application.dataPath))
+                        {
+                            relativePath = "Assets" + relativePath.Substring(Application.dataPath.Length);
+                        }
+
+                        AssetDatabase.DeleteAsset(relativePath);
+                    }
+
+                    Debug.Log($"[TableSO] {assetFiles.Length}개의 생성된 에셋을 정리했습니다.");
+                    AssetDatabase.Refresh();
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[TableSO] 에셋 정리 중 오류: {e.Message}");
+            }
+        }
+
     }
 #endif
 }

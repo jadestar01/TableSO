@@ -51,7 +51,6 @@ namespace TableSO.Scripts.Editor
         private string refTableName = "";
         private bool refAutoRegister = true;
         private List<ScriptableObject> selectedReferenceTables = new List<ScriptableObject>();
-        private List<CustomOperation> customOperations = new List<CustomOperation>();
         private bool showAdvancedOptions = false;
         private Vector2 operationsScrollPosition;
         private Vector2 tablesScrollPosition;
@@ -454,7 +453,9 @@ namespace TableSO.Scripts.Editor
             GUI.enabled = true;
         }
 
-        private void DrawRefTableTab()
+// TableSOEditor.cs에서 DrawRefTableTab 메서드를 다음과 같이 개선:
+
+private void DrawRefTableTab()
 {
     var titleStyle = new GUIStyle(EditorStyles.boldLabel)
     {
@@ -467,6 +468,10 @@ namespace TableSO.Scripts.Editor
     DrawSectionHeader("Table Settings");
     refTableName = EditorGUILayout.TextField("RefTable Name", refTableName);
     
+    // 키 타입 선택 기능 추가
+    EditorGUILayout.Space();
+    DrawKeyTypeSelection();
+    
     EditorGUILayout.Space();
 
     DrawSectionHeader("Referenced Tables");
@@ -475,7 +480,6 @@ namespace TableSO.Scripts.Editor
     EditorGUILayout.Space();
 
     DrawSectionHeader("Custom Operations");
-    DrawCustomOperations();
     
     EditorGUILayout.Space();
 
@@ -491,9 +495,10 @@ namespace TableSO.Scripts.Editor
 
     EditorGUILayout.Space(20);
 
-    // Generate button
+    // Generate button - 키 타입도 검증에 추가
     GUI.enabled = !string.IsNullOrEmpty(refTableName) && 
-                 selectedReferenceTables.Count > 0;
+                 selectedReferenceTables.Count > 0 &&
+                 !string.IsNullOrEmpty(refTableKeyType);
 
     if (GUILayout.Button("Generate Reference Table", GUILayout.Height(40)))
     {
@@ -502,6 +507,103 @@ namespace TableSO.Scripts.Editor
     GUI.enabled = true;
 }
 
+// 키 타입 선택을 위한 새로운 변수들과 메서드들
+private string refTableKeyType = "string"; // 기본값은 string
+private string[] commonKeyTypes = { "string", "int", "float", "bool" };
+
+private void DrawKeyTypeSelection()
+{
+    DrawSectionHeader("Key Type Configuration");
+    
+    EditorGUILayout.BeginVertical(GUI.skin.box);
+    
+    var helpStyle = new GUIStyle(EditorStyles.helpBox)
+    {
+        fontSize = 11,
+        padding = new RectOffset(10, 10, 8, 8)
+    };
+    
+    EditorGUILayout.LabelField("Specify the key type for the RefTable. You can use built-in types (string, int, etc.) or custom types (e.g., ItemType enum).", helpStyle);
+    
+    EditorGUILayout.Space(5);
+    
+    // 일반적인 키 타입 버튼들
+    EditorGUILayout.LabelField("Common Types:", EditorStyles.boldLabel);
+    EditorGUILayout.BeginHorizontal();
+    foreach (string keyType in commonKeyTypes)
+    {
+        var buttonStyle = refTableKeyType == keyType ? 
+            new GUIStyle(GUI.skin.button) { normal = { background = MakeTex(1, 1, new Color(0.3f, 0.5f, 0.8f, 1f)) } } : 
+            GUI.skin.button;
+            
+        if (GUILayout.Button(keyType, buttonStyle))
+        {
+            refTableKeyType = keyType;
+        }
+    }
+    EditorGUILayout.EndHorizontal();
+    
+    EditorGUILayout.Space(5);
+    
+    // 사용자 정의 타입 입력
+    EditorGUILayout.LabelField("Custom Type:", EditorStyles.boldLabel);
+    refTableKeyType = EditorGUILayout.TextField("Key Type", refTableKeyType);
+    
+    // 키 타입 유효성 검사 및 안내
+    if (!string.IsNullOrEmpty(refTableKeyType))
+    {
+        if (IsBuiltInType(refTableKeyType))
+        {
+            DrawInfoBox($"Using built-in type: {refTableKeyType}", MessageType.Info);
+        }
+        else
+        {
+            DrawInfoBox($"Using custom type: {refTableKeyType}\nMake sure this type exists in your project and implements IConvertible if needed.", MessageType.Warning);
+        }
+    }
+    
+    EditorGUILayout.EndVertical();
+}
+
+private bool IsBuiltInType(string typeName)
+{
+    string[] builtInTypes = { "string", "int", "float", "double", "bool", "char", "byte", "short", "long", "uint", "ushort", "ulong" };
+    return builtInTypes.Contains(typeName.ToLower());
+}
+
+// GenerateRefTable 메서드 수정
+private void GenerateRefTable()
+{
+    try
+    {
+        // Validate input
+        if (!RefTableGenerator.ValidateTableReferences(selectedReferenceTables))
+        {
+            EditorUtility.DisplayDialog("Error", "Invalid table references detected. Please check your selections.", "OK");
+            return;
+        }
+
+        // 키 타입 검증
+        if (string.IsNullOrEmpty(refTableKeyType))
+        {
+            EditorUtility.DisplayDialog("Error", "Key type must be specified.", "OK");
+            return;
+        }
+
+        // 키 타입을 포함하여 RefTable 생성
+        RefTableGenerator.GenerateRefTable(refTableName, selectedReferenceTables, refTableKeyType, refAutoRegister);
+        
+        // Clear form after successful generation
+        refTableName = "";
+        refTableKeyType = "string";
+        selectedReferenceTables.Clear();
+    }
+    catch (Exception e)
+    {
+        Debug.LogError($"[TableSO] Error in RefTable generation: {e.Message}");
+        EditorUtility.DisplayDialog("Error", $"Failed to generate RefTable:\n{e.Message}", "OK");
+    }
+}
 private void DrawReferencedTablesSelection()
 {
     var availableTables = RefTableGenerator.GetAllAvailableTables();
@@ -572,106 +674,6 @@ private void DrawReferencedTablesSelection()
     }
     
     EditorGUILayout.EndVertical();
-}
-
-private void DrawCustomOperations()
-{
-    EditorGUILayout.BeginVertical(GUI.skin.box);
-    
-    var headerStyle = new GUIStyle(EditorStyles.boldLabel)
-    {
-        fontSize = 12
-    };
-    
-    EditorGUILayout.BeginHorizontal();
-    EditorGUILayout.LabelField($"Custom Operations ({customOperations.Count})", headerStyle);
-    
-    if (GUILayout.Button("Add Operation", GUILayout.Width(100)))
-    {
-        customOperations.Add(new CustomOperation("", "", "string", ""));
-    }
-    
-    EditorGUILayout.EndHorizontal();
-    
-    if (customOperations.Count > 0)
-    {
-        operationsScrollPosition = EditorGUILayout.BeginScrollView(operationsScrollPosition, GUILayout.MaxHeight(200));
-        
-        for (int i = customOperations.Count - 1; i >= 0; i--)
-        {
-            var operation = customOperations[i];
-            
-            EditorGUILayout.BeginVertical(GUI.skin.box);
-            
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField($"Operation {i + 1}", EditorStyles.boldLabel);
-            
-            if (GUILayout.Button("Remove", GUILayout.Width(60)))
-            {
-                customOperations.RemoveAt(i);
-                continue;
-            }
-            
-            EditorGUILayout.EndHorizontal();
-            
-            operation.name = EditorGUILayout.TextField("Method Name", operation.name);
-            operation.description = EditorGUILayout.TextField("Description", operation.description);
-            
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Return Type", GUILayout.Width(80));
-            
-            string[] returnTypes = { "string", "int", "float", "bool", "List<string>", "string[]", "int[]", "float[]" };
-            int selectedIndex = Array.IndexOf(returnTypes, operation.returnType);
-            if (selectedIndex == -1) selectedIndex = 0;
-            
-            selectedIndex = EditorGUILayout.Popup(selectedIndex, returnTypes);
-            operation.returnType = returnTypes[selectedIndex];
-            
-            EditorGUILayout.EndHorizontal();
-            
-            operation.parameters = EditorGUILayout.TextField("Parameters (e.g., string id, int count)", operation.parameters);
-            
-            EditorGUILayout.EndVertical();
-        }
-        
-        EditorGUILayout.EndScrollView();
-    }
-    else
-    {
-        EditorGUILayout.HelpBox("Add custom operations to define specific behaviors for your RefTable.", MessageType.Info);
-    }
-    
-    EditorGUILayout.EndVertical();
-}
-
-private void GenerateRefTable()
-{
-    try
-    {
-        // Validate input
-        if (!RefTableGenerator.ValidateTableReferences(selectedReferenceTables))
-        {
-            EditorUtility.DisplayDialog("Error", "Invalid table references detected. Please check your selections.", "OK");
-            return;
-        }
-
-        // Filter out invalid operations
-        var validOperations = customOperations.Where(op => 
-            !string.IsNullOrEmpty(op.name) && 
-            !string.IsNullOrEmpty(op.returnType)).ToList();
-
-        RefTableGenerator.GenerateRefTable(refTableName, selectedReferenceTables, validOperations, refAutoRegister);
-        
-        // Clear form after successful generation
-        refTableName = "";
-        selectedReferenceTables.Clear();
-        customOperations.Clear();
-    }
-    catch (Exception e)
-    {
-        Debug.LogError($"[TableSO] Error in RefTable generation: {e.Message}");
-        EditorUtility.DisplayDialog("Error", $"Failed to generate RefTable:\n{e.Message}", "OK");
-    }
 }
 
         private void DrawSectionHeader(string title)

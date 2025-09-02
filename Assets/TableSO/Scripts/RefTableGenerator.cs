@@ -12,14 +12,8 @@ namespace TableSO.Scripts.Generator
 {
     public class RefTableGenerator : EditorWindow
     {
-        [MenuItem("TableSO/Reference Table Generator")]
-        public static void ShowWindow()
-        {
-            GetWindow<RefTableGenerator>("Reference Table Generator");
-        }
-
-        public static void GenerateRefTable(string tableName, List<ScriptableObject> referencedTables, 
-            List<CustomOperation> customOperations, bool autoRegister)
+        // 키 타입을 받도록 메서드 시그니처 수정
+        public static void GenerateRefTable(string tableName, List<ScriptableObject> referencedTables, string keyType, bool autoRegister)
         {
             try
             {
@@ -35,16 +29,22 @@ namespace TableSO.Scripts.Generator
                     return;
                 }
 
+                if (string.IsNullOrEmpty(keyType))
+                {
+                    EditorUtility.DisplayDialog("Error", "Key type cannot be empty", "OK");
+                    return;
+                }
+
                 // Generate RefData class
-                GenerateRefDataClass(tableName, referencedTables, customOperations);
+                GenerateRefDataClass(tableName, keyType, referencedTables);
                 
                 // Generate RefTableSO class
-                GenerateRefTableSOClass(tableName, referencedTables, customOperations);
+                GenerateRefTableSOClass(tableName, keyType, referencedTables);
 
                 // Refresh to compile new scripts
                 AssetDatabase.Refresh();
                 
-                Debug.Log($"[TableSO] RefTable '{tableName}' generated successfully");
+                Debug.Log($"[TableSO] RefTable '{tableName}' generated successfully with key type '{keyType}'");
                 EditorUtility.DisplayDialog("Success", $"RefTable '{tableName}' generated successfully!", "OK");
             }
             catch (Exception e)
@@ -54,8 +54,7 @@ namespace TableSO.Scripts.Generator
             }
         }
         
-        private static void GenerateRefDataClass(string className, List<ScriptableObject> referencedTables, 
-            List<CustomOperation> customOperations)
+        private static void GenerateRefDataClass(string className, string keyType, List<ScriptableObject> referencedTables)
         {
             StringBuilder classCode = new StringBuilder();
             
@@ -66,17 +65,17 @@ namespace TableSO.Scripts.Generator
             classCode.AppendLine();
             classCode.AppendLine("/// <summary>");
             classCode.AppendLine("/// Reference Data Class - Made by TableSO RefTableGenerator");
+            classCode.AppendLine($"/// Key Type: {keyType}");
             classCode.AppendLine("/// </summary>");
             classCode.AppendLine();
             classCode.AppendLine("namespace TableData");
             classCode.AppendLine("{");
             classCode.AppendLine("    [System.Serializable]");
-            classCode.AppendLine($"    public class {className} : IIdentifiable<string>");
+            classCode.AppendLine($"    public class {className} : IIdentifiable<{keyType}>");
             classCode.AppendLine("    {");
-            classCode.AppendLine("        [field: SerializeField] public string ID { get; internal set; }");
-            classCode.AppendLine();
+            classCode.AppendLine($"        [field: SerializeField] public {keyType} ID {{ get; internal set; }}");
             
-            // Generate reference properties for each referenced table
+            // 참조된 테이블들의 데이터를 위한 필드들 추가
             foreach (var table in referencedTables)
             {
                 if (table == null) continue;
@@ -84,57 +83,19 @@ namespace TableSO.Scripts.Generator
                 string tableTypeName = table.GetType().Name;
                 string propertyName = GetTablePropertyName(tableTypeName);
                 
-                classCode.AppendLine($"        [field: SerializeField] public string {propertyName}ID {{ get; internal set; }}");
+                classCode.AppendLine($"        /// <summary>");
+                classCode.AppendLine($"        /// Reference to {tableTypeName} data");
+                classCode.AppendLine($"        /// </summary>");
+                classCode.AppendLine($"        [field: SerializeField] public string {propertyName}ID {{ get; set; }}");
             }
             
+            // 커스텀 데이터 필드들을 위한 공간
             classCode.AppendLine();
+            classCode.AppendLine("        // Add your custom fields here");
+            classCode.AppendLine("        // Example:");
+            classCode.AppendLine("        // [field: SerializeField] public int CustomValue { get; set; }");
+            classCode.AppendLine("        // [field: SerializeField] public string Description { get; set; }");
             
-            // Generate custom operation results storage
-            foreach (var operation in customOperations)
-            {
-                if (string.IsNullOrEmpty(operation.name)) continue;
-                
-                classCode.AppendLine($"        [field: SerializeField] public {operation.returnType} {operation.name}Result {{ get; internal set; }}");
-            }
-            
-            classCode.AppendLine();
-            
-            // Constructor
-            List<string> constructorParams = new List<string> { "string id" };
-            
-            foreach (var table in referencedTables)
-            {
-                if (table == null) continue;
-                string tableTypeName = table.GetType().Name;
-                string propertyName = GetTablePropertyName(tableTypeName);
-                constructorParams.Add($"string {propertyName.ToLower()}ID = \"\"");
-            }
-            
-            foreach (var operation in customOperations)
-            {
-                if (string.IsNullOrEmpty(operation.name)) continue;
-                constructorParams.Add($"{operation.returnType} {operation.name.ToLower()}Result = default");
-            }
-            
-            classCode.AppendLine($"        public {className}({string.Join(", ", constructorParams)})");
-            classCode.AppendLine("        {");
-            classCode.AppendLine("            this.ID = id;");
-            
-            foreach (var table in referencedTables)
-            {
-                if (table == null) continue;
-                string tableTypeName = table.GetType().Name;
-                string propertyName = GetTablePropertyName(tableTypeName);
-                classCode.AppendLine($"            this.{propertyName}ID = {propertyName.ToLower()}ID;");
-            }
-            
-            foreach (var operation in customOperations)
-            {
-                if (string.IsNullOrEmpty(operation.name)) continue;
-                classCode.AppendLine($"            this.{operation.name}Result = {operation.name.ToLower()}Result;");
-            }
-            
-            classCode.AppendLine("        }");
             classCode.AppendLine("    }");
             classCode.AppendLine("}");
 
@@ -144,8 +105,7 @@ namespace TableSO.Scripts.Generator
             File.WriteAllText(classFilePath, classCode.ToString());
         }
 
-        private static void GenerateRefTableSOClass(string className, List<ScriptableObject> referencedTables, 
-            List<CustomOperation> customOperations)
+        private static void GenerateRefTableSOClass(string className, string keyType, List<ScriptableObject> referencedTables)
         {
             StringBuilder tableCode = new StringBuilder();
             
@@ -156,12 +116,19 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine("using System;");
             tableCode.AppendLine("using TableSO.Scripts;");
             tableCode.AppendLine();
+            tableCode.AppendLine("/// <summary>");
+            tableCode.AppendLine($"/// Reference Table - Made by TableSO RefTableGenerator");
+            tableCode.AppendLine($"/// Key Type: {keyType}");
+            tableCode.AppendLine($"/// Referenced Tables: {string.Join(", ", referencedTables.Where(t => t != null).Select(t => t.GetType().Name))}");
+            tableCode.AppendLine("/// </summary>");
+            tableCode.AppendLine();
             tableCode.AppendLine("namespace Table");
             tableCode.AppendLine("{");
-            tableCode.AppendLine($"    public class {className}RefTableSO : TableSO.Scripts.RefTableSO<string, TableData.{className}>, IReferencable");
+            tableCode.AppendLine($"    public class {className}RefTableSO : TableSO.Scripts.RefTableSO<{keyType}, TableData.{className}>, IReferencable");
             tableCode.AppendLine("    {");
             tableCode.AppendLine($"        public string fileName => \"{className}RefTableSO\";");
             
+            // 참조된 테이블들을 위한 private 필드들
             foreach (var table in referencedTables)
             {
                 if (table == null) continue;
@@ -172,99 +139,35 @@ namespace TableSO.Scripts.Generator
                 tableCode.AppendLine($"        [SerializeField] private {tableTypeName} {propertyName}Table;");
             }
             
+            tableCode.AppendLine();
+            
+            // refTableTypes 속성 구현
             tableCode.AppendLine($"        public List<Type> refTableTypes {{ get; set; }} = new List<Type>()");
             tableCode.AppendLine($"        {{");
             
-            // Generate reference table getters
             foreach (var table in referencedTables)
             {
                 if (table == null) continue;
                 
                 string tableTypeName = table.GetType().Name;
-                
                 tableCode.AppendLine($"            typeof({tableTypeName}),");
             }
             tableCode.AppendLine($"        }};");
-
+            tableCode.AppendLine();
             
-            // Generate custom operations
-            foreach (var operation in customOperations)
-            {
-                if (string.IsNullOrEmpty(operation.name)) continue;
-                
-                tableCode.AppendLine($"        /// <summary>");
-                tableCode.AppendLine($"        /// Custom operation: {operation.description}");
-                tableCode.AppendLine($"        /// </summary>");
-                tableCode.AppendLine($"        public {operation.returnType} {operation.name}({operation.parameters})");
-                tableCode.AppendLine("        {");
-                tableCode.AppendLine($"            // TODO: Implement {operation.name} logic here");
-                tableCode.AppendLine($"            // You can access referenced tables using Get[TableName]() methods");
-                tableCode.AppendLine();
-                
-                // Generate sample code based on operation type
-                if (operation.returnType.Contains("List") || operation.returnType.EndsWith("[]"))
-                {
-                    tableCode.AppendLine($"            var result = new List<{ExtractGenericType(operation.returnType)}>();");
-                    tableCode.AppendLine("            // Add your custom logic here");
-                    tableCode.AppendLine("            return result" + (operation.returnType.EndsWith("[]") ? ".ToArray()" : "") + ";");
-                }
-                else if (operation.returnType == "bool")
-                {
-                    tableCode.AppendLine("            // Add your custom logic here");
-                    tableCode.AppendLine("            return false; // Change this to your actual logic");
-                }
-                else if (operation.returnType == "int" || operation.returnType == "float")
-                {
-                    tableCode.AppendLine("            // Add your custom logic here");
-                    tableCode.AppendLine("            return 0; // Change this to your actual logic");
-                }
-                else if (operation.returnType == "string")
-                {
-                    tableCode.AppendLine("            // Add your custom logic here");
-                    tableCode.AppendLine("            return string.Empty; // Change this to your actual logic");
-                }
-                else
-                {
-                    tableCode.AppendLine("            // Add your custom logic here");
-                    tableCode.AppendLine($"            return default({operation.returnType}); // Change this to your actual logic");
-                }
-                
-                tableCode.AppendLine("        }");
-                tableCode.AppendLine();
-            }
-            
-            // Override ExecuteCustomOperation
-            if (customOperations.Count > 0)
-            {
-                tableCode.AppendLine("        public override TResult ExecuteCustomOperation<TResult>(string operationName, params object[] parameters)");
-                tableCode.AppendLine("        {");
-                tableCode.AppendLine("            switch (operationName)");
-                tableCode.AppendLine("            {");
-                
-                foreach (var operation in customOperations)
-                {
-                    if (string.IsNullOrEmpty(operation.name)) continue;
-                    
-                    tableCode.AppendLine($"                case \"{operation.name}\":");
-                    tableCode.AppendLine($"                    return (TResult)(object){operation.name}({GenerateParameterCast(operation.parameters)});");
-                }
-                
-                tableCode.AppendLine("                default:");
-                tableCode.AppendLine("                    return base.ExecuteCustomOperation<TResult>(operationName, parameters);");
-                tableCode.AppendLine("            }");
-                tableCode.AppendLine("        }");
-                tableCode.AppendLine();
-            }
-            
-            // Override refresh logic
-            tableCode.AppendLine("        protected override void OnRefreshFromReferencedTables()");
+            // GetData 구현 (RefTableSO에서 실제 데이터를 반환하기 위함)
+            tableCode.AppendLine();
+            tableCode.AppendLine($"        /// <summary>");
+            tableCode.AppendLine($"        /// Get RefTable data by key");
+            tableCode.AppendLine($"        /// </summary>");
+            tableCode.AppendLine($"        public override TableData.{className} GetData({keyType} key)");
             tableCode.AppendLine("        {");
-            tableCode.AppendLine("            // TODO: Implement custom refresh logic");
-            tableCode.AppendLine("            // This method is called when RefreshFromReferencedTables() is invoked");
-            tableCode.AppendLine("            // You can update your dataList based on referenced tables here");
-            tableCode.AppendLine("            ");
-            tableCode.AppendLine("            base.OnRefreshFromReferencedTables();");
+            tableCode.AppendLine("            // TODO: Implement GetData logic");
+            tableCode.AppendLine("            // This should return the RefData that matches the key");
+            tableCode.AppendLine("            // You may want to create data dynamically based on referenced tables");
+            tableCode.AppendLine($"            return base.GetData(key);");
             tableCode.AppendLine("        }");
+            
             tableCode.AppendLine("    }");
             tableCode.AppendLine("}");
 
@@ -273,7 +176,7 @@ namespace TableSO.Scripts.Generator
             string tableFilePath = Path.Combine(FilePath.TABLE_CLASS_PATH, $"{className}RefTableSO.cs");
             File.WriteAllText(tableFilePath, tableCode.ToString());
         }
-
+        
         private static string GetTablePropertyName(string tableTypeName)
         {
             // Remove "TableSO" suffix and return clean name
@@ -283,40 +186,7 @@ namespace TableSO.Scripts.Generator
             }
             return tableTypeName;
         }
-
-        private static string ExtractGenericType(string returnType)
-        {
-            if (returnType.StartsWith("List<") && returnType.EndsWith(">"))
-            {
-                return returnType.Substring(5, returnType.Length - 6);
-            }
-            if (returnType.EndsWith("[]"))
-            {
-                return returnType.Substring(0, returnType.Length - 2);
-            }
-            return returnType;
-        }
-
-        private static string GenerateParameterCast(string parameters)
-        {
-            if (string.IsNullOrEmpty(parameters)) return "";
-            
-            var paramList = parameters.Split(',').Select(p => p.Trim()).ToList();
-            var castParams = new List<string>();
-            
-            for (int i = 0; i < paramList.Count; i++)
-            {
-                var parts = paramList[i].Split(' ');
-                if (parts.Length >= 2)
-                {
-                    string type = parts[0];
-                    castParams.Add($"({type})parameters[{i}]");
-                }
-            }
-            
-            return string.Join(", ", castParams);
-        }
-
+        
         private static void EnsureDirectoryExists(string path)
         {
             if (!Directory.Exists(path))
@@ -325,9 +195,6 @@ namespace TableSO.Scripts.Generator
             }
         }
 
-        /// <summary>
-        /// Get all available TableSO and AssetTableSO instances in the project
-        /// </summary>
         public static List<ScriptableObject> GetAllAvailableTables()
         {
             List<ScriptableObject> tables = new List<ScriptableObject>();
@@ -379,9 +246,6 @@ namespace TableSO.Scripts.Generator
             return false;
         }
 
-        /// <summary>
-        /// Get table information for display
-        /// </summary>
         public static string GetTableInfo(ScriptableObject table)
         {
             if (table == null) return "Unknown";
@@ -397,9 +261,6 @@ namespace TableSO.Scripts.Generator
             return $"{tableName} ({tableType})";
         }
 
-        /// <summary>
-        /// Validate that table references are compatible
-        /// </summary>
         public static bool ValidateTableReferences(List<ScriptableObject> tables)
         {
             foreach (var table in tables)
@@ -418,26 +279,6 @@ namespace TableSO.Scripts.Generator
             }
             
             return true;
-        }
-    }
-
-    /// <summary>
-    /// Data structure for custom operations in RefTable
-    /// </summary>
-    [System.Serializable]
-    public class CustomOperation
-    {
-        public string name;
-        public string description;
-        public string returnType;
-        public string parameters;
-        
-        public CustomOperation(string name, string description, string returnType, string parameters = "")
-        {
-            this.name = name;
-            this.description = description;
-            this.returnType = returnType;
-            this.parameters = parameters;
         }
     }
 }

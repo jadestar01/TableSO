@@ -31,12 +31,6 @@ namespace TableSO.Scripts.Generator
             {"ScriptableObject", typeof(ScriptableObject)},
             {"TextAsset", typeof(TextAsset)}
         };
-
-        [MenuItem("TableSO/Asset Table Generator")]
-        public static void ShowWindow()
-        {
-            GetWindow<AssetTableGenerator>("Asset Table Generator");
-        }
         
         public static void GenerateAssetTable(string selectedFolderPath ,string tableName,
             Type selectedAssetType, bool createAddressableGroup,string addressableGroupName, bool autoRegister)
@@ -153,7 +147,6 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine();
             tableCode.AppendLine("namespace Table");
             tableCode.AppendLine("{");
-            tableCode.AppendLine($"    [CreateAssetMenu(fileName = \"{className}TableSO\", menuName = \"TableSO/AssetTable/{className}Table\")]");
             tableCode.AppendLine($"    public class {className}TableSO : TableSO.Scripts.AssetTableSO<TableData.{className}>, IAssetData");
             tableCode.AppendLine("    {");
             tableCode.AppendLine($"        [SerializeField] private string assetFolderPath = \"{folderPath}\";");
@@ -262,114 +255,8 @@ namespace TableSO.Scripts.Generator
             string tableFilePath = Path.Combine(FilePath.TABLE_CLASS_PATH, $"{className}TableSO.cs");
             File.WriteAllText(tableFilePath, tableCode.ToString());
         }
-
-        private static void CreateAssetTableSO(string className, List<UnityEngine.Object> assets, bool autoRegisterToTableCenter)
-        {
-            try
-            {
-                // Find the generated TableSO class type
-                var tableSOType = System.Reflection.Assembly.GetExecutingAssembly()
-                    .GetTypes()
-                    .FirstOrDefault(t => t.Name == $"{className}TableSO");
-
-                if (tableSOType == null)
-                {
-                    // Try to find in all loaded assemblies
-                    foreach (var assembly in System.AppDomain.CurrentDomain.GetAssemblies())
-                    {
-                        tableSOType = assembly.GetTypes()
-                            .FirstOrDefault(t => t.Name == $"{className}TableSO");
-                        if (tableSOType != null) break;
-                    }
-                }
-
-                if (tableSOType == null)
-                {
-                    Debug.LogError($"[TableSO] Could not find generated class {className}TableSO. Please compile and try again.");
-                    return;
-                }
-
-                // Create ScriptableObject instance
-                var tableInstance = ScriptableObject.CreateInstance(tableSOType);
-                
-                // Use reflection to set the dataList
-                var dataListField = tableSOType.BaseType.GetField("dataList", 
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-                if (dataListField != null)
-                {
-                    // Create data entries
-                    var dataType = System.Type.GetType($"TableData.{className}");
-                    if (dataType != null)
-                    {
-                        var dataList = Activator.CreateInstance(typeof(List<>).MakeGenericType(dataType));
-                        var addMethod = dataList.GetType().GetMethod("Add");
-
-                        foreach (var asset in assets)
-                        {
-                            string assetName = GetAssetName(asset);
-                            string _assetPath = AssetDatabase.GetAssetPath(asset);
-                            
-                            var dataInstance = Activator.CreateInstance(dataType, assetName, asset, _assetPath);
-                            addMethod.Invoke(dataList, new[] { dataInstance });
-                        }
-
-                        dataListField.SetValue(tableInstance, dataList);
-                    }
-                }
-
-                // Save the ScriptableObject
-                EnsureDirectoryExists(FilePath.TABLE_OUTPUT_PATH);
-                string assetPath = Path.Combine(FilePath.TABLE_OUTPUT_PATH, $"{className}TableSO.asset");
-                AssetDatabase.CreateAsset(tableInstance, assetPath);
-                
-                // Register to TableCenter if option is enabled
-                if (autoRegisterToTableCenter)
-                {
-                    RegisterToTableCenter(tableInstance as ScriptableObject);
-                }
-                
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-                
-                // Ping the created asset
-                EditorGUIUtility.PingObject(tableInstance);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[TableSO] Error creating ScriptableObject: {e.Message}");
-            }
-        }
-
-        private static void RegisterToTableCenter(ScriptableObject tableInstance)
-        {
-            try
-            {
-                // Find TableCenter asset
-                string[] guids = AssetDatabase.FindAssets("t:TableCenter");
-                if (guids.Length > 0)
-                {
-                    string tableCenterPath = AssetDatabase.GUIDToAssetPath(guids[0]);
-                    var tableCenter = AssetDatabase.LoadAssetAtPath<TableCenter>(tableCenterPath);
-                    
-                    if (tableCenter != null)
-                    {
-                        tableCenter.RegisterTable(tableInstance);
-                        EditorUtility.SetDirty(tableCenter);
-                        Debug.Log($"[TableSO] {tableInstance.name} registered to TableCenter");
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("[TableSO] No TableCenter found. Please create one first.");
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning($"[TableSO] Could not register to TableCenter: {e.Message}");
-            }
-        }
-
+        
+        
         private static void CreateAddressableGroup(List<UnityEngine.Object> assets, string groupName)
         {
             try

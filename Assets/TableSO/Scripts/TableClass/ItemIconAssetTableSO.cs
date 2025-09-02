@@ -10,7 +10,6 @@ using TableSO.Scripts;
 
 namespace Table
 {
-    [CreateAssetMenu(fileName = "ItemIconAssetTableSO", menuName = "TableSO/AssetTable/ItemIconAssetTable")]
     public class ItemIconAssetTableSO : TableSO.Scripts.AssetTableSO<TableData.ItemIconAsset>, IAssetData
     {
         [SerializeField] private string assetFolderPath = "Assets/TableSO/Asset/ItemIcon";

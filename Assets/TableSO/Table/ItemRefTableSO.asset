@@ -16,6 +16,6 @@ MonoBehaviour:
   dataList: []
   referencedTables: []
   autoUpdateOnReferencedTableChange: 1
-  ItemData: {fileID: 0}
-  ItemIconAsset: {fileID: 0}
-  ItemStringData: {fileID: 0}
+  ItemDataTable: {fileID: 11400000, guid: f7ac160c1404de945aebe6c9f9a943dd, type: 2}
+  ItemStringDataTable: {fileID: 11400000, guid: 972f0712fdef014488ff7116e6ca2cb4, type: 2}
+  ItemIconAssetTable: {fileID: 11400000, guid: 66d791f502b45934d9f7c0216e7adb89, type: 2}
