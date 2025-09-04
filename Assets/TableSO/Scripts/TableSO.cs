@@ -23,10 +23,12 @@ namespace TableSO.Scripts
             CacheData();
         }
 
-        // TODO : 나중에 삭제해야 함.
-        public List<TData> GetAllData()
+        public List<TKey> GetAllKey()
         {
-            return dataList;
+            List<TKey> keys = new List<TKey>();
+            foreach (var kvp in dataDict)
+                keys.Add(kvp.Key);
+            return keys;
         }
 
         public virtual TData GetData(TKey key)
