@@ -12,8 +12,6 @@ namespace TableSO.Scripts
     public abstract class AssetTableSO<TData> : TableSO<string, TData>, ITableType
         where TData : class, IIdentifiable<string>
     {
-        public TableType tableType { get; set; }
-
         [Header("Asset Table Settings")]
         [SerializeField] protected bool preloadOnAwake = false;
         [SerializeField] protected bool useAddressableLoading = true;

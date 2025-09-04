@@ -17,6 +17,7 @@ public class Test : MonoBehaviour
 
     public void OnClick()
     {
+        tableCenter.GetTable<ItemRefTableSO>().GetData(1001);
     }
 }
 

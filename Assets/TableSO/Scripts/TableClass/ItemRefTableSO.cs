@@ -13,7 +13,7 @@ using TableSO.Scripts;
 
 namespace Table
 {
-    public class ItemRefTableSO : TableSO.Scripts.RefTableSO<int, TableData.Item>, IReferencable
+    public class ItemRefTableSO : TableSO.Scripts.RefTableSO<int, TableData.Item>, IReferencable, IUpdatable
     {
         public string fileName => "ItemRefTableSO";
         [SerializeField] private ItemDataTableSO ItemDataTable;
@@ -27,6 +27,19 @@ namespace Table
             typeof(ItemIconAssetTableSO),
         };
 
+        public override void UpdateData()
+        {
+            foreach (var itemData in ItemDataTable.GetAllData())
+            {
+                var stringData = ItemStringDataTable.GetData(itemData.ID);
+                var iconData = ItemIconAssetTable.GetData(itemData.ID.ToString());
+                if (stringData != null &&
+                    iconData != null)
+                {
+                    dataList.Add(new Item(iconData.Asset, stringData.Name, itemData.ItemType, itemData.ItemQuality));
+                }
+            }
+        }
 
         /// <summary>
         /// Get RefTable data by key

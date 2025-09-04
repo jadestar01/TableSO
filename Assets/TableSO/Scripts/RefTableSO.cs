@@ -9,7 +9,7 @@ namespace TableSO.Scripts
     /// <summary>
     /// Reference Table that links to other tables and provides custom operations
     /// </summary>
-    public abstract class RefTableSO<TKey, TData> : TableSO<TKey, TData>, ITableType
+    public abstract class RefTableSO<TKey, TData> : TableSO<TKey, TData>, ITableType, IUpdatable
         where TData : class, IIdentifiable<TKey> 
         where TKey : IConvertible
     {
@@ -33,5 +33,11 @@ namespace TableSO.Scripts
         {
             // Override in derived classes for custom refresh logic
         }
+        
+        #region IUpdatable Implementation
+        public virtual void UpdateData()
+        {
+        }
+        #endregion
     }
 }

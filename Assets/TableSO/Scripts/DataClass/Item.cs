@@ -14,22 +14,18 @@ namespace TableData
     public class Item : IIdentifiable<int>
     {
         [field: SerializeField] public int ID { get; internal set; }
-        /// <summary>
-        /// Reference to ItemDataTableSO data
-        /// </summary>
-        [field: SerializeField] public string ItemDataID { get; set; }
-        /// <summary>
-        /// Reference to ItemStringDataTableSO data
-        /// </summary>
-        [field: SerializeField] public string ItemStringDataID { get; set; }
-        /// <summary>
-        /// Reference to ItemIconAssetTableSO data
-        /// </summary>
-        [field: SerializeField] public string ItemIconAssetID { get; set; }
 
-        // Add your custom fields here
-        // Example:
-        // [field: SerializeField] public int CustomValue { get; set; }
-        // [field: SerializeField] public string Description { get; set; }
+        public Sprite itemSprite;
+        public string itemName;
+        public ItemType itemType;
+        public ItemQuality itemQuality;
+        
+        public Item(Sprite itemSprite, string itemName, ItemType itemType, ItemQuality itemQuality)
+        {
+            this.itemSprite = itemSprite;
+            this.itemName = itemName;
+            this.itemType = itemType;
+            this.itemQuality = itemQuality;
+        }
     }
 }

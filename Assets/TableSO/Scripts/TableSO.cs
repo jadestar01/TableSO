@@ -23,6 +23,12 @@ namespace TableSO.Scripts
             CacheData();
         }
 
+        // TODO : 나중에 삭제해야 함.
+        public List<TData> GetAllData()
+        {
+            return dataList;
+        }
+
         public virtual TData GetData(TKey key)
         {
             if (isUpdated) CacheData();
@@ -60,8 +66,6 @@ namespace TableSO.Scripts
 
         public virtual void UpdateData()
         {
-            
-            
             CacheData();
         }
 

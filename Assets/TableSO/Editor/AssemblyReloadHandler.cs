@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using TableSO.Scripts;
 using System.IO;
 using TableSO.Scripts.Generator;
-using Unity.VisualScripting;
 
 [InitializeOnLoad]
 public static class AssemblyReloadHandler
@@ -43,318 +42,170 @@ public static class AssemblyReloadHandler
             AssetDatabase.SaveAssets();
         }
     }
-private static void InitializeGeneratedTables()
-{
-    try
-    {
-        // First, check the generated .cs files
-        var generatedFiles = FindGeneratedTableFiles();
-
-        if (generatedFiles.Count == 0)
-        {
-            return;
-        }
-
-        // Find types (try multiple ways)
-        var tableSoTypes = FindAllTableSOTypes();
-
-        var tableCenter = FindOrCreateTableCenter();
-        if (tableCenter == null)
-        {
-            return;
-        }
-
-        int createdCount = 0;
-        int registeredCount = 0;
-
-        tableCenter.ClearRegisteredTables();
-
-        // Step 1: Create and register all TableSOs first
-        foreach (var tableType in tableSoTypes)
-        {
-            try
-            {
-                var assetCreated = CreateTableSOAssetIfNotExists(tableType);
-                if (assetCreated.created)
-                {
-                    createdCount++;
-                    Debug.Log($"[TableSO] New asset created: {tableType.Name}");
-                }
-
-                if (assetCreated.asset != null)
-                {
-                    var registered = RegisterToTableCenter(tableCenter, assetCreated.asset);
-                    if (registered)
-                    {
-                        registeredCount++;
-                        Debug.Log($"[TableSO] Registered to TableCenter: {tableType.Name}");
-                    }
-
-                    if (assetCreated.asset is IUpdatable updatable)
-                        updatable.UpdateData();
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[TableSO] Error while processing {tableType.Name}: {e.Message}");
-            }
-        }
-
-        // Step 2: Automatically assign references for RefTableSOs (after all tables are registered)
-        EditorApplication.delayCall += () => {
-            AssignRefTableReferences(tableCenter, tableSoTypes);
-            
-            if (createdCount > 0 || registeredCount > 0)
-            {
-                EditorUtility.SetDirty(tableCenter);
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-            }
-
-            CSVDataLoader.LoadAllCSVData();
-        };
-    }
-    catch (Exception e)
-    {
-        Debug.LogError($"[TableSO] Error during initialization: {e.Message}");
-    }
-}
-private static void AssignRefTableReferences(TableCenter tableCenter, List<Type> tableSoTypes)
-{
-    try
-    {
-        Debug.Log("[TableSO] Starting RefTable reference assignment...");
-        
-        foreach (var tableType in tableSoTypes)
-        {
-            try
-            {
-                // Check if this is a RefTableSO implementing IReferencable
-                if (typeof(IReferencable).IsAssignableFrom(tableType))
-                {
-                    string assetName = tableType.Name;
-                    string assetPath = Path.Combine(GENERATED_TABLES_FOLDER, $"{assetName}.asset");
-                    var refTableAsset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(assetPath);
-
-                    if (refTableAsset != null && refTableAsset is IReferencable referencable)
-                    {
-                        AssignReferencesToRefTable(tableCenter, refTableAsset, referencable);
-                        
-                        // Call RefTableSO's OnRefreshFromReferencedTables to initialize data
-                        try
-                        {
-                            var refreshMethod = refTableAsset.GetType().GetMethod("RefreshFromReferencedTables");
-                            if (refreshMethod != null)
-                            {
-                                refreshMethod.Invoke(refTableAsset, null);
-                                Debug.Log($"[TableSO] RefTable {refTableAsset.name} initial data refresh complete");
-                            }
-                        }
-                        catch (Exception refreshEx)
-                        {
-                            Debug.LogWarning($"[TableSO] Error while refreshing RefTable {refTableAsset.name}: {refreshEx.Message}");
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[TableSO] Error assigning references for RefTable {tableType.Name}: {e.Message}");
-            }
-        }
-        
-        Debug.Log("[TableSO] RefTable reference assignment completed");
-    }
-    catch (Exception e)
-    {
-        Debug.LogError($"[TableSO] Fatal error during RefTable reference assignment stage: {e.Message}");
-    }
-}
-
-private static void AssignReferencesToRefTable(TableCenter tableCenter, ScriptableObject refTableAsset,
-    IReferencable referencable)
-{
-    try
-    {
-        Debug.Log($"[TableSO] Starting reference table assignment for RefTable {refTableAsset.name}...");
-
-        // Get the required reference table types from IReferencable
-        var requiredTableTypes = referencable.refTableTypes;
-        
-        int assignedCount = 0;
-        foreach (var type in referencable.refTableTypes)
-        {
-            foreach (var table in tableCenter.GetRegisteredTables())
-            {
-                if (table.GetType() == type)
-                {
-                    FieldInfo field = refTableAsset.GetType().GetField(GetTablePropertyName(type.Name),
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-
-                    if (field != null)
-                    {
-                        field.SetValue(refTableAsset, table);
-                        assignedCount++;
-                    }
-                    
-                    
-                    break;
-                }
-            }
-        }
-
-
-        EditorUtility.SetDirty(refTableAsset);
-        Debug.Log($"[TableSO] {assignedCount} reference tables assigned to RefTable {refTableAsset.name}");
-    }
-    catch (Exception e)
-    {
-        Debug.LogError($"[TableSO] Error while assigning references to RefTable {refTableAsset.name}: {e.Message}");
-    }
-}
-
-private static string GetTablePropertyName(string str)
-{
-    return str.Substring(0, str.Length - 2);
-}
-
-private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, Type targetType)
-    {
-        var tableCenterType = tableCenter.GetType();
-        string[] listFieldNames = { "csvTables", "assetTables", "refTables" };
-
-        foreach (var fieldName in listFieldNames)
-        {
-            var field = tableCenterType.GetField(fieldName,
-                BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-
-            if (field != null)
-            {
-                var list = field.GetValue(tableCenter) as System.Collections.IList;
-                if (list != null)
-                {
-                    foreach (var item in list)
-                    {
-                        var scriptableObject = item as ScriptableObject;
-                        if (scriptableObject != null && scriptableObject.GetType() == targetType)
-                        {
-                            return scriptableObject;
-                        }
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private static bool AssignTableReference(ScriptableObject refTable, ScriptableObject targetTable, Type targetType)
+    private static void InitializeGeneratedTables()
     {
         try
         {
-            var refTableType = refTable.GetType();
+            // First, check the generated .cs files
+            var generatedFiles = FindGeneratedTableFiles();
 
-            // Generate field name (e.g. CharacterTableSO -> characterTable)
-            string fieldName = GetTableFieldName(targetType.Name);
-
-            // Find private field
-            var field = refTableType.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
-
-            if (field != null && field.FieldType == targetType)
+            if (generatedFiles.Count == 0)
             {
-                field.SetValue(refTable, targetTable);
-                Debug.Log($"[TableSO] Field {fieldName} successfully assigned with {targetTable.name}");
-                return true;
+                return;
             }
-            else
-            {
-                Debug.LogWarning($"[TableSO] Field {fieldName} not found in RefTable {refTable.name} or type mismatch.");
 
-                // Print all fields for debugging
-                var allFields = refTableType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-                Debug.Log($"[TableSO] Available fields: {string.Join(", ", allFields.Select(f => $"{f.Name}({f.FieldType.Name})"))}");
-            
-                // Alternative approach: retry based on type name
-                var alternativeField = allFields.FirstOrDefault(f => 
-                    f.FieldType == targetType && 
-                    f.Name.ToLower().Contains(GetTablePropertyName(targetType.Name).ToLower()));
+            // Find types (try multiple ways)
+            var tableSoTypes = FindAllTableSOTypes();
+
+            var tableCenter = FindOrCreateTableCenter();
+            if (tableCenter == null)
+            {
+                return;
+            }
+
+            int createdCount = 0;
+            int registeredCount = 0;
+
+            tableCenter.ClearRegisteredTables();
+
+            // Step 1: Create and register all TableSOs first
+            foreach (var tableType in tableSoTypes)
+            {
+                try
+                {
+                    var assetCreated = CreateTableSOAssetIfNotExists(tableType);
+                    if (assetCreated.created)
+                    {
+                        createdCount++;
+                        Debug.Log($"[TableSO] New asset created: {tableType.Name}");
+                    }
+
+                    if (assetCreated.asset != null)
+                    {
+                        var registered = RegisterToTableCenter(tableCenter, assetCreated.asset);
+                        if (registered)
+                        {
+                            registeredCount++;
+                            Debug.Log($"[TableSO] Registered to TableCenter: {tableType.Name}");
+                        }
+
+                        if (assetCreated.asset is IUpdatable updatable)
+                            updatable.UpdateData();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[TableSO] Error while processing {tableType.Name}: {e.Message}");
+                }
+            }
+
+            // Step 2: Automatically assign references for RefTableSOs (after all tables are registered)
+            EditorApplication.delayCall += () => {
+                AssignRefTableReferences(tableCenter, tableSoTypes);
                 
-                if (alternativeField != null)
+                if (createdCount > 0 || registeredCount > 0)
                 {
-                    alternativeField.SetValue(refTable, targetTable);
-                    Debug.Log($"[TableSO] Alternative field {alternativeField.Name} successfully assigned with {targetTable.name}");
-                    return true;
+                    EditorUtility.SetDirty(tableCenter);
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
                 }
-            }
-        
-            return false;
+
+                CSVDataLoader.LoadAllCSVData();
+            };
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TableSO] Error while assigning table reference: {e.Message}");
-            return false;
+            Debug.LogError($"[TableSO] Error during initialization: {e.Message}");
         }
     }
-
-
-    private static string GetTableFieldName(string typeName)
-    {
-        // Remove "TableSO" suffix
-        string baseName = typeName;
-        if (baseName.EndsWith("TableSO"))
-        {
-            baseName = baseName.Substring(0, baseName.Length - 7);
-        }
-
-        // Make the first letter lowercase and add "Table" suffix
-        if (!string.IsNullOrEmpty(baseName))
-        {
-            baseName = char.ToLower(baseName[0]) + baseName.Substring(1) + "Table";
-        }
-
-        return baseName;
-    }
-
-
-    private static void UpdateRefTableReferences(ScriptableObject refTable)
+    private static void AssignRefTableReferences(TableCenter tableCenter, List<Type> tableSoTypes)
     {
         try
         {
-            // Update RefTableSO's referencedTables list
-            var refTableType = refTable.GetType();
-            var referencedTablesField = refTableType.BaseType?.GetField("referencedTables",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-
-            if (referencedTablesField != null)
+            foreach (var tableType in tableSoTypes)
             {
-                var referencedTablesList = referencedTablesField.GetValue(refTable) as List<ScriptableObject>;
-                if (referencedTablesList != null)
+                try
                 {
-                    referencedTablesList.Clear();
-
-                    // Add assigned tables to the referencedTables list
-                    var fields = refTableType.GetFields(BindingFlags.NonPublic | BindingFlags.Instance);
-                    foreach (var field in fields)
+                    // Check if this is a RefTableSO implementing IReferencable
+                    if (typeof(IReferencable).IsAssignableFrom(tableType))
                     {
-                        if (field.FieldType.IsSubclassOf(typeof(ScriptableObject)) &&
-                            field.Name.EndsWith("Table"))
+                        string assetName = tableType.Name;
+                        string assetPath = Path.Combine(GENERATED_TABLES_FOLDER, $"{assetName}.asset");
+                        var refTableAsset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(assetPath);
+
+                        if (refTableAsset != null && refTableAsset is IReferencable referencable)
                         {
-                            var tableValue = field.GetValue(refTable) as ScriptableObject;
-                            if (tableValue != null && !referencedTablesList.Contains(tableValue))
+                            AssignReferencesToRefTable(tableCenter, refTableAsset, referencable);
+                            
+                            // Call RefTableSO's OnRefreshFromReferencedTables to initialize data
+                            try
                             {
-                                referencedTablesList.Add(tableValue);
+                                var refreshMethod = refTableAsset.GetType().GetMethod("RefreshFromReferencedTables");
+                                if (refreshMethod != null)
+                                {
+                                    refreshMethod.Invoke(refTableAsset, null);
+                                }
+                            }
+                            catch (Exception refreshEx)
+                            {
+                                Debug.LogWarning($"[TableSO] Error while refreshing RefTable {refTableAsset.name}: {refreshEx.Message}");
                             }
                         }
                     }
-
-                    Debug.Log($"[TableSO] {refTable.name} added {referencedTablesList.Count} tables to referencedTables list");
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[TableSO] Error assigning references for RefTable {tableType.Name}: {e.Message}");
                 }
             }
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TableSO] Error while updating RefTable reference list: {e.Message}");
+            Debug.LogError($"[TableSO] Fatal error during RefTable reference assignment stage: {e.Message}");
         }
+    }
+
+    private static void AssignReferencesToRefTable(TableCenter tableCenter, ScriptableObject refTableAsset,
+        IReferencable referencable)
+    {
+        try
+        {
+            int assignedCount = 0;
+            foreach (var type in referencable.refTableTypes)
+            {
+                foreach (var table in tableCenter.GetRegisteredTables())
+                {
+                    if (table.GetType() == type)
+                    {
+                        FieldInfo field = refTableAsset.GetType().GetField(GetTablePropertyName(type.Name),
+                            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+                        if (field != null)
+                        {
+                            field.SetValue(refTableAsset, table);
+                            assignedCount++;
+                        }
+                        
+                        break;
+                    }
+                }
+            }
+
+            if (refTableAsset is IUpdatable updatable)
+            {
+                updatable.UpdateData();
+            }
+
+            EditorUtility.SetDirty(refTableAsset);
+        }
+        catch (Exception e)
+        {
+        }
+    }
+
+    private static string GetTablePropertyName(string str)
+    {
+        return str.Substring(0, str.Length - 2);
     }
 
     private static List<string> FindGeneratedTableFiles()
@@ -564,7 +415,6 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
             AssetDatabase.CreateAsset(instance, assetPath);
             AssetDatabase.SaveAssets();
 
-            Debug.Log($"[TableSO] ScriptableObject created: {assetPath}");
             return (true, instance);
         }
         catch (Exception e)
@@ -582,7 +432,6 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
         // Check if this table is already registered in TableCenter
         if (IsAlreadyRegistered(tableCenter, tableAsset))
         {
-            Debug.Log($"[TableSO] {tableAsset.name} is already registered.");
             return false;
         }
 
@@ -679,7 +528,6 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
 
         if (guids.Length == 0)
         {
-            Debug.Log("[TableSO] Cannot find TableCenter");
             return null;
         }
 
@@ -700,8 +548,7 @@ private static ScriptableObject FindTableInTableCenter(TableCenter tableCenter, 
             AssetDatabase.CreateAsset(instance, assetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-
-            Debug.Log($"[TableSO] TableCenter Generated : {assetPath}");
+            
             return instance;
         }
         catch (Exception e)

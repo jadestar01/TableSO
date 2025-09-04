@@ -7,6 +7,19 @@ using UnityEngine;
 using System.Reflection;
 using TableSO.Scripts.Generator;
 
+// ITableType 인터페이스와 TableType enum 정의
+public interface ITableType
+{
+    public TableType tableType { get; set; }
+}
+
+public enum TableType
+{
+    Data,
+    Asset,
+    Reference
+}
+
 namespace TableSO.Scripts.Editor
 {
     public class TableSOEditor : EditorWindow
@@ -35,6 +48,21 @@ namespace TableSO.Scripts.Editor
         private bool assetCreateAddressable = true;
         private string addressableGroupName = "";
 
+        // RefTable Variables
+        private string refTableName = "";
+        private bool refAutoRegister = true;
+        private List<ScriptableObject> selectedReferenceTables = new List<ScriptableObject>();
+        private bool showAdvancedOptions = false;
+        private Vector2 operationsScrollPosition;
+        private Vector2 tablesScrollPosition;
+        private string refTableKeyType = "string";
+        private string[] commonKeyTypes = { "string", "int", "float", "bool" };
+
+        // Asset List Variables
+        private Vector2 assetListScrollPosition;
+        private bool showAssetList = true;
+        private Dictionary<string, bool> assetFoldouts = new Dictionary<string, bool>();
+
         // Supported asset types
         private readonly Dictionary<string, Type> supportedTypes = new Dictionary<string, Type>()
         {
@@ -47,13 +75,6 @@ namespace TableSO.Scripts.Editor
             {"ScriptableObject", typeof(ScriptableObject)},
             {"TextAsset", typeof(TextAsset)}
         };
-        
-        private string refTableName = "";
-        private bool refAutoRegister = true;
-        private List<ScriptableObject> selectedReferenceTables = new List<ScriptableObject>();
-        private bool showAdvancedOptions = false;
-        private Vector2 operationsScrollPosition;
-        private Vector2 tablesScrollPosition;
 
         [MenuItem("TableSO/TableSO Editor")]
         public static void ShowWindow()
@@ -127,7 +148,6 @@ namespace TableSO.Scripts.Editor
                 currentTab = Tab.AssetTable;
             }
 
-            // RefTable 버튼 활성화 (GUI.enabled = false; 제거)
             if (GUILayout.Button("RefTable", currentTab == Tab.RefTable ? activeButtonStyle : buttonStyle))
             {
                 currentTab = Tab.RefTable;
@@ -200,106 +220,58 @@ namespace TableSO.Scripts.Editor
             
             EditorGUILayout.Space(10);
 
-            // Count different table types
-            int totalTables = tableCenter.GetTableCount();
-            int assetTables = tableCenter.GetAssetTableCount();
-            int dataTables = tableCenter.GetCsvTableCount();
-            int refTables = tableCenter.GetRefTableCount();
+            // Get tables by type using interface filtering
+            var allTables = GetTablesByInterface();
+            var dataTables = allTables.Where(t => GetTableType(t) == TableType.Data).ToList();
+            var assetTables = allTables.Where(t => GetTableType(t) == TableType.Asset).ToList();
+            var refTables = allTables.Where(t => GetTableType(t) == TableType.Reference).ToList();
             
             // Display statistics
-            DrawTableStatistics(totalTables, dataTables, assetTables, refTables);
+            DrawTableStatistics(allTables.Count, dataTables.Count, assetTables.Count, refTables.Count);
 
             EditorGUILayout.Space(20);
 
             // Quick actions
             DrawQuickActions(tableCenter);
+
+            EditorGUILayout.Space(20);
+
+            // All Tables List
+            DrawAllTablesList();
         }
 
-        private void DrawTableStatistics(int total, int data, int asset, int reference)
-        {
-            var boxStyle = new GUIStyle(GUI.skin.box)
-            {
-                padding = new RectOffset(15, 15, 15, 15)
-            };
-
-            EditorGUILayout.BeginVertical(boxStyle);
-            
-            var statStyle = new GUIStyle(EditorStyles.label)
-            {
-                fontSize = 14,
-                fontStyle = FontStyle.Bold
-            };
-
-            EditorGUILayout.LabelField("Registered Tables Statistics", statStyle);
-            EditorGUILayout.Space(5);
-
-            EditorGUILayout.BeginHorizontal();
-            DrawStatBox("Total", total, new Color(0.2f, 0.6f, 0.9f));
-            DrawStatBox("Data Tables", data, new Color(0.3f, 0.8f, 0.3f));
-            DrawStatBox("Asset Tables", asset, new Color(0.9f, 0.6f, 0.2f));
-            DrawStatBox("Ref Tables", reference, new Color(0.8f, 0.3f, 0.8f));
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.EndVertical();
-        }
-
-        private void DrawStatBox(string label, int count, Color color)
-        {
-            var originalColor = GUI.backgroundColor;
-            GUI.backgroundColor = color;
-            
-            EditorGUILayout.BeginVertical(GUI.skin.box);
-            
-            var countStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                fontSize = 20,
-                alignment = TextAnchor.MiddleCenter
-            };
-            
-            var labelStyle = new GUIStyle(EditorStyles.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 10
-            };
-
-            EditorGUILayout.LabelField(count.ToString(), countStyle);
-            EditorGUILayout.LabelField(label, labelStyle);
-            
-            EditorGUILayout.EndVertical();
-            GUI.backgroundColor = originalColor;
-        }
-
-        private void DrawQuickActions(TableCenter tableCenter)
+        private void DrawAllTablesList()
         {
             var titleStyle = new GUIStyle(EditorStyles.boldLabel)
             {
                 fontSize = 14
             };
 
-            EditorGUILayout.LabelField("Quick Actions", titleStyle);
-            EditorGUILayout.Space(5);
-
-            EditorGUILayout.BeginHorizontal();
+            showAssetList = EditorGUILayout.Foldout(showAssetList, "All Registered Tables", true);
             
-            if (GUILayout.Button("Refresh All Tables", GUILayout.Height(25)))
-            {
-                // Implement table refresh logic
-                Debug.Log("[TableSO] Refreshing all tables...");
-            }
+            if (!showAssetList) return;
 
-            if (GUILayout.Button("Validate Tables", GUILayout.Height(25)))
-            {
-                // Implement table validation logic
-                Debug.Log("[TableSO] Validating tables...");
-            }
+            EditorGUILayout.BeginVertical(GUI.skin.box);
 
-            EditorGUILayout.EndHorizontal();
+            assetListScrollPosition = EditorGUILayout.BeginScrollView(assetListScrollPosition, GUILayout.MaxHeight(300));
 
-            if (GUILayout.Button("Select TableCenter in Project", GUILayout.Height(25)))
-            {
-                Selection.activeObject = tableCenter;
-                EditorGUIUtility.PingObject(tableCenter);
-            }
+            // Get tables by interface implementation
+            var allTables = GetTablesByInterface();
+            var dataTables = allTables.Where(t => GetTableType(t) == TableType.Data).ToList();
+            var assetTables = allTables.Where(t => GetTableType(t) == TableType.Asset).ToList();
+            var refTables = allTables.Where(t => GetTableType(t) == TableType.Reference).ToList();
+
+            // Data Tables
+            DrawTableSection("Data Tables", dataTables, new Color(0.3f, 0.8f, 0.3f));
+
+            // Asset Tables
+            DrawTableSection("Asset Tables", assetTables, new Color(0.9f, 0.6f, 0.2f));
+
+            // Reference Tables
+            DrawTableSection("Reference Tables", refTables, new Color(0.8f, 0.3f, 0.8f));
+
+            EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndVertical();
         }
 
         private void DrawTableTab()
@@ -366,6 +338,12 @@ namespace TableSO.Scripts.Editor
                 GenerateTableFromCSV();
             }
             GUI.enabled = true;
+
+            EditorGUILayout.Space(20);
+
+            // Show existing Data Tables
+            var dataTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Data).ToList();
+            DrawTabSpecificTableList("Data Tables", dataTables, new Color(0.3f, 0.8f, 0.3f));
         }
 
         private void DrawAssetTableTab()
@@ -451,230 +429,459 @@ namespace TableSO.Scripts.Editor
                 GenerateAssetTable();
             }
             GUI.enabled = true;
+
+            EditorGUILayout.Space(20);
+
+            // Show existing Asset Tables
+            var assetTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Asset).ToList();
+            DrawTabSpecificTableList("Asset Tables", assetTables, new Color(0.9f, 0.6f, 0.2f));
         }
 
-// TableSOEditor.cs에서 DrawRefTableTab 메서드를 다음과 같이 개선:
+        private void DrawRefTableTab()
+        {
+            var titleStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 16,
+                margin = new RectOffset(0, 0, 10, 5)
+            };
 
-private void DrawRefTableTab()
-{
-    var titleStyle = new GUIStyle(EditorStyles.boldLabel)
-    {
-        fontSize = 16,
-        margin = new RectOffset(0, 0, 10, 5)
-    };
+            EditorGUILayout.LabelField("Reference Table Generator", titleStyle);
 
-    EditorGUILayout.LabelField("Reference Table Generator", titleStyle);
-
-    DrawSectionHeader("Table Settings");
-    refTableName = EditorGUILayout.TextField("RefTable Name", refTableName);
-    
-    // 키 타입 선택 기능 추가
-    EditorGUILayout.Space();
-    DrawKeyTypeSelection();
-    
-    EditorGUILayout.Space();
-
-    DrawSectionHeader("Referenced Tables");
-    DrawReferencedTablesSelection();
-    
-    EditorGUILayout.Space();
-
-    DrawSectionHeader("Custom Operations");
-    
-    EditorGUILayout.Space();
-
-    DrawSectionHeader("Options");
-    refAutoRegister = EditorGUILayout.Toggle("Auto Register to TableCenter", refAutoRegister);
-    
-    showAdvancedOptions = EditorGUILayout.Foldout(showAdvancedOptions, "Advanced Options");
-    if (showAdvancedOptions)
-    {
-        EditorGUILayout.HelpBox("Advanced options for RefTable generation", MessageType.Info);
-        // 추후 고급 옵션들 추가 가능
-    }
-
-    EditorGUILayout.Space(20);
-
-    // Generate button - 키 타입도 검증에 추가
-    GUI.enabled = !string.IsNullOrEmpty(refTableName) && 
-                 selectedReferenceTables.Count > 0 &&
-                 !string.IsNullOrEmpty(refTableKeyType);
-
-    if (GUILayout.Button("Generate Reference Table", GUILayout.Height(40)))
-    {
-        GenerateRefTable();
-    }
-    GUI.enabled = true;
-}
-
-// 키 타입 선택을 위한 새로운 변수들과 메서드들
-private string refTableKeyType = "string"; // 기본값은 string
-private string[] commonKeyTypes = { "string", "int", "float", "bool" };
-
-private void DrawKeyTypeSelection()
-{
-    DrawSectionHeader("Key Type Configuration");
-    
-    EditorGUILayout.BeginVertical(GUI.skin.box);
-    
-    var helpStyle = new GUIStyle(EditorStyles.helpBox)
-    {
-        fontSize = 11,
-        padding = new RectOffset(10, 10, 8, 8)
-    };
-    
-    EditorGUILayout.LabelField("Specify the key type for the RefTable. You can use built-in types (string, int, etc.) or custom types (e.g., ItemType enum).", helpStyle);
-    
-    EditorGUILayout.Space(5);
-    
-    // 일반적인 키 타입 버튼들
-    EditorGUILayout.LabelField("Common Types:", EditorStyles.boldLabel);
-    EditorGUILayout.BeginHorizontal();
-    foreach (string keyType in commonKeyTypes)
-    {
-        var buttonStyle = refTableKeyType == keyType ? 
-            new GUIStyle(GUI.skin.button) { normal = { background = MakeTex(1, 1, new Color(0.3f, 0.5f, 0.8f, 1f)) } } : 
-            GUI.skin.button;
+            DrawSectionHeader("Table Settings");
+            refTableName = EditorGUILayout.TextField("RefTable Name", refTableName);
             
-        if (GUILayout.Button(keyType, buttonStyle))
-        {
-            refTableKeyType = keyType;
-        }
-    }
-    EditorGUILayout.EndHorizontal();
-    
-    EditorGUILayout.Space(5);
-    
-    // 사용자 정의 타입 입력
-    EditorGUILayout.LabelField("Custom Type:", EditorStyles.boldLabel);
-    refTableKeyType = EditorGUILayout.TextField("Key Type", refTableKeyType);
-    
-    // 키 타입 유효성 검사 및 안내
-    if (!string.IsNullOrEmpty(refTableKeyType))
-    {
-        if (IsBuiltInType(refTableKeyType))
-        {
-            DrawInfoBox($"Using built-in type: {refTableKeyType}", MessageType.Info);
-        }
-        else
-        {
-            DrawInfoBox($"Using custom type: {refTableKeyType}\nMake sure this type exists in your project and implements IConvertible if needed.", MessageType.Warning);
-        }
-    }
-    
-    EditorGUILayout.EndVertical();
-}
+            // 키 타입 선택 기능 추가
+            EditorGUILayout.Space();
+            DrawKeyTypeSelection();
+            
+            EditorGUILayout.Space();
 
-private bool IsBuiltInType(string typeName)
-{
-    string[] builtInTypes = { "string", "int", "float", "double", "bool", "char", "byte", "short", "long", "uint", "ushort", "ulong" };
-    return builtInTypes.Contains(typeName.ToLower());
-}
+            DrawSectionHeader("Referenced Tables");
+            DrawReferencedTablesSelection();
+            
+            EditorGUILayout.Space();
 
-// GenerateRefTable 메서드 수정
-private void GenerateRefTable()
-{
-    try
-    {
-        // Validate input
-        if (!RefTableGenerator.ValidateTableReferences(selectedReferenceTables))
-        {
-            EditorUtility.DisplayDialog("Error", "Invalid table references detected. Please check your selections.", "OK");
-            return;
-        }
-
-        // 키 타입 검증
-        if (string.IsNullOrEmpty(refTableKeyType))
-        {
-            EditorUtility.DisplayDialog("Error", "Key type must be specified.", "OK");
-            return;
-        }
-
-        // 키 타입을 포함하여 RefTable 생성
-        RefTableGenerator.GenerateRefTable(refTableName, selectedReferenceTables, refTableKeyType, refAutoRegister);
-        
-        // Clear form after successful generation
-        refTableName = "";
-        refTableKeyType = "string";
-        selectedReferenceTables.Clear();
-    }
-    catch (Exception e)
-    {
-        Debug.LogError($"[TableSO] Error in RefTable generation: {e.Message}");
-        EditorUtility.DisplayDialog("Error", $"Failed to generate RefTable:\n{e.Message}", "OK");
-    }
-}
-private void DrawReferencedTablesSelection()
-{
-    var availableTables = RefTableGenerator.GetAllAvailableTables();
-    
-    if (availableTables.Count == 0)
-    {
-        DrawInfoBox("No tables found in the project. Please create some TableSO or AssetTableSO first.", MessageType.Warning);
-        return;
-    }
-
-    EditorGUILayout.BeginVertical(GUI.skin.box);
-    
-    var headerStyle = new GUIStyle(EditorStyles.boldLabel)
-    {
-        fontSize = 12
-    };
-    
-    EditorGUILayout.LabelField($"Available Tables ({availableTables.Count} found)", headerStyle);
-    
-    tablesScrollPosition = EditorGUILayout.BeginScrollView(tablesScrollPosition, GUILayout.MaxHeight(150));
-    
-    foreach (var table in availableTables)
-    {
-        if (table == null) continue;
-        
-        EditorGUILayout.BeginHorizontal();
-        
-        bool isSelected = selectedReferenceTables.Contains(table);
-        bool newSelection = EditorGUILayout.Toggle(isSelected, GUILayout.Width(20));
-        
-        if (newSelection != isSelected)
-        {
-            if (newSelection)
+            DrawSectionHeader("Options");
+            refAutoRegister = EditorGUILayout.Toggle("Auto Register to TableCenter", refAutoRegister);
+            
+            showAdvancedOptions = EditorGUILayout.Foldout(showAdvancedOptions, "Advanced Options");
+            if (showAdvancedOptions)
             {
-                selectedReferenceTables.Add(table);
+                EditorGUILayout.HelpBox("Advanced options for RefTable generation", MessageType.Info);
+                // 추후 고급 옵션들 추가 가능
             }
-            else
+
+            EditorGUILayout.Space(20);
+
+            // Generate button
+            GUI.enabled = !string.IsNullOrEmpty(refTableName) && 
+                         selectedReferenceTables.Count > 0 &&
+                         !string.IsNullOrEmpty(refTableKeyType);
+
+            if (GUILayout.Button("Generate Reference Table", GUILayout.Height(40)))
             {
-                selectedReferenceTables.Remove(table);
+                GenerateRefTable();
+            }
+            GUI.enabled = true;
+
+            EditorGUILayout.Space(20);
+
+            // Show existing Reference Tables
+            var refTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Reference).ToList();
+            DrawTabSpecificTableList("Reference Tables", refTables, new Color(0.8f, 0.3f, 0.8f));
+        }
+
+        #region Interface-based Table Detection Methods
+
+        /// <summary>
+        /// ITableType 인터페이스를 구현한 모든 ScriptableObject를 FilePath.TABLE_OUTPUT_PATH 경로에서 찾습니다.
+        /// </summary>
+        private List<ScriptableObject> GetTablesByInterface()
+        {
+            var tables = new List<ScriptableObject>();
+            
+            // FilePath.TABLE_OUTPUT_PATH 경로에서 모든 .asset 파일 검색
+            string searchPath = "Assets"; // FilePath.TABLE_OUTPUT_PATH가 정의되지 않아 기본 경로 사용
+            
+            // 모든 ScriptableObject 검색
+            string[] guids = AssetDatabase.FindAssets("t:ScriptableObject", new[] { searchPath });
+            
+            foreach (string guid in guids)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(assetPath);
+                
+                if (asset != null && IsTableType(asset))
+                {
+                    tables.Add(asset);
+                }
+            }
+            
+            return tables.OrderBy(t => t.name).ToList();
+        }
+
+        /// <summary>
+        /// ScriptableObject가 ITableType 인터페이스를 구현하는지 확인합니다.
+        /// </summary>
+        private bool IsTableType(ScriptableObject obj)
+        {
+            return obj is ITableType;
+        }
+
+        /// <summary>
+        /// ITableType을 구현한 ScriptableObject의 TableType을 반환합니다.
+        /// </summary>
+        private TableType GetTableType(ScriptableObject obj)
+        {
+            if (obj is ITableType tableType)
+            {
+                return tableType.tableType;
+            }
+            return TableType.Data; // 기본값
+        }
+
+        #endregion
+
+        #region Asset List Drawing Methods
+
+        private void DrawTabSpecificTableList(string title, List<ScriptableObject> tables, Color headerColor)
+        {
+            if (tables.Count == 0)
+            {
+                DrawInfoBox($"No {title} found in project", MessageType.Info);
+                return;
+            }
+
+            string foldoutKey = title.Replace(" ", "");
+            if (!assetFoldouts.ContainsKey(foldoutKey))
+                assetFoldouts[foldoutKey] = true;
+
+            assetFoldouts[foldoutKey] = EditorGUILayout.Foldout(assetFoldouts[foldoutKey], $"{title} ({tables.Count})", true);
+            
+            if (!assetFoldouts[foldoutKey]) return;
+
+            EditorGUILayout.BeginVertical(GUI.skin.box);
+            assetListScrollPosition = EditorGUILayout.BeginScrollView(assetListScrollPosition, GUILayout.MaxHeight(250));
+
+            foreach (var table in tables)
+            {
+                DrawAssetItem(table, headerColor);
+            }
+
+            EditorGUILayout.EndScrollView();
+            EditorGUILayout.EndVertical();
+        }
+
+        private void DrawTableSection(string sectionName, List<ScriptableObject> tables, Color sectionColor)
+        {
+            if (tables.Count == 0) return;
+
+            if (!assetFoldouts.ContainsKey(sectionName))
+                assetFoldouts[sectionName] = true;
+
+            var headerStyle = new GUIStyle(EditorStyles.foldout)
+            {
+                fontStyle = FontStyle.Bold,
+                fontSize = 12
+            };
+
+            assetFoldouts[sectionName] = EditorGUILayout.Foldout(assetFoldouts[sectionName], 
+                $"{sectionName} ({tables.Count})", true, headerStyle);
+
+            if (!assetFoldouts[sectionName]) return;
+
+            EditorGUI.indentLevel++;
+            
+            foreach (var table in tables)
+            {
+                DrawAssetItem(table, sectionColor);
+            }
+            
+            EditorGUI.indentLevel--;
+            EditorGUILayout.Space(5);
+        }
+
+        private void DrawAssetItem(ScriptableObject asset, Color accentColor)
+        {
+            if (asset == null) return;
+
+            EditorGUILayout.BeginHorizontal();
+            
+
+            // Asset icon
+            var icon = AssetDatabase.GetCachedIcon(AssetDatabase.GetAssetPath(asset));
+            if (icon != null)
+            {
+                GUILayout.Label(icon, GUILayout.Width(16), GUILayout.Height(16));
+            }
+
+            // Asset name (clickable)
+            var nameStyle = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = 11,
+                normal = {textColor = accentColor}
+            };
+
+            if (GUILayout.Button(asset.name, nameStyle, GUILayout.ExpandWidth(true)))
+            {
+                Selection.activeObject = asset;
+                EditorGUIUtility.PingObject(asset);
+            }
+            
+            EditorGUILayout.EndHorizontal();
+        }
+
+        #endregion
+
+        #region Key Type Selection
+
+        private void DrawKeyTypeSelection()
+        {
+            DrawSectionHeader("Key Type Configuration");
+            
+            EditorGUILayout.BeginVertical(GUI.skin.box);
+            
+            var helpStyle = new GUIStyle(EditorStyles.helpBox)
+            {
+                fontSize = 11,
+                padding = new RectOffset(10, 10, 8, 8)
+            };
+            
+            EditorGUILayout.LabelField("Specify the key type for the RefTable. You can use built-in types (string, int, etc.) or custom types (e.g., ItemType enum).", helpStyle);
+            
+            EditorGUILayout.Space(5);
+            
+            // 일반적인 키 타입 버튼들
+            EditorGUILayout.LabelField("Common Types:", EditorStyles.boldLabel);
+            EditorGUILayout.BeginHorizontal();
+            foreach (string keyType in commonKeyTypes)
+            {
+                var buttonStyle = refTableKeyType == keyType ? 
+                    new GUIStyle(GUI.skin.button) { normal = { background = MakeTex(1, 1, new Color(0.3f, 0.5f, 0.8f, 1f)) } } : 
+                    GUI.skin.button;
+                    
+                if (GUILayout.Button(keyType, buttonStyle))
+                {
+                    refTableKeyType = keyType;
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+            
+            EditorGUILayout.Space(5);
+            
+            // 사용자 정의 타입 입력
+            EditorGUILayout.LabelField("Custom Type:", EditorStyles.boldLabel);
+            refTableKeyType = EditorGUILayout.TextField("Key Type", refTableKeyType);
+            
+            // 키 타입 유효성 검사 및 안내
+            if (!string.IsNullOrEmpty(refTableKeyType))
+            {
+                if (IsBuiltInType(refTableKeyType))
+                {
+                    DrawInfoBox($"Using built-in type: {refTableKeyType}", MessageType.Info);
+                }
+                else
+                {
+                    DrawInfoBox($"Using custom type: {refTableKeyType}\nMake sure this type exists in your project and implements IConvertible if needed.", MessageType.Warning);
+                }
+            }
+            
+            EditorGUILayout.EndVertical();
+        }
+
+        private bool IsBuiltInType(string typeName)
+        {
+            string[] builtInTypes = { "string", "int", "float", "double", "bool", "char", "byte", "short", "long", "uint", "ushort", "ulong" };
+            return builtInTypes.Contains(typeName.ToLower());
+        }
+
+        #endregion
+
+        #region Reference Tables Selection
+
+        private void DrawReferencedTablesSelection()
+        {
+            var availableTables = GetTablesByInterface(); // 인터페이스 기반으로 변경
+            
+            if (availableTables.Count == 0)
+            {
+                DrawInfoBox("No tables found in the project. Please create some tables first.", MessageType.Warning);
+                return;
+            }
+
+            EditorGUILayout.BeginVertical(GUI.skin.box);
+            
+            var headerStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 12
+            };
+            
+            EditorGUILayout.LabelField($"Available Tables ({availableTables.Count} found)", headerStyle);
+            
+            tablesScrollPosition = EditorGUILayout.BeginScrollView(tablesScrollPosition, GUILayout.MaxHeight(150));
+            
+            foreach (var table in availableTables)
+            {
+                if (table == null) continue;
+                
+                EditorGUILayout.BeginHorizontal();
+                
+                Color color = Color.black;
+                if (table is ITableType tt)
+                {
+                    if (tt.tableType == TableType.Data) color = new Color(0.3f, 0.8f, 0.3f);
+                    else if (tt.tableType == TableType.Asset) color = new Color(0.9f, 0.6f, 0.2f);
+                    else if (tt.tableType == TableType.Reference) color = new Color(0.8f, 0.3f, 0.8f);
+                }
+
+                var fieldStyle = new GUIStyle(EditorStyles.foldout)
+                {
+                    fontSize = 12,
+                    normal = {textColor = color}
+                };
+                
+                bool isSelected = selectedReferenceTables.Contains(table);
+                bool newSelection = EditorGUILayout.Toggle(isSelected, GUILayout.Width(20));
+                
+                if (newSelection != isSelected)
+                {
+                    if (newSelection)
+                    {
+                        selectedReferenceTables.Add(table);
+                    }
+                    else
+                    {
+                        selectedReferenceTables.Remove(table);
+                    }
+                }
+                
+                // 테이블 정보 표시 (타입 포함)
+                string tableInfo = table.name;
+                if (table is ITableType tableType)
+                {
+                    tableInfo += $" ({tableType.tableType})";
+                }
+                
+                EditorGUILayout.LabelField(tableInfo, fieldStyle);
+                
+                EditorGUILayout.EndHorizontal();
+            }
+            
+            EditorGUILayout.EndScrollView();
+            
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Select All", GUILayout.Width(80)))
+            {
+                selectedReferenceTables.Clear();
+                selectedReferenceTables.AddRange(availableTables);
+            }
+            
+            if (GUILayout.Button("Clear All", GUILayout.Width(80)))
+            {
+                selectedReferenceTables.Clear();
+            }
+            
+            EditorGUILayout.EndHorizontal();
+            
+            if (selectedReferenceTables.Count > 0)
+            {
+                DrawInfoBox($"{selectedReferenceTables.Count} table(s) selected", MessageType.Info);
+            }
+            
+            EditorGUILayout.EndVertical();
+        }
+
+        #endregion
+
+        #region UI Helper Methods
+
+        private void DrawTableStatistics(int total, int data, int asset, int reference)
+        {
+            var boxStyle = new GUIStyle(GUI.skin.box)
+            {
+                padding = new RectOffset(15, 15, 15, 15)
+            };
+
+            EditorGUILayout.BeginVertical(boxStyle);
+            
+            var statStyle = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = 14,
+                fontStyle = FontStyle.Bold
+            };
+
+            EditorGUILayout.LabelField("Registered Tables Statistics", statStyle);
+            EditorGUILayout.Space(5);
+
+            EditorGUILayout.BeginHorizontal();
+            DrawStatBox("Total", total, new Color(0.2f, 0.6f, 0.9f));
+            DrawStatBox("Data Tables", data, new Color(0.3f, 0.8f, 0.3f));
+            DrawStatBox("Asset Tables", asset, new Color(0.9f, 0.6f, 0.2f));
+            DrawStatBox("Ref Tables", reference, new Color(0.8f, 0.3f, 0.8f));
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private void DrawStatBox(string label, int count, Color color)
+        {
+            var originalColor = GUI.backgroundColor;
+            GUI.backgroundColor = color;
+            
+            EditorGUILayout.BeginVertical(GUI.skin.box);
+            
+            var countStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 20,
+                alignment = TextAnchor.MiddleCenter
+            };
+            
+            var labelStyle = new GUIStyle(EditorStyles.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 10
+            };
+
+            EditorGUILayout.LabelField(count.ToString(), countStyle);
+            EditorGUILayout.LabelField(label, labelStyle);
+            
+            EditorGUILayout.EndVertical();
+            GUI.backgroundColor = originalColor;
+        }
+
+        private void DrawQuickActions(TableCenter tableCenter)
+        {
+            var titleStyle = new GUIStyle(EditorStyles.boldLabel)
+            {
+                fontSize = 14
+            };
+
+            EditorGUILayout.LabelField("Quick Actions", titleStyle);
+            EditorGUILayout.Space(5);
+
+            EditorGUILayout.BeginHorizontal();
+            
+            if (GUILayout.Button("Refresh All Tables", GUILayout.Height(25)))
+            {
+                // Implement table refresh logic
+                Debug.Log("[TableSO] Refreshing all tables...");
+                Repaint();
+            }
+
+            if (GUILayout.Button("Validate Tables", GUILayout.Height(25)))
+            {
+                // Implement table validation logic
+                Debug.Log("[TableSO] Validating tables...");
+            }
+
+            EditorGUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Select TableCenter in Project", GUILayout.Height(25)))
+            {
+                Selection.activeObject = tableCenter;
+                EditorGUIUtility.PingObject(tableCenter);
             }
         }
-        
-        string tableInfo = RefTableGenerator.GetTableInfo(table);
-        EditorGUILayout.LabelField(tableInfo);
-        
-        EditorGUILayout.EndHorizontal();
-    }
-    
-    EditorGUILayout.EndScrollView();
-    
-    EditorGUILayout.BeginHorizontal();
-    if (GUILayout.Button("Select All", GUILayout.Width(80)))
-    {
-        selectedReferenceTables.Clear();
-        selectedReferenceTables.AddRange(availableTables);
-    }
-    
-    if (GUILayout.Button("Clear All", GUILayout.Width(80)))
-    {
-        selectedReferenceTables.Clear();
-    }
-    
-    EditorGUILayout.EndHorizontal();
-    
-    if (selectedReferenceTables.Count > 0)
-    {
-        DrawInfoBox($"{selectedReferenceTables.Count} table(s) selected", MessageType.Info);
-    }
-    
-    EditorGUILayout.EndVertical();
-}
 
         private void DrawSectionHeader(string title)
         {
@@ -752,6 +959,10 @@ private void DrawReferencedTablesSelection()
             }
         }
 
+        #endregion
+
+        #region Generation Methods
+
         private void CreateTableCenter()
         {
             // Implementation for creating TableCenter
@@ -770,12 +981,18 @@ private void DrawReferencedTablesSelection()
                 
                 TableGenerator.GenerateTableFromCSV(csvFilePath);
 
-                return;
                 if (method != null)
                 {
                     method.Invoke(null, new object[] { csvFilePath });
                     Debug.Log($"[TableSO] Table '{tableName}' generated successfully from CSV");
                     EditorUtility.DisplayDialog("Success", $"Table '{tableName}' generated successfully!", "OK");
+                    
+                    // Clear form after successful generation
+                    csvFilePath = "";
+                    tableName = "";
+                    
+                    // Refresh the display
+                    Repaint();
                 }
                 else
                 {
@@ -803,17 +1020,67 @@ private void DrawReferencedTablesSelection()
 
                 AssetTableGenerator.GenerateAssetTable(selectedFolderPath, assetTableName, selectedAssetType,
                     assetCreateAddressable, addressableGroupName, assetAutoRegister);
-                // Use existing AssetTableGenerator logic
-                // This would need to be adapted from the existing AssetTableGenerator class
-                Debug.Log($"[TableSO] Asset table '{assetTableName}' generation started with {assets.Count} assets");
-                // EditorUtility.DisplayDialog("Info", "Asset table generation functionality needs to be fully integrated.", "OK");
+                
+                Debug.Log($"[TableSO] Asset table '{assetTableName}' generation completed with {assets.Count} assets");
+                EditorUtility.DisplayDialog("Success", $"Asset table '{assetTableName}' generated successfully with {assets.Count} assets!", "OK");
+                
+                // Clear form after successful generation
+                selectedFolderPath = "Assets/";
+                assetTableName = "";
+                addressableGroupName = "";
+                
+                // Refresh the display
+                Repaint();
             }
             catch (Exception e)
             {
                 Debug.LogError($"[TableSO] Error generating asset table: {e.Message}");
-                // EditorUtility.DisplayDialog("Error", $"Failed to generate asset table:\n{e.Message}", "OK");
+                EditorUtility.DisplayDialog("Error", $"Failed to generate asset table:\n{e.Message}", "OK");
             }
         }
+
+        private void GenerateRefTable()
+        {
+            try
+            {
+                // Validate input
+                if (!RefTableGenerator.ValidateTableReferences(selectedReferenceTables))
+                {
+                    EditorUtility.DisplayDialog("Error", "Invalid table references detected. Please check your selections.", "OK");
+                    return;
+                }
+
+                // 키 타입 검증
+                if (string.IsNullOrEmpty(refTableKeyType))
+                {
+                    EditorUtility.DisplayDialog("Error", "Key type must be specified.", "OK");
+                    return;
+                }
+
+                // 키 타입을 포함하여 RefTable 생성
+                RefTableGenerator.GenerateRefTable(refTableName, selectedReferenceTables, refTableKeyType, refAutoRegister);
+                
+                Debug.Log($"[TableSO] RefTable '{refTableName}' generated successfully with key type '{refTableKeyType}'");
+                EditorUtility.DisplayDialog("Success", $"RefTable '{refTableName}' generated successfully!", "OK");
+                
+                // Clear form after successful generation
+                refTableName = "";
+                refTableKeyType = "string";
+                selectedReferenceTables.Clear();
+                
+                // Refresh the display
+                Repaint();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[TableSO] Error in RefTable generation: {e.Message}");
+                EditorUtility.DisplayDialog("Error", $"Failed to generate RefTable:\n{e.Message}", "OK");
+            }
+        }
+
+        #endregion
+
+        #region Utility Methods
 
         private List<UnityEngine.Object> GetAssetsInFolder(string folderPath, Type assetType)
         {
@@ -850,5 +1117,7 @@ private void DrawReferencedTablesSelection()
             result.Apply();
             return result;
         }
+
+        #endregion
     }
 }

@@ -72,7 +72,6 @@ namespace TableSO.Scripts.Generator
             }
             
             EditorUtility.SetDirty(tableCenter);
-            Debug.Log($"[TableSO] {tables.Count} tables automatically registered to TableCenter");
         }
 
         private static ScriptableObject LoadCSVDataToTableSO(string csvPath, string tableOutputPath)
@@ -110,7 +109,6 @@ namespace TableSO.Scripts.Generator
                 SetTableSOData(tableSO, dataList);
                 
                 EditorUtility.SetDirty(tableSO);
-                Debug.Log($"[TableSO] {fileName}.csv data loaded to {fileName}TableSO. Data count: {dataList.Count}");
             }
             catch (Exception e)
             {
@@ -135,9 +133,6 @@ namespace TableSO.Scripts.Generator
             string[] fieldNames = ParseCSVLine(lines[0]);
             string[] fieldTypes = ParseCSVLine(lines[1]);
             
-            Debug.Log($"[TableSO] {className} - Field names: [{string.Join(", ", fieldNames)}]");
-            Debug.Log($"[TableSO] {className} - Field types: [{string.Join(", ", fieldTypes)}]");
-            
             // Find data class type
             Type dataType = FindDataClassType(className);
             if (dataType == null)
@@ -145,9 +140,7 @@ namespace TableSO.Scripts.Generator
                 Debug.LogError($"[TableSO] Cannot find {className} data class");
                 return null;
             }
-
-            Debug.Log($"[TableSO] Found data type: {dataType.FullName}");
-
+            
             // Find matching constructor
             ConstructorInfo constructor = FindMatchingConstructor(dataType, fieldTypes, fieldNames, className);
             if (constructor == null)
@@ -200,12 +193,10 @@ namespace TableSO.Scripts.Generator
                 return null;
             }
 
-            Debug.Log($"[TableSO] {className} available constructors:");
             for (int i = 0; i < constructors.Length; i++)
             {
                 var parameters = constructors[i].GetParameters();
                 string paramInfo = string.Join(", ", parameters.Select(p => $"{p.ParameterType.Name} {p.Name}"));
-                Debug.Log($"[TableSO]   Constructor {i + 1}: ({paramInfo})");
             }
 
             // 1. 매개변수 개수가 일치하는 생성자부터 찾기
@@ -239,7 +230,6 @@ namespace TableSO.Scripts.Generator
                 
                 if (typeMatch)
                 {
-                    Debug.Log($"[TableSO] Found exact matching constructor for {className}");
                     return constructor;
                 }
             }
@@ -486,7 +476,6 @@ namespace TableSO.Scripts.Generator
             {
                 // 첫 번째 후보 사용 (가장 적합한 것으로 추정)
                 Type selectedType = candidateTypes[0];
-                Debug.Log($"[TableSO] Found user-defined type '{typeName}': {selectedType.FullName}");
                 
                 if (candidateTypes.Count > 1)
                 {

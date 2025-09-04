@@ -11,4 +11,12 @@ public class DummyA
         typeof(string),
         typeof(float),
     };
+
+    public void Some()
+    {
+    }
+
+    public void SomeThing()
+    {
+    }
 }

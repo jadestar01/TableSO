@@ -154,8 +154,10 @@ namespace TableSO.Scripts.Generator
             }
             tableCode.AppendLine($"        }};");
             tableCode.AppendLine();
-            
-            // GetData 구현 (RefTableSO에서 실제 데이터를 반환하기 위함)
+            tableCode.AppendLine($"        public override void UpdateData()");
+            tableCode.AppendLine("        {");
+            tableCode.AppendLine("            // TODO: Implement UpdateDatalogic");
+            tableCode.AppendLine("        }");
             tableCode.AppendLine();
             tableCode.AppendLine($"        /// <summary>");
             tableCode.AppendLine($"        /// Get RefTable data by key");

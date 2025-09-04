@@ -147,7 +147,7 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine();
             tableCode.AppendLine("namespace Table");
             tableCode.AppendLine("{");
-            tableCode.AppendLine($"    public class {className}TableSO : TableSO.Scripts.AssetTableSO<TableData.{className}>, IAssetData");
+            tableCode.AppendLine($"    public class {className}TableSO : TableSO.Scripts.AssetTableSO<TableData.{className}>, IAssetData, IUpdatable");
             tableCode.AppendLine("    {");
             tableCode.AppendLine($"        [SerializeField] private string assetFolderPath = \"{folderPath}\";");
             tableCode.AppendLine($"        public string fileName => \"{className}TableSO\";");
