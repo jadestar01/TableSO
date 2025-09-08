@@ -7,19 +7,6 @@ using UnityEngine;
 using System.Reflection;
 using TableSO.Scripts.Generator;
 
-// ITableType 인터페이스와 TableType enum 정의
-public interface ITableType
-{
-    public TableType tableType { get; set; }
-}
-
-public enum TableType
-{
-    Data,
-    Asset,
-    Reference
-}
-
 namespace TableSO.Scripts.Editor
 {
     public class TableSOEditor : EditorWindow
@@ -63,6 +50,8 @@ namespace TableSO.Scripts.Editor
         private bool showAssetList = true;
         private Dictionary<string, bool> assetFoldouts = new Dictionary<string, bool>();
 
+        public bool autoReload = false;
+
         // Supported asset types
         private readonly Dictionary<string, Type> supportedTypes = new Dictionary<string, Type>()
         {
@@ -82,11 +71,18 @@ namespace TableSO.Scripts.Editor
             var window = GetWindow<TableSOEditor>("TableSO Editor");
             window.minSize = new Vector2(500, 400);
         }
-
+        
         private void OnEnable()
         {
+            autoReload = EditorPrefs.GetBool("AutoReload");
             LoadStyles();
         }
+
+        private void OnDisable()
+        {
+            EditorPrefs.SetBool("AutoReload", autoReload);
+        }
+        
 
         private void LoadStyles()
         {
@@ -189,8 +185,6 @@ namespace TableSO.Scripts.Editor
                 margin = new RectOffset(0, 0, 10, 5)
             };
 
-            EditorGUILayout.LabelField("TableCenter Overview", titleStyle);
-
             // Find TableCenter
             string[] guids = AssetDatabase.FindAssets("t:TableCenter");
             
@@ -215,9 +209,6 @@ namespace TableSO.Scripts.Editor
                 return;
             }
 
-            // TableCenter Info
-            DrawInfoBox($"TableCenter found: {tableCenter.name}", MessageType.Info);
-            
             EditorGUILayout.Space(10);
 
             // Get tables by type using interface filtering
@@ -856,24 +847,18 @@ namespace TableSO.Scripts.Editor
                 fontSize = 14
             };
 
-            EditorGUILayout.LabelField("Quick Actions", titleStyle);
+            EditorGUILayout.LabelField("Utility", titleStyle);
             EditorGUILayout.Space(5);
 
+            autoReload = EditorGUILayout.Toggle("Auto Reloader", autoReload);
+
             EditorGUILayout.BeginHorizontal();
-            
             if (GUILayout.Button("Refresh All Tables", GUILayout.Height(25)))
             {
-                // Implement table refresh logic
                 Debug.Log("[TableSO] Refreshing all tables...");
+                AssemblyReloadHandler.InitializeGeneratedTables();
                 Repaint();
             }
-
-            if (GUILayout.Button("Validate Tables", GUILayout.Height(25)))
-            {
-                // Implement table validation logic
-                Debug.Log("[TableSO] Validating tables...");
-            }
-
             EditorGUILayout.EndHorizontal();
 
             if (GUILayout.Button("Select TableCenter in Project", GUILayout.Height(25)))

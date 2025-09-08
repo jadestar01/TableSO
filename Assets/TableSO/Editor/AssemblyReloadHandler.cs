@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using TableSO.Scripts;
 using System.IO;
+using TableSO.Scripts.Editor;
 using TableSO.Scripts.Generator;
 
 [InitializeOnLoad]
@@ -13,7 +14,8 @@ public static class AssemblyReloadHandler
 {
     private const string GENERATED_TABLES_FOLDER = "Assets/TableSO/Table";
     private const string GENERATED_CODE_FOLDER = "Assets/TableSO/Scripts/TableClass";
-
+    
+#if UNITY_EDITOR
     static AssemblyReloadHandler()
     {
         AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
@@ -27,6 +29,10 @@ public static class AssemblyReloadHandler
 
     private static void OnAfterAssemblyReload()
     {
+        bool autoReload = EditorPrefs.GetBool("AutoReload");
+        Debug.Log($"[TableSO] Auto Reload: {autoReload}");
+        if (!autoReload)
+            return;
         Debug.Log("[TableSO] Try to find Tables..");
 
         // Wait with a longer delay until the assembly is fully loaded
@@ -42,7 +48,7 @@ public static class AssemblyReloadHandler
             AssetDatabase.SaveAssets();
         }
     }
-    private static void InitializeGeneratedTables()
+    public static void InitializeGeneratedTables()
     {
         try
         {
@@ -200,6 +206,7 @@ public static class AssemblyReloadHandler
         }
         catch (Exception e)
         {
+            Debug.LogError($"[TableSO] Error assigning references for RefTable {refTableAsset.name}: {e.Message}");
         }
     }
 
@@ -341,6 +348,7 @@ public static class AssemblyReloadHandler
         }
         catch (Exception e)
         {
+            Debug.LogWarning($"[TableSO] Error while checking type {type.Name}: {e.Message}");
         }
 
         return false;
@@ -553,7 +561,7 @@ public static class AssemblyReloadHandler
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TableSO] Cannot Generate TableCenter");
+            Debug.LogError($"[TableSO] Error while creating TableCenter: {e.Message}");
             return null;
         }
     }
@@ -566,4 +574,5 @@ public static class AssemblyReloadHandler
             AssetDatabase.Refresh();
         }
     }
+#endif
 }
