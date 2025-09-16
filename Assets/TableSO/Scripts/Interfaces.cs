@@ -31,7 +31,7 @@ namespace TableSO.Scripts
         public void UpdateData();
     }
 
-    public interface IReferencable
+    public interface IConsultable
     {
         public List<Type> refTableTypes { get; set; }
     }

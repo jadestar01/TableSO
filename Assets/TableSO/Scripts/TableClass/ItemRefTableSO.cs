@@ -13,7 +13,7 @@ using TableSO.Scripts;
 
 namespace Table
 {
-    public class ItemRefTableSO : TableSO.Scripts.RefTableSO<int, TableData.Item>, IReferencable
+    public class ItemRefTableSO : TableSO.Scripts.RefTableSO<int, TableData.Item>, IConsultable
     {
         public string fileName => "ItemRefTableSO";
         [SerializeField] private EquippableItemDataTableSO EquippableItemDataTable;

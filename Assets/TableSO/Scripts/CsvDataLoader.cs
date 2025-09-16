@@ -10,9 +10,9 @@ using System.Linq;
 
 namespace TableSO.Scripts.Generator
 {
-    public static class CSVDataLoader
+    public static class CsvDataLoader
     {
-        public static void LoadAllCSVData()
+        public static void LoadAllCsvData()
         {
             string csvDataPath = FilePath.CSV_PATH;
             string tableOutputPath = FilePath.TABLE_OUTPUT_PATH;
@@ -29,7 +29,7 @@ namespace TableSO.Scripts.Generator
             
             foreach (string csvPath in csvFiles)
             {
-                var tableSO = LoadCSVDataToTableSO(csvPath, tableOutputPath);
+                var tableSO = LoadCsvDataToTableSO(csvPath, tableOutputPath);
                 if (tableSO != null)
                 {
                     sos.Add(tableSO);
@@ -75,7 +75,7 @@ namespace TableSO.Scripts.Generator
             EditorUtility.SetDirty(tableCenter);
         }
 
-        private static ScriptableObject LoadCSVDataToTableSO(string csvPath, string tableOutputPath)
+        private static ScriptableObject LoadCsvDataToTableSO(string csvPath, string tableOutputPath)
         {
             string fileName = Path.GetFileNameWithoutExtension(csvPath);
             string tableSOPath = Path.Combine(tableOutputPath, $"{fileName}TableSO.asset");
@@ -98,7 +98,7 @@ namespace TableSO.Scripts.Generator
                 }
 
                 // Load CSV data
-                List<object> dataList = LoadCSVData(csvPath, fileName);
+                List<object> dataList = LoadCsvData(csvPath, fileName);
                 
                 if (dataList == null)
                 {
@@ -120,7 +120,7 @@ namespace TableSO.Scripts.Generator
             return tableSO;
         }
 
-        private static List<object> LoadCSVData(string csvPath, string className)
+        private static List<object> LoadCsvData(string csvPath, string className)
         {
             List<object> dataList = new List<object>();
             string[] lines = File.ReadAllLines(csvPath);
@@ -131,8 +131,8 @@ namespace TableSO.Scripts.Generator
                 return dataList;
             }
 
-            string[] fieldNames = ParseCSVLine(lines[0]);
-            string[] fieldTypes = ParseCSVLine(lines[1]);
+            string[] fieldNames = ParseCsvLine(lines[0]);
+            string[] fieldTypes = ParseCsvLine(lines[1]);
             
             // Find data class type
             Type dataType = FindDataClassType(className);
@@ -154,7 +154,7 @@ namespace TableSO.Scripts.Generator
             {
                 if (string.IsNullOrWhiteSpace(lines[i])) continue;
                 
-                string[] values = ParseCSVLine(lines[i]);
+                string[] values = ParseCsvLine(lines[i]);
                 
                 if (values.Length != fieldNames.Length)
                 {
@@ -277,7 +277,7 @@ namespace TableSO.Scripts.Generator
             return false;
         }
 
-        private static string[] ParseCSVLine(string line)
+        private static string[] ParseCsvLine(string line)
         {
             List<string> fields = new List<string>();
             bool inQuotes = false;

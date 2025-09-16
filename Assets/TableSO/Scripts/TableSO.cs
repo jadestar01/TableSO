@@ -12,17 +12,19 @@ namespace TableSO.Scripts
         public bool isUpdated = true;
         
         [SerializeField] 
-        protected List<TData> dataList = new();   // Inspector에서 관리할 데이터
-        
+        protected List<TData> dataList;
         protected Dictionary<TKey, TData> dataDict;
         
+        #region Unity Event
         protected virtual void OnEnable()
         {
             tableType = TableType.Data;
             UpdateData();
             CacheData();
         }
+        #endregion
         
+        #region Utils
         public List<TKey> GetAllKey()
         {
             List<TKey> keys = new List<TKey>();
@@ -33,17 +35,19 @@ namespace TableSO.Scripts
 
         public virtual TData GetData(TKey key)
         {
-            if (IsContains(key))
+            if (Contains(key))
                 return dataDict[key];
             else
                 return null;
         }
 
-        public bool IsContains(TKey ID)
+        public bool Contains(TKey ID)
         {
             return dataDict.ContainsKey(ID);
         }
+        #endregion
 
+        #region Data
         public virtual void CacheData()
         {
             dataDict = new Dictionary<TKey, TData>();
@@ -64,5 +68,6 @@ namespace TableSO.Scripts
         {
             
         }
+        #endregion
     }
 }

@@ -116,7 +116,7 @@ public static class AssemblyReloadHandler
                     AssetDatabase.Refresh();
                 }
 
-                CSVDataLoader.LoadAllCSVData();
+                CsvDataLoader.LoadAllCsvData();
             };
         }
         catch (Exception e)
@@ -133,13 +133,13 @@ public static class AssemblyReloadHandler
                 try
                 {
                     // Check if this is a RefTableSO implementing IReferencable
-                    if (typeof(IReferencable).IsAssignableFrom(tableType))
+                    if (typeof(IConsultable).IsAssignableFrom(tableType))
                     {
                         string assetName = tableType.Name;
                         string assetPath = Path.Combine(GENERATED_TABLES_FOLDER, $"{assetName}.asset");
                         var refTableAsset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(assetPath);
 
-                        if (refTableAsset != null && refTableAsset is IReferencable referencable)
+                        if (refTableAsset != null && refTableAsset is IConsultable referencable)
                         {
                             AssignReferencesToRefTable(tableCenter, refTableAsset, referencable);
                             
@@ -172,12 +172,12 @@ public static class AssemblyReloadHandler
     }
 
     private static void AssignReferencesToRefTable(TableCenter tableCenter, ScriptableObject refTableAsset,
-        IReferencable referencable)
+        IConsultable consultable)
     {
         try
         {
             int assignedCount = 0;
-            foreach (var type in referencable.refTableTypes)
+            foreach (var type in consultable.refTableTypes)
             {
                 foreach (var table in tableCenter.GetRegisteredTables())
                 {
