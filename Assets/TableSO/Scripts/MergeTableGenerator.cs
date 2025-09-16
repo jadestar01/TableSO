@@ -7,14 +7,13 @@ using System.Text;
 using TableSO.FileUtility;
 using UnityEditor;
 using UnityEngine;
-using System.Reflection;
 
 namespace TableSO.Scripts.Generator
 {
-    public class RefTableGenerator : EditorWindow
+    public class MergeTableGenerator : EditorWindow
     {
         // 키 타입을 받도록 메서드 시그니처 수정
-        public static void GenerateRefTable(string tableName, List<ScriptableObject> referencedTables, string keyType, bool autoRegister)
+        public static void GenerateMergeTable(string tableName, List<ScriptableObject> referencedTables, string keyType, bool autoRegister)
         {
             try
             {
@@ -37,10 +36,10 @@ namespace TableSO.Scripts.Generator
                 }
 
                 // Generate RefData class
-                GenerateRefDataClass(tableName, keyType, referencedTables);
+                GenerateMergeDataClass(tableName, keyType, referencedTables);
                 
-                // Generate RefTableSO class
-                GenerateRefTableSOClass(tableName, keyType, referencedTables);
+                // Generate MergeTableSO class
+                GenerateMergeTableSOClass(tableName, keyType, referencedTables);
 
                 // Refresh to compile new scripts
                 AssetDatabase.Refresh();
@@ -55,7 +54,7 @@ namespace TableSO.Scripts.Generator
             }
         }
         
-        private static void GenerateRefDataClass(string className, string keyType, List<ScriptableObject> referencedTables)
+        private static void GenerateMergeDataClass(string className, string keyType, List<ScriptableObject> referencedTables)
         {
             StringBuilder classCode = new StringBuilder();
             
@@ -65,7 +64,7 @@ namespace TableSO.Scripts.Generator
             classCode.AppendLine("using TableSO.Scripts;");
             classCode.AppendLine();
             classCode.AppendLine("/// <summary>");
-            classCode.AppendLine("/// Reference Data Class - Made by TableSO RefTableGenerator");
+            classCode.AppendLine("/// Merge Data Class - Made by TableSO MergeTableGenerator");
             classCode.AppendLine($"/// Key Type: {keyType}");
             classCode.AppendLine("/// </summary>");
             classCode.AppendLine();
@@ -85,7 +84,7 @@ namespace TableSO.Scripts.Generator
                 string propertyName = GetTablePropertyName(tableTypeName);
                 
                 classCode.AppendLine($"        /// <summary>");
-                classCode.AppendLine($"        /// Reference to {tableTypeName} data");
+                classCode.AppendLine($"        /// Merge to {tableTypeName} data");
                 classCode.AppendLine($"        /// </summary>");
                 classCode.AppendLine($"        [field: SerializeField] public string {propertyName}ID {{ get; set; }}");
             }
@@ -106,7 +105,7 @@ namespace TableSO.Scripts.Generator
             File.WriteAllText(classFilePath, classCode.ToString());
         }
 
-        private static void GenerateRefTableSOClass(string className, string keyType, List<ScriptableObject> referencedTables)
+        private static void GenerateMergeTableSOClass(string className, string keyType, List<ScriptableObject> referencedTables)
         {
             StringBuilder tableCode = new StringBuilder();
             
@@ -118,16 +117,16 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine("using TableSO.Scripts;");
             tableCode.AppendLine();
             tableCode.AppendLine("/// <summary>");
-            tableCode.AppendLine($"/// Reference Table - Made by TableSO RefTableGenerator");
+            tableCode.AppendLine($"/// Merge Table - Made by TableSO MergeTableGenerator");
             tableCode.AppendLine($"/// Key Type: {keyType}");
             tableCode.AppendLine($"/// Referenced Tables: {string.Join(", ", referencedTables.Where(t => t != null).Select(t => t.GetType().Name))}");
             tableCode.AppendLine("/// </summary>");
             tableCode.AppendLine();
             tableCode.AppendLine("namespace Table");
             tableCode.AppendLine("{");
-            tableCode.AppendLine($"    public class {className}RefTableSO : TableSO.Scripts.RefTableSO<{keyType}, TableData.{className}>, IReferencable");
+            tableCode.AppendLine($"    public class {className}MergeTableSO : TableSO.Scripts.MergeTableSO<{keyType}, TableData.{className}>, IReferencable");
             tableCode.AppendLine("    {");
-            tableCode.AppendLine($"        public string fileName => \"{className}RefTableSO\";");
+            tableCode.AppendLine($"        public string fileName => \"{className}MergeTableSO\";");
             
             // 참조된 테이블들을 위한 private 필드들
             foreach (var table in referencedTables)
@@ -160,9 +159,6 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine("            // TODO: Implement UpdateDatalogic");
             tableCode.AppendLine("        }");
             tableCode.AppendLine();
-            tableCode.AppendLine($"        /// <summary>");
-            tableCode.AppendLine($"        /// Get RefTable data by key");
-            tableCode.AppendLine($"        /// </summary>");
             tableCode.AppendLine($"        public override TableData.{className} GetData({keyType} key)");
             tableCode.AppendLine("        {");
             tableCode.AppendLine("            // TODO: Implement GetData logic");
@@ -176,7 +172,7 @@ namespace TableSO.Scripts.Generator
 
             // Save file
             EnsureDirectoryExists(FilePath.TABLE_CLASS_PATH);
-            string tableFilePath = Path.Combine(FilePath.TABLE_CLASS_PATH, $"{className}RefTableSO.cs");
+            string tableFilePath = Path.Combine(FilePath.TABLE_CLASS_PATH, $"{className}MergeTableSO.cs");
             File.WriteAllText(tableFilePath, tableCode.ToString());
         }
         
@@ -238,7 +234,7 @@ namespace TableSO.Scripts.Generator
                     Type genericTypeDef = currentType.GetGenericTypeDefinition();
                     if (genericTypeDef.Name.StartsWith("TableSO") || 
                         genericTypeDef.Name.StartsWith("AssetTableSO") ||
-                        genericTypeDef.Name.StartsWith("RefTableSO"))
+                        genericTypeDef.Name.StartsWith("MergeTableSO"))
                     {
                         return true;
                     }
@@ -248,35 +244,19 @@ namespace TableSO.Scripts.Generator
             
             return false;
         }
-
-        public static string GetTableInfo(ScriptableObject table)
-        {
-            if (table == null) return "Unknown";
-            
-            string tableName = table.name;
-            string tableType = "Unknown";
-            
-            if (table is ITableType tableTypeInterface)
-            {
-                tableType = tableTypeInterface.tableType.ToString();
-            }
-            
-            return $"{tableName} ({tableType})";
-        }
-
         public static bool ValidateTableReferences(List<ScriptableObject> tables)
         {
             foreach (var table in tables)
             {
                 if (table == null)
                 {
-                    Debug.LogWarning("[RefTableGenerator] Null table reference found");
+                    Debug.LogWarning("[MergeTableGenerator] Null table reference found");
                     return false;
                 }
                 
                 if (!IsTableSO(table))
                 {
-                    Debug.LogWarning($"[RefTableGenerator] {table.name} is not a valid TableSO");
+                    Debug.LogWarning($"[MergeTableGenerator] {table.name} is not a valid TableSO");
                     return false;
                 }
             }

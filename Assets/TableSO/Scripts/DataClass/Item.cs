@@ -4,7 +4,7 @@ using UnityEngine;
 using TableSO.Scripts;
 
 /// <summary>
-/// Reference Data Class - Made by TableSO RefTableGenerator
+/// Merge Data Class - Made by TableSO MergeTableGenerator
 /// Key Type: int
 /// </summary>
 
@@ -15,19 +15,19 @@ namespace TableData
     {
         [field: SerializeField] public int ID { get; internal set; }
         /// <summary>
-        /// Reference to EquippableItemDataTableSO data
+        /// Merge to EquippableItemDataTableSO data
         /// </summary>
         [field: SerializeField] public string EquippableItemDataID { get; set; }
         /// <summary>
-        /// Reference to ItemIconAssetTableSO data
+        /// Merge to ItemIconAssetTableSO data
         /// </summary>
         [field: SerializeField] public string ItemIconAssetID { get; set; }
         /// <summary>
-        /// Reference to ItemStringDataTableSO data
+        /// Merge to ItemStringDataTableSO data
         /// </summary>
         [field: SerializeField] public string ItemStringDataID { get; set; }
         /// <summary>
-        /// Reference to MaterialItemDataTableSO data
+        /// Merge to MaterialItemDataTableSO data
         /// </summary>
         [field: SerializeField] public string MaterialItemDataID { get; set; }
 

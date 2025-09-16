@@ -14,15 +14,15 @@ namespace TableSO.Scripts.Editor
         private enum Tab
         {
             Center,
-            Table,
+            CsvTable,
             AssetTable,
-            RefTable
+            MergeTable
         }
 
         private Tab currentTab = Tab.Center;
         private Vector2 scrollPosition;
 
-        // Table Tab Variables
+        // CsvTable Tab Variables
         private string csvFilePath = "";
         private string tableName = "";
         private bool tableAutoRegister = true;
@@ -35,14 +35,14 @@ namespace TableSO.Scripts.Editor
         private bool assetCreateAddressable = true;
         private string addressableGroupName = "";
 
-        // RefTable Variables
-        private string refTableName = "";
+        // MergeTable Variables
+        private string mergeTableName = "";
         private bool refAutoRegister = true;
         private List<ScriptableObject> selectedReferenceTables = new List<ScriptableObject>();
         private bool showAdvancedOptions = false;
         private Vector2 operationsScrollPosition;
         private Vector2 tablesScrollPosition;
-        private string refTableKeyType = "string";
+        private string mergeTableKeyType = "string";
         private string[] commonKeyTypes = { "string", "int", "float", "bool" };
 
         // Asset List Variables
@@ -134,9 +134,9 @@ namespace TableSO.Scripts.Editor
                 currentTab = Tab.Center;
             }
 
-            if (GUILayout.Button("Table", currentTab == Tab.Table ? activeButtonStyle : buttonStyle))
+            if (GUILayout.Button("CsvTable", currentTab == Tab.CsvTable ? activeButtonStyle : buttonStyle))
             {
-                currentTab = Tab.Table;
+                currentTab = Tab.CsvTable;
             }
 
             if (GUILayout.Button("AssetTable", currentTab == Tab.AssetTable ? activeButtonStyle : buttonStyle))
@@ -144,9 +144,9 @@ namespace TableSO.Scripts.Editor
                 currentTab = Tab.AssetTable;
             }
 
-            if (GUILayout.Button("RefTable", currentTab == Tab.RefTable ? activeButtonStyle : buttonStyle))
+            if (GUILayout.Button("MergeTable", currentTab == Tab.MergeTable ? activeButtonStyle : buttonStyle))
             {
-                currentTab = Tab.RefTable;
+                currentTab = Tab.MergeTable;
             }
 
             EditorGUILayout.EndHorizontal();
@@ -163,14 +163,14 @@ namespace TableSO.Scripts.Editor
                 case Tab.Center:
                     DrawCenterTab();
                     break;
-                case Tab.Table:
+                case Tab.CsvTable:
                     DrawTableTab();
                     break;
                 case Tab.AssetTable:
                     DrawAssetTableTab();
                     break;
-                case Tab.RefTable:
-                    DrawRefTableTab();
+                case Tab.MergeTable:
+                    DrawMergeTableTab();
                     break;
             }
 
@@ -215,10 +215,10 @@ namespace TableSO.Scripts.Editor
             var allTables = GetTablesByInterface();
             var dataTables = allTables.Where(t => GetTableType(t) == TableType.Data).ToList();
             var assetTables = allTables.Where(t => GetTableType(t) == TableType.Asset).ToList();
-            var refTables = allTables.Where(t => GetTableType(t) == TableType.Reference).ToList();
+            var mergeTables = allTables.Where(t => GetTableType(t) == TableType.Merge).ToList();
             
             // Display statistics
-            DrawTableStatistics(allTables.Count, dataTables.Count, assetTables.Count, refTables.Count);
+            DrawTableStatistics(allTables.Count, dataTables.Count, assetTables.Count, mergeTables.Count);
 
             EditorGUILayout.Space(20);
 
@@ -250,7 +250,7 @@ namespace TableSO.Scripts.Editor
             var allTables = GetTablesByInterface();
             var dataTables = allTables.Where(t => GetTableType(t) == TableType.Data).ToList();
             var assetTables = allTables.Where(t => GetTableType(t) == TableType.Asset).ToList();
-            var refTables = allTables.Where(t => GetTableType(t) == TableType.Reference).ToList();
+            var mergeTables = allTables.Where(t => GetTableType(t) == TableType.Merge).ToList();
 
             // Data Tables
             DrawTableSection("Data Tables", dataTables, new Color(0.3f, 0.8f, 0.3f));
@@ -258,8 +258,8 @@ namespace TableSO.Scripts.Editor
             // Asset Tables
             DrawTableSection("Asset Tables", assetTables, new Color(0.9f, 0.6f, 0.2f));
 
-            // Reference Tables
-            DrawTableSection("Reference Tables", refTables, new Color(0.8f, 0.3f, 0.8f));
+            // Merge Tables
+            DrawTableSection("Merge Tables", mergeTables, new Color(0.8f, 0.3f, 0.8f));
 
             EditorGUILayout.EndScrollView();
             EditorGUILayout.EndVertical();
@@ -273,7 +273,7 @@ namespace TableSO.Scripts.Editor
                 margin = new RectOffset(0, 0, 10, 5)
             };
 
-            EditorGUILayout.LabelField("CSV Table Generator", titleStyle);
+            EditorGUILayout.LabelField("CSV CsvTable Generator", titleStyle);
 
             DrawSectionHeader("CSV File Selection");
             
@@ -301,8 +301,8 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space();
 
-            DrawSectionHeader("Table Settings");
-            tableName = EditorGUILayout.TextField("Table Name", tableName);
+            DrawSectionHeader("CsvTable Settings");
+            tableName = EditorGUILayout.TextField("CsvTable Name", tableName);
 
             EditorGUILayout.Space();
 
@@ -324,7 +324,7 @@ namespace TableSO.Scripts.Editor
                          !string.IsNullOrEmpty(tableName) && 
                          File.Exists(csvFilePath);
 
-            if (GUILayout.Button("Generate Table from CSV", GUILayout.Height(40)))
+            if (GUILayout.Button("Generate CsvTable from CSV", GUILayout.Height(40)))
             {
                 GenerateTableFromCSV();
             }
@@ -345,7 +345,7 @@ namespace TableSO.Scripts.Editor
                 margin = new RectOffset(0, 0, 10, 5)
             };
 
-            EditorGUILayout.LabelField("Asset Table Generator", titleStyle);
+            EditorGUILayout.LabelField("Asset CsvTable Generator", titleStyle);
 
             DrawSectionHeader("Target Folder");
             
@@ -376,8 +376,8 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space();
 
-            DrawSectionHeader("Table Settings");
-            assetTableName = EditorGUILayout.TextField("Table Name", assetTableName);
+            DrawSectionHeader("CsvTable Settings");
+            assetTableName = EditorGUILayout.TextField("CsvTable Name", assetTableName);
             
             if (string.IsNullOrEmpty(assetTableName))
             {
@@ -415,7 +415,7 @@ namespace TableSO.Scripts.Editor
                          !string.IsNullOrEmpty(assetTableName) && 
                          Directory.Exists(selectedFolderPath);
 
-            if (GUILayout.Button("Generate Asset Table", GUILayout.Height(40)))
+            if (GUILayout.Button("Generate Asset CsvTable", GUILayout.Height(40)))
             {
                 GenerateAssetTable();
             }
@@ -428,7 +428,7 @@ namespace TableSO.Scripts.Editor
             DrawTabSpecificTableList("Asset Tables", assetTables, new Color(0.9f, 0.6f, 0.2f));
         }
 
-        private void DrawRefTableTab()
+        private void DrawMergeTableTab()
         {
             var titleStyle = new GUIStyle(EditorStyles.boldLabel)
             {
@@ -436,10 +436,10 @@ namespace TableSO.Scripts.Editor
                 margin = new RectOffset(0, 0, 10, 5)
             };
 
-            EditorGUILayout.LabelField("Reference Table Generator", titleStyle);
+            EditorGUILayout.LabelField("Merge CsvTable Generator", titleStyle);
 
-            DrawSectionHeader("Table Settings");
-            refTableName = EditorGUILayout.TextField("RefTable Name", refTableName);
+            DrawSectionHeader("CsvTable Settings");
+            mergeTableName = EditorGUILayout.TextField("Merge Table Name", mergeTableName);
             
             // 키 타입 선택 기능 추가
             EditorGUILayout.Space();
@@ -458,31 +458,31 @@ namespace TableSO.Scripts.Editor
             showAdvancedOptions = EditorGUILayout.Foldout(showAdvancedOptions, "Advanced Options");
             if (showAdvancedOptions)
             {
-                EditorGUILayout.HelpBox("Advanced options for RefTable generation", MessageType.Info);
+                EditorGUILayout.HelpBox("Advanced options for MergeTable generation", MessageType.Info);
                 // 추후 고급 옵션들 추가 가능
             }
 
             EditorGUILayout.Space(20);
 
             // Generate button
-            GUI.enabled = !string.IsNullOrEmpty(refTableName) && 
+            GUI.enabled = !string.IsNullOrEmpty(mergeTableName) && 
                          selectedReferenceTables.Count > 0 &&
-                         !string.IsNullOrEmpty(refTableKeyType);
+                         !string.IsNullOrEmpty(mergeTableKeyType);
 
-            if (GUILayout.Button("Generate Reference Table", GUILayout.Height(40)))
+            if (GUILayout.Button("Generate Merge Table", GUILayout.Height(40)))
             {
-                GenerateRefTable();
+                GenerateMergeTable();
             }
             GUI.enabled = true;
 
             EditorGUILayout.Space(20);
 
-            // Show existing Reference Tables
-            var refTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Reference).ToList();
-            DrawTabSpecificTableList("Reference Tables", refTables, new Color(0.8f, 0.3f, 0.8f));
+            // Show existing Merge Tables
+            var mergeTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Merge).ToList();
+            DrawTabSpecificTableList("Merge Tables", mergeTables, new Color(0.8f, 0.3f, 0.8f));
         }
 
-        #region Interface-based Table Detection Methods
+        #region Interface-based CsvTable Detection Methods
 
         /// <summary>
         /// ITableType 인터페이스를 구현한 모든 ScriptableObject를 FilePath.TABLE_OUTPUT_PATH 경로에서 찾습니다.
@@ -638,7 +638,7 @@ namespace TableSO.Scripts.Editor
                 padding = new RectOffset(10, 10, 8, 8)
             };
             
-            EditorGUILayout.LabelField("Specify the key type for the RefTable. You can use built-in types (string, int, etc.) or custom types (e.g., ItemType enum).", helpStyle);
+            EditorGUILayout.LabelField("Specify the key type for the MergeTable. You can use built-in types (string, int, etc.) or custom types (e.g., ItemType enum).", helpStyle);
             
             EditorGUILayout.Space(5);
             
@@ -647,13 +647,13 @@ namespace TableSO.Scripts.Editor
             EditorGUILayout.BeginHorizontal();
             foreach (string keyType in commonKeyTypes)
             {
-                var buttonStyle = refTableKeyType == keyType ? 
+                var buttonStyle = mergeTableKeyType == keyType ? 
                     new GUIStyle(GUI.skin.button) { normal = { background = MakeTex(1, 1, new Color(0.3f, 0.5f, 0.8f, 1f)) } } : 
                     GUI.skin.button;
                     
                 if (GUILayout.Button(keyType, buttonStyle))
                 {
-                    refTableKeyType = keyType;
+                    mergeTableKeyType = keyType;
                 }
             }
             EditorGUILayout.EndHorizontal();
@@ -662,18 +662,18 @@ namespace TableSO.Scripts.Editor
             
             // 사용자 정의 타입 입력
             EditorGUILayout.LabelField("Custom Type:", EditorStyles.boldLabel);
-            refTableKeyType = EditorGUILayout.TextField("Key Type", refTableKeyType);
+            mergeTableKeyType = EditorGUILayout.TextField("Key Type", mergeTableKeyType);
             
             // 키 타입 유효성 검사 및 안내
-            if (!string.IsNullOrEmpty(refTableKeyType))
+            if (!string.IsNullOrEmpty(mergeTableKeyType))
             {
-                if (IsBuiltInType(refTableKeyType))
+                if (IsBuiltInType(mergeTableKeyType))
                 {
-                    DrawInfoBox($"Using built-in type: {refTableKeyType}", MessageType.Info);
+                    DrawInfoBox($"Using built-in type: {mergeTableKeyType}", MessageType.Info);
                 }
                 else
                 {
-                    DrawInfoBox($"Using custom type: {refTableKeyType}\nMake sure this type exists in your project and implements IConvertible if needed.", MessageType.Warning);
+                    DrawInfoBox($"Using custom type: {mergeTableKeyType}\nMake sure this type exists in your project and implements IConvertible if needed.", MessageType.Warning);
                 }
             }
             
@@ -688,7 +688,7 @@ namespace TableSO.Scripts.Editor
 
         #endregion
 
-        #region Reference Tables Selection
+        #region Merge Tables Selection
 
         private void DrawReferencedTablesSelection()
         {
@@ -722,7 +722,7 @@ namespace TableSO.Scripts.Editor
                 {
                     if (tt.tableType == TableType.Data) color = new Color(0.3f, 0.8f, 0.3f);
                     else if (tt.tableType == TableType.Asset) color = new Color(0.9f, 0.6f, 0.2f);
-                    else if (tt.tableType == TableType.Reference) color = new Color(0.8f, 0.3f, 0.8f);
+                    else if (tt.tableType == TableType.Merge) color = new Color(0.8f, 0.3f, 0.8f);
                 }
 
                 var fieldStyle = new GUIStyle(EditorStyles.foldout)
@@ -806,9 +806,9 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.BeginHorizontal();
             DrawStatBox("Total", total, new Color(0.2f, 0.6f, 0.9f));
-            DrawStatBox("Data Tables", data, new Color(0.3f, 0.8f, 0.3f));
+            DrawStatBox("Csv Tables", data, new Color(0.3f, 0.8f, 0.3f));
             DrawStatBox("Asset Tables", asset, new Color(0.9f, 0.6f, 0.2f));
-            DrawStatBox("Ref Tables", reference, new Color(0.8f, 0.3f, 0.8f));
+            DrawStatBox("Merge Tables", reference, new Color(0.8f, 0.3f, 0.8f));
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.EndVertical();
@@ -969,8 +969,8 @@ namespace TableSO.Scripts.Editor
                 if (method != null)
                 {
                     method.Invoke(null, new object[] { csvFilePath });
-                    Debug.Log($"[TableSO] Table '{tableName}' generated successfully from CSV");
-                    EditorUtility.DisplayDialog("Success", $"Table '{tableName}' generated successfully!", "OK");
+                    Debug.Log($"[TableSO] CsvTable '{tableName}' generated successfully from CSV");
+                    EditorUtility.DisplayDialog("Success", $"CsvTable '{tableName}' generated successfully!", "OK");
                     
                     // Clear form after successful generation
                     csvFilePath = "";
@@ -1024,33 +1024,33 @@ namespace TableSO.Scripts.Editor
             }
         }
 
-        private void GenerateRefTable()
+        private void GenerateMergeTable()
         {
             try
             {
                 // Validate input
-                if (!RefTableGenerator.ValidateTableReferences(selectedReferenceTables))
+                if (!MergeTableGenerator.ValidateTableReferences(selectedReferenceTables))
                 {
                     EditorUtility.DisplayDialog("Error", "Invalid table references detected. Please check your selections.", "OK");
                     return;
                 }
 
                 // 키 타입 검증
-                if (string.IsNullOrEmpty(refTableKeyType))
+                if (string.IsNullOrEmpty(mergeTableKeyType))
                 {
                     EditorUtility.DisplayDialog("Error", "Key type must be specified.", "OK");
                     return;
                 }
 
-                // 키 타입을 포함하여 RefTable 생성
-                RefTableGenerator.GenerateRefTable(refTableName, selectedReferenceTables, refTableKeyType, refAutoRegister);
+                // 키 타입을 포함하여 MergeTable 생성
+                MergeTableGenerator.GenerateMergeTable(mergeTableName, selectedReferenceTables, mergeTableKeyType, refAutoRegister);
                 
-                Debug.Log($"[TableSO] RefTable '{refTableName}' generated successfully with key type '{refTableKeyType}'");
-                EditorUtility.DisplayDialog("Success", $"RefTable '{refTableName}' generated successfully!", "OK");
+                Debug.Log($"[TableSO] MergeTable '{mergeTableName}' generated successfully with key type '{mergeTableKeyType}'");
+                EditorUtility.DisplayDialog("Success", $"MergeTable '{mergeTableName}' generated successfully!", "OK");
                 
                 // Clear form after successful generation
-                refTableName = "";
-                refTableKeyType = "string";
+                mergeTableName = "";
+                mergeTableKeyType = "string";
                 selectedReferenceTables.Clear();
                 
                 // Refresh the display
@@ -1058,8 +1058,8 @@ namespace TableSO.Scripts.Editor
             }
             catch (Exception e)
             {
-                Debug.LogError($"[TableSO] Error in RefTable generation: {e.Message}");
-                EditorUtility.DisplayDialog("Error", $"Failed to generate RefTable:\n{e.Message}", "OK");
+                Debug.LogError($"[TableSO] Error in MergeTable generation: {e.Message}");
+                EditorUtility.DisplayDialog("Error", $"Failed to generate MergeTable:\n{e.Message}", "OK");
             }
         }
 

@@ -138,7 +138,7 @@ namespace TableSO.Scripts
         {
             int i = 0;
             foreach (var table in registeredTables)
-                if (table != null && ((ITableType)table).tableType == TableType.Reference)
+                if (table != null && ((ITableType)table).tableType == TableType.Merge)
                     i++;
 
             return i;

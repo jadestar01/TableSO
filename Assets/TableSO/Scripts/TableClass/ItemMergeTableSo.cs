@@ -6,16 +6,16 @@ using System;
 using TableSO.Scripts;
 
 /// <summary>
-/// Reference Table - Made by TableSO RefTableGenerator
+/// Merge Table - Made by TableSO MergeTableGenerator
 /// Key Type: int
 /// Referenced Tables: EquippableItemDataTableSO, ItemIconAssetTableSO, ItemStringDataTableSO, MaterialItemDataTableSO
 /// </summary>
 
 namespace Table
 {
-    public class ItemRefTableSO : TableSO.Scripts.RefTableSO<int, TableData.Item>, IConsultable
+    public class ItemMergeTableSo : TableSO.Scripts.MergeTableSO<int, TableData.Item>, IConsultable
     {
-        public string fileName => "ItemRefTableSO";
+        public string fileName => "ItemMergeTableSo";
         [SerializeField] private EquippableItemDataTableSO EquippableItemDataTable;
         [SerializeField] private ItemIconAssetTableSO ItemIconAssetTable;
         [SerializeField] private ItemStringDataTableSO ItemStringDataTable;

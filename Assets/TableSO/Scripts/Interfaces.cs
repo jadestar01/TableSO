@@ -17,7 +17,7 @@ namespace TableSO.Scripts
     {
         Data,
         Asset,
-        Reference
+        Merge
     }
     
     public interface IAssetData

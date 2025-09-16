@@ -7,13 +7,13 @@ using System.Reflection;
 namespace TableSO.Scripts
 {
     /// <summary>
-    /// Reference Table that links to other tables and provides custom operations
+    /// Merge Table that links to other tables and provides custom operations
     /// </summary>
-    public abstract class RefTableSO<TKey, TData> : TableSO<TKey, TData>
+    public abstract class MergeTableSO<TKey, TData> : TableSO<TKey, TData>
         where TData : class, IIdentifiable<TKey> 
         where TKey : IConvertible
     {
-        [Header("Reference Table Settings")]
+        [Header("Merge Table Settings")]
         [SerializeField] protected List<ScriptableObject> referencedTables = new();
         [SerializeField] protected bool autoUpdateOnReferencedTableChange = true;
 
@@ -21,7 +21,7 @@ namespace TableSO.Scripts
 
         protected override void OnEnable()
         {
-            tableType = TableType.Reference;
+            tableType = TableType.Merge;
             UpdateData();
             CacheData();
         }

@@ -132,7 +132,7 @@ public static class AssemblyReloadHandler
             {
                 try
                 {
-                    // Check if this is a RefTableSO implementing IReferencable
+                    // Check if this is a MergeTableSO implementing IReferencable
                     if (typeof(IConsultable).IsAssignableFrom(tableType))
                     {
                         string assetName = tableType.Name;
@@ -143,7 +143,7 @@ public static class AssemblyReloadHandler
                         {
                             AssignReferencesToRefTable(tableCenter, refTableAsset, referencable);
                             
-                            // Call RefTableSO's OnRefreshFromReferencedTables to initialize data
+                            // Call MergeTableSO's OnRefreshFromReferencedTables to initialize data
                             try
                             {
                                 var refreshMethod = refTableAsset.GetType().GetMethod("RefreshFromReferencedTables");
