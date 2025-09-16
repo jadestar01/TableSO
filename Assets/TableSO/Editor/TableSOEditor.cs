@@ -273,7 +273,7 @@ namespace TableSO.Scripts.Editor
                 margin = new RectOffset(0, 0, 10, 5)
             };
 
-            EditorGUILayout.LabelField("CSV CsvTable Generator", titleStyle);
+            EditorGUILayout.LabelField("CSV Table Generator", titleStyle);
 
             DrawSectionHeader("CSV File Selection");
             
@@ -301,8 +301,8 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space();
 
-            DrawSectionHeader("CsvTable Settings");
-            tableName = EditorGUILayout.TextField("CsvTable Name", tableName);
+            DrawSectionHeader("Table Settings");
+            tableName = EditorGUILayout.TextField("Table Name", tableName);
 
             EditorGUILayout.Space();
 
@@ -324,7 +324,7 @@ namespace TableSO.Scripts.Editor
                          !string.IsNullOrEmpty(tableName) && 
                          File.Exists(csvFilePath);
 
-            if (GUILayout.Button("Generate CsvTable from CSV", GUILayout.Height(40)))
+            if (GUILayout.Button("Generate Csv Table", GUILayout.Height(40)))
             {
                 GenerateTableFromCSV();
             }
@@ -345,7 +345,7 @@ namespace TableSO.Scripts.Editor
                 margin = new RectOffset(0, 0, 10, 5)
             };
 
-            EditorGUILayout.LabelField("Asset CsvTable Generator", titleStyle);
+            EditorGUILayout.LabelField("Asset Table Generator", titleStyle);
 
             DrawSectionHeader("Target Folder");
             
@@ -376,8 +376,8 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space();
 
-            DrawSectionHeader("CsvTable Settings");
-            assetTableName = EditorGUILayout.TextField("CsvTable Name", assetTableName);
+            DrawSectionHeader("Table Settings");
+            assetTableName = EditorGUILayout.TextField("Table Name", assetTableName);
             
             if (string.IsNullOrEmpty(assetTableName))
             {
@@ -415,7 +415,7 @@ namespace TableSO.Scripts.Editor
                          !string.IsNullOrEmpty(assetTableName) && 
                          Directory.Exists(selectedFolderPath);
 
-            if (GUILayout.Button("Generate Asset CsvTable", GUILayout.Height(40)))
+            if (GUILayout.Button("Generate Asset Table", GUILayout.Height(40)))
             {
                 GenerateAssetTable();
             }
@@ -436,9 +436,9 @@ namespace TableSO.Scripts.Editor
                 margin = new RectOffset(0, 0, 10, 5)
             };
 
-            EditorGUILayout.LabelField("Merge CsvTable Generator", titleStyle);
+            EditorGUILayout.LabelField("Merge Table Generator", titleStyle);
 
-            DrawSectionHeader("CsvTable Settings");
+            DrawSectionHeader("Table Settings");
             mergeTableName = EditorGUILayout.TextField("Merge Table Name", mergeTableName);
             
             // 키 타입 선택 기능 추가
