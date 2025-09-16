@@ -9,7 +9,7 @@ namespace TableSO.Scripts
     /// <summary>
     /// Reference Table that links to other tables and provides custom operations
     /// </summary>
-    public abstract class RefTableSO<TKey, TData> : TableSO<TKey, TData>, ITableType, IUpdatable
+    public abstract class RefTableSO<TKey, TData> : TableSO<TKey, TData>
         where TData : class, IIdentifiable<TKey> 
         where TKey : IConvertible
     {
@@ -22,17 +22,10 @@ namespace TableSO.Scripts
         protected override void OnEnable()
         {
             tableType = TableType.Reference;
+            UpdateData();
             CacheData();
         }
-
-
-        /// <summary>
-        /// Override this to define custom refresh logic based on referenced tables
-        /// </summary>
-        protected virtual void OnRefreshFromReferencedTables()
-        {
-            // Override in derived classes for custom refresh logic
-        }
+        
         
         #region IUpdatable Implementation
         public virtual void UpdateData()

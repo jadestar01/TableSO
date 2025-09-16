@@ -15,14 +15,14 @@ namespace TableSO.Scripts
         protected List<TData> dataList = new();   // Inspector에서 관리할 데이터
         
         protected Dictionary<TKey, TData> dataDict;
-
-        private void Awake()
+        
+        protected virtual void OnEnable()
         {
-            isUpdated = false;
-            
+            tableType = TableType.Data;
+            UpdateData();
             CacheData();
         }
-
+        
         public List<TKey> GetAllKey()
         {
             List<TKey> keys = new List<TKey>();
@@ -33,7 +33,6 @@ namespace TableSO.Scripts
 
         public virtual TData GetData(TKey key)
         {
-            if (isUpdated) CacheData();
             if (IsContains(key))
                 return dataDict[key];
             else
@@ -60,21 +59,10 @@ namespace TableSO.Scripts
 
             isUpdated = false;
         }
-        
-        protected virtual void OnDataUpdated()
-        {
-            
-        }
 
         public virtual void UpdateData()
         {
-            CacheData();
-        }
-
-        protected virtual void OnEnable()
-        {
-            tableType = TableType.Data;
-            CacheData();
+            
         }
     }
 }

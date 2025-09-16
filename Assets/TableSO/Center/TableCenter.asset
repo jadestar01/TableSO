@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: TableCenter
   m_EditorClassIdentifier: 
   registeredTables:
-  - {fileID: 11400000, guid: f7ac160c1404de945aebe6c9f9a943dd, type: 2}
-  - {fileID: 11400000, guid: 66d791f502b45934d9f7c0216e7adb89, type: 2}
-  - {fileID: 11400000, guid: 3af072a83b312334bae5c39da555111d, type: 2}
-  - {fileID: 11400000, guid: 972f0712fdef014488ff7116e6ca2cb4, type: 2}
+  - {fileID: 11400000, guid: 0db0a186baef6324d979f96aea041587, type: 2}
+  - {fileID: 11400000, guid: 009dcc285111afa41ae207d64d0b457a, type: 2}
+  - {fileID: 11400000, guid: 5a2435a38953f644fa00181d629461a4, type: 2}
+  - {fileID: 11400000, guid: 5f47bfe7b31c91645a0f7cd9b43b08be, type: 2}
+  - {fileID: 11400000, guid: bb418b632f21bb545a26461102050914, type: 2}

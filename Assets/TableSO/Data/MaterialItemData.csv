@@ -1,0 +1,10 @@
+ID,ItemType,ItemQuality,DropRate,Price,MaterialType,UpgradeRate,Health,Spirit,Swift,Haste,PhysicalDamage,PhysicalCritRate,PhysicalCritDamage,PhysicalAttackSpeed,PhysicalPenetration,MagicalDamage,MagicalCritRate,MagicalCritDamage,MagicalAttackSpeed,MagicalPenetration,Armor,Resistance,Dodge
+int,ItemType,ItemQuality,int,string,MaterialType,int,float,float,float,float,string,float,float,float,float,string,float,float,float,float,float,float,float
+4301,Material,Rare,1,80~160,Normal,80,20,10,1,,,,,,,,,,,,,,5
+4302,Material,Rare,1,80~160,Normal,70,,30,,10,,,,,,,4~6,,,,,10,
+5301,Material,Rare,1,80~160,Special,40,10,10,1,1,,5,,10,5,5,,5,,10,5,5,5
+5401,Material,Epic,1,150~220,Special,80,20,20,,,6,,,,,10,6,,,,,10,
+5402,Material,Epic,1,150~220,Special,70,50,10,,5,,,,,,,,,,,,,10
+5403,Material,Epic,1,150~220,Special,60,30,20,5,5,4,,,,,,4,,,,,,5
+5404,Material,Epic,1,150~220,Special,80,,,,,6,10,,20,10,10,6,10,,20,10,10,
+5501,Material,Legendary,1,200~280,Special,90,100,,,,,,,,,,,,,,,,40
