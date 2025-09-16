@@ -4,7 +4,7 @@ using UnityEngine;
 using TableSO.Scripts;
 
 /// <summary>
-/// Made by TableSO TableGenerator
+/// Made by TableSO CsvTableGenerator
 /// </summary>
 
 namespace TableData

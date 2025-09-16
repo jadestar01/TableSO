@@ -133,13 +133,13 @@ public static class AssemblyReloadHandler
                 try
                 {
                     // Check if this is a MergeTableSO implementing IReferencable
-                    if (typeof(IConsultable).IsAssignableFrom(tableType))
+                    if (typeof(IMergable).IsAssignableFrom(tableType))
                     {
                         string assetName = tableType.Name;
                         string assetPath = Path.Combine(GENERATED_TABLES_FOLDER, $"{assetName}.asset");
                         var refTableAsset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(assetPath);
 
-                        if (refTableAsset != null && refTableAsset is IConsultable referencable)
+                        if (refTableAsset != null && refTableAsset is IMergable referencable)
                         {
                             AssignReferencesToRefTable(tableCenter, refTableAsset, referencable);
                             
@@ -172,7 +172,7 @@ public static class AssemblyReloadHandler
     }
 
     private static void AssignReferencesToRefTable(TableCenter tableCenter, ScriptableObject refTableAsset,
-        IConsultable consultable)
+        IMergable consultable)
     {
         try
         {

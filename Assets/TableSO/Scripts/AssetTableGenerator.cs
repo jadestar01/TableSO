@@ -12,27 +12,8 @@ using UnityEditor.AddressableAssets.Settings;
 
 namespace TableSO.Scripts.Generator
 {
-    public class AssetTableGenerator : EditorWindow
+    public class AssetTableGenerator
     {
-        private string selectedFolderPath = "Assets/";
-        private Type selectedAssetType = typeof(Sprite);
-        private string tableName = "";
-        private bool autoRegisterToTableCenter = true;
-        private bool createAddressableGroup = true;
-        private string addressableGroupName = "";
-        
-        private readonly Dictionary<string, Type> supportedTypes = new Dictionary<string, Type>()
-        {
-            {"Sprite", typeof(Sprite)},
-            {"Texture2D", typeof(Texture2D)},
-            {"AudioClip", typeof(AudioClip)},
-            {"AnimationClip", typeof(AnimationClip)},
-            {"GameObject", typeof(GameObject)},
-            {"Material", typeof(Material)},
-            {"ScriptableObject", typeof(ScriptableObject)},
-            {"TextAsset", typeof(TextAsset)}
-        };
-        
         public static void GenerateAssetTable(string selectedFolderPath ,string tableName,
             Type selectedAssetType, bool createAddressableGroup,string addressableGroupName, bool autoRegister)
         {
@@ -148,7 +129,7 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine();
             tableCode.AppendLine("namespace Table");
             tableCode.AppendLine("{");
-            tableCode.AppendLine($"    public class {className}TableSO : TableSO.Scripts.AssetTableSO<TableData.{className}>, IAssetData, IUpdatable");
+            tableCode.AppendLine($"    public class {className}TableSO : TableSO.Scripts.AssetTableSO<TableData.{className}>");
             tableCode.AppendLine("    {");
             tableCode.AppendLine($"        [SerializeField] private string assetFolderPath = \"{folderPath}\";");
             tableCode.AppendLine($"        public string fileName => \"{className}TableSO\";");

@@ -7,6 +7,8 @@ namespace TableSO.Scripts
     public class TableSO<TKey, TData> : ScriptableObject, ITableType, IUpdatable
         where TData : class, IIdentifiable<TKey> where TKey : IConvertible
     {
+        public string fileName { get; }
+        
         public TableType tableType { get; set; }
 
         public bool isUpdated = true;

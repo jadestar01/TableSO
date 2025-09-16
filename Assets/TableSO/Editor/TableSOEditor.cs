@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using System.Reflection;
 using TableSO.Scripts.Generator;
 
 namespace TableSO.Scripts.Editor
@@ -957,32 +956,10 @@ namespace TableSO.Scripts.Editor
 
         private void GenerateTableFromCSV()
         {
-            // Use the existing TableGenerator logic
+            // Use the existing CsvTableGenerator logic
             try
             {
-                // Call the existing method from TableGenerator
-                var method = typeof(TableSO.Scripts.Generator.TableGenerator)
-                    .GetMethod("GenerateTableFromCSV", BindingFlags.NonPublic | BindingFlags.Static);
-                
-                TableGenerator.GenerateTableFromCSV(csvFilePath);
-
-                if (method != null)
-                {
-                    method.Invoke(null, new object[] { csvFilePath });
-                    Debug.Log($"[TableSO] CsvTable '{tableName}' generated successfully from CSV");
-                    EditorUtility.DisplayDialog("Success", $"CsvTable '{tableName}' generated successfully!", "OK");
-                    
-                    // Clear form after successful generation
-                    csvFilePath = "";
-                    tableName = "";
-                    
-                    // Refresh the display
-                    Repaint();
-                }
-                else
-                {
-                    Debug.LogError("[TableSO] Could not find GenerateTableFromCSV method");
-                }
+                CsvTableGenerator.GenerateTableFromCSV(csvFilePath);
             }
             catch (Exception e)
             {

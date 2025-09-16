@@ -4,8 +4,8 @@ using TableSO.Scripts;
 
 namespace Table
 {
-    public class EquippableItemDataTableSO : TableSO.Scripts.TableSO<int, TableData.EquippableItemData>
+    public class EquippableItemDataTableSO : TableSO.Scripts.CsvTableSO<int, TableData.EquippableItemData>
     {
-        public string fileName = "EquippableItemData";
+        public override string csvPath { get => "EquippableItemData"; }
     }
 }

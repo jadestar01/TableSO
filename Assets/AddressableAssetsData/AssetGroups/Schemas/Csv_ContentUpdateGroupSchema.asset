@@ -9,9 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5ef38c26c08886540a413d94c25c2b5f, type: 3}
-  m_Name: ItemStringDataTableSO
+  m_Script: {fileID: 11500000, guid: 5834b5087d578d24c926ce20cd31e6d6, type: 3}
+  m_Name: Csv_ContentUpdateGroupSchema
   m_EditorClassIdentifier: 
-  isUpdated: 0
-  dataList: []
-  fileName: ItemStringData
+  m_Group: {fileID: 11400000, guid: 1fd9903bbf79a144a8a18fcdc9c9121c, type: 2}
+  m_StaticContent: 0

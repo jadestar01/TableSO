@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading.Tasks;
-using System.Linq;
 using TableSO.Scripts.Utility;
-using UnityEditor;
 using Object = UnityEngine.Object;
 
 namespace TableSO.Scripts
 {
-    public abstract class AssetTableSO<TData> : TableSO<string, TData>
+    public abstract class AssetTableSO<TData> : TableSO<string, TData>, IAssetData
         where TData : class, IIdentifiable<string>
     {
+        public Type assetType { get; }
+        
         [Header("Asset Table Settings")]
         [SerializeField] protected bool preloadOnAwake = false;
         [SerializeField] protected bool useAddressableLoading = true;

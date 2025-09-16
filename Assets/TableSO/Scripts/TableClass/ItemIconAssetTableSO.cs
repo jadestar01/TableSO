@@ -10,7 +10,7 @@ using TableSO.Scripts;
 
 namespace Table
 {
-    public class ItemIconAssetTableSO : TableSO.Scripts.AssetTableSO<TableData.ItemIconAsset>, IAssetData, IUpdatable
+    public class ItemIconAssetTableSO : TableSO.Scripts.AssetTableSO<TableData.ItemIconAsset>
     {
         [SerializeField] private string assetFolderPath = "Assets/TableSO/Asset/ItemIcon";
         public string fileName => "ItemIconAssetTableSO";

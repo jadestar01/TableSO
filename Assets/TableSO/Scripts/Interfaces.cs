@@ -20,9 +20,10 @@ namespace TableSO.Scripts
         Merge
     }
     
+
     public interface IAssetData
     {
-        public Type assetType { get; }
+        public Type assetType { get; } 
         public string fileName { get; }   
     }
     
@@ -31,8 +32,13 @@ namespace TableSO.Scripts
         public void UpdateData();
     }
 
-    public interface IConsultable
+    public interface IMergable
     {
         public List<Type> refTableTypes { get; set; }
+    }
+
+    public interface ICsvPath
+    {
+        public string csvPath { get; }
     }
 }

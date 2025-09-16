@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b661d8504ba6a943a53a19fb5f23bc8, type: 3}
   m_Name: ItemIconAssetTableSO
   m_EditorClassIdentifier: 
-  isUpdated: 0
+  isUpdated: 1
   dataList: []
   preloadOnAwake: 0
   useAddressableLoading: 1

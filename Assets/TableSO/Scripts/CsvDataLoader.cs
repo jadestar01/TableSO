@@ -7,11 +7,85 @@ using TableSO.FileUtility;
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
+using System.Threading.Tasks;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace TableSO.Scripts.Generator
 {
     public static class CsvDataLoader
     {
+        public static async Task<List<T>> LoadCsvDataAsync<T>(string csvPath) where T : class
+        {
+            List<T> dataList = new List<T>();
+
+            // Addressable 키 구성
+            string addressKey = $"{FilePath.CSV_PATH}/{csvPath}.csv";
+
+            // CSV(TextAsset) 로드
+            AsyncOperationHandle<TextAsset> handle = Addressables.LoadAssetAsync<TextAsset>(addressKey);
+            await handle.Task;
+
+            if (handle.Status != AsyncOperationStatus.Succeeded)
+            {
+                Debug.LogError($"[TableSO] Addressables 로드 실패: {addressKey}");
+                return null;
+            }
+
+            // 텍스트 전체 가져오기
+            string csvText = handle.Result.text;
+            string[] lines = csvText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (lines.Length < 3) // Header, type, minimum 1 data
+            {
+                Debug.LogWarning($"[TableSO] {csvPath}.csv: No data found");
+                return dataList;
+            }
+
+            string[] fieldNames = ParseCsvLine(lines[0]);
+            string[] fieldTypes = ParseCsvLine(lines[1]);
+
+            // Find matching constructor
+            ConstructorInfo constructor = FindMatchingConstructor(typeof(T), fieldTypes, fieldNames);
+            if (constructor == null)
+            {
+                return null; // 에러 메시지는 FindMatchingConstructor 내에서 출력
+            }
+
+            // Process data rows (starting from row 3)
+            for (int i = 2; i < lines.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(lines[i])) continue;
+
+                string[] values = ParseCsvLine(lines[i]);
+
+                if (values.Length != fieldNames.Length)
+                {
+                    Debug.LogWarning($"[TableSO] {csvPath}.csv row {i + 1}: Field count mismatch. Expected: {fieldNames.Length}, Got: {values.Length}");
+                    continue;
+                }
+
+                object[] constructorArgs = new object[values.Length];
+
+                for (int j = 0; j < values.Length; j++)
+                {
+                    constructorArgs[j] = ConvertValue(values[j], fieldTypes[j]);
+                }
+
+                try
+                {
+                    T dataInstance = (T)constructor.Invoke(constructorArgs);
+                    dataList.Add(dataInstance);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[TableSO] Constructor args: [{string.Join(", ", constructorArgs.Select(arg => arg?.ToString() ?? "null"))}]");
+                }
+            }
+
+            return dataList;
+        }
+        
         public static void LoadAllCsvData()
         {
             string csvDataPath = FilePath.CSV_PATH;
@@ -143,7 +217,7 @@ namespace TableSO.Scripts.Generator
             }
             
             // Find matching constructor
-            ConstructorInfo constructor = FindMatchingConstructor(dataType, fieldTypes, fieldNames, className);
+            ConstructorInfo constructor = FindMatchingConstructor(dataType, fieldTypes, fieldNames);
             if (constructor == null)
             {
                 return null; // 에러 메시지는 FindMatchingConstructor 내에서 출력
@@ -184,13 +258,13 @@ namespace TableSO.Scripts.Generator
             return dataList;
         }
 
-        private static ConstructorInfo FindMatchingConstructor(Type dataType, string[] fieldTypes, string[] fieldNames, string className)
+        private static ConstructorInfo FindMatchingConstructor(Type dataType, string[] fieldTypes, string[] fieldNames)
         {
             ConstructorInfo[] constructors = dataType.GetConstructors();
             
             if (constructors.Length == 0)
             {
-                Debug.LogError($"[TableSO] No public constructors found for {className}");
+                Debug.LogError($"[TableSO] No public constructors found");
                 return null;
             }
 
@@ -205,7 +279,7 @@ namespace TableSO.Scripts.Generator
             
             if (matchingCountConstructors.Length == 0)
             {
-                Debug.LogError($"[TableSO] No constructor with {fieldTypes.Length} parameters found for {className}. " +
+                Debug.LogError($"[TableSO] No constructor with {fieldTypes.Length} parameters found " +
                               $"CSV has {fieldTypes.Length} fields but available constructors have: {string.Join(", ", constructors.Select(c => $"{c.GetParameters().Length}"))} parameters");
                 return null;
             }
@@ -239,7 +313,7 @@ namespace TableSO.Scripts.Generator
             var fallbackConstructor = matchingCountConstructors[0];
             var fallbackParams = fallbackConstructor.GetParameters();
             
-            Debug.LogWarning($"[TableSO] No exact type match found for {className} constructor. Using fallback constructor:");
+            Debug.LogWarning($"[TableSO] No exact type match found for constructor. Using fallback constructor:");
             Debug.LogWarning($"Expected types: [{string.Join(", ", fieldTypes)}]");
             Debug.LogWarning($"Constructor types: [{string.Join(", ", fallbackParams.Select(p => p.ParameterType.Name))}]");
             

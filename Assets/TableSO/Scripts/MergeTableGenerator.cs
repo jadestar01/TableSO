@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace TableSO.Scripts.Generator
 {
-    public class MergeTableGenerator : EditorWindow
+    public class MergeTableGenerator
     {
         // 키 타입을 받도록 메서드 시그니처 수정
         public static void GenerateMergeTable(string tableName, List<ScriptableObject> referencedTables, string keyType, bool autoRegister)
@@ -124,7 +124,7 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine();
             tableCode.AppendLine("namespace Table");
             tableCode.AppendLine("{");
-            tableCode.AppendLine($"    public class {className}MergeTableSO : TableSO.Scripts.MergeTableSO<{keyType}, TableData.{className}>, IReferencable");
+            tableCode.AppendLine($"    public class {className}MergeTableSO : TableSO.Scripts.MergeTableSO<{keyType}, TableData.{className}>");
             tableCode.AppendLine("    {");
             tableCode.AppendLine($"        public string fileName => \"{className}MergeTableSO\";");
             
