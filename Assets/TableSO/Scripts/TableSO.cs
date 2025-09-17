@@ -10,8 +10,6 @@ namespace TableSO.Scripts
         public string fileName { get; }
         
         public TableType tableType { get; set; }
-
-        public bool isUpdated = true;
         
         [SerializeField] 
         protected List<TData> dataList;
@@ -23,6 +21,7 @@ namespace TableSO.Scripts
             tableType = TableType.Data;
             UpdateData();
             CacheData();
+            Debug.Log($"[{GetType().Name}] ({typeof(TKey).Name}, {typeof(TData).Name}) : {dataList.Count}");
         }
         #endregion
         
@@ -62,13 +61,10 @@ namespace TableSO.Scripts
                 else
                     Debug.LogWarning($"[TableSO] Duplicate key detected: {item.ID}");
             }
-
-            isUpdated = false;
         }
 
         public virtual void UpdateData()
         {
-            
         }
         #endregion
     }

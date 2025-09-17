@@ -50,7 +50,6 @@ namespace Table
             dataList = dataList.OrderBy(data => data.ID).ToList();
             
             // Mark as updated to refresh cache
-            isUpdated = true;
             CacheData();
 #endif
         }
@@ -94,7 +93,6 @@ namespace Table
         /// </summary>
         public Sprite[] GetAllSprites()
         {
-            if (isUpdated) CacheData();
             return dataDict.Values.Select(data => data.Asset).Where(asset => asset != null).ToArray();
         }
 

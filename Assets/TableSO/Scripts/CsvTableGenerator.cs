@@ -193,10 +193,8 @@ namespace TableSO.Scripts.Generator
                    normalizedType == "double";
         }
 
-        // **수정된 부분: 더 정확한 enum 타입 검증**
         private static bool ValidateEnumType(string enumTypeName)
         {
-            // 사용자 정의 enum만 찾기 (Unity 내부 타입 제외)
             var userDefinedEnums = FindUserDefinedEnumTypes(enumTypeName);
             
             if (userDefinedEnums.Count > 0)
@@ -412,19 +410,12 @@ namespace TableSO.Scripts.Generator
             
             switch (normalizedType)
             {
-                case "int":
-                    return "int";
-                case "float":
-                    return "float";
-                case "string":
-                    return "string";
-                case "bool":
-                    return "bool";
-                case "double":
-                    return "double";
-                default:
-                    // Return as-is for enum or custom types
-                    return csvType.Trim();
+                case "int": return "int";
+                case "float": return "float";
+                case "string": return "string";
+                case "bool": return "bool";
+                case "double": return "double";
+                default: return csvType.Trim();
             }
         }
 

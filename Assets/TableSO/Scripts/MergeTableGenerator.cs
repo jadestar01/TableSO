@@ -45,7 +45,6 @@ namespace TableSO.Scripts.Generator
                 AssetDatabase.Refresh();
                 
                 Debug.Log($"[TableSO] RefTable '{tableName}' generated successfully with key type '{keyType}'");
-                EditorUtility.DisplayDialog("Success", $"RefTable '{tableName}' generated successfully!", "OK");
             }
             catch (Exception e)
             {

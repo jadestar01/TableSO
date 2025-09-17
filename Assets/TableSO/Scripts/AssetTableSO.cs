@@ -38,7 +38,7 @@ namespace TableSO.Scripts
             if (!useAddressableLoading || isPreloaded)
                 return;
 
-            if (isUpdated) CacheData();
+            CacheData();
 
             List<string> addresses = GetAllAddressablePaths();
             
