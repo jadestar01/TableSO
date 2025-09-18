@@ -981,7 +981,7 @@ namespace TableSO.Scripts.Editor
                 }
 
                 AssetTableGenerator.GenerateAssetTable(selectedFolderPath, assetTableName, selectedAssetType,
-                    assetCreateAddressable, addressableGroupName, assetAutoRegister);
+                    assetCreateAddressable);
                 
                 Debug.Log($"[TableSO] Asset table '{assetTableName}' generation completed with {assets.Count} assets");
                 EditorUtility.DisplayDialog("Success", $"Asset table '{assetTableName}' generated successfully with {assets.Count} assets!", "OK");

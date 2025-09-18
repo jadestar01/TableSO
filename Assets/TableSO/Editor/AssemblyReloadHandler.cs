@@ -115,8 +115,6 @@ public static class AssemblyReloadHandler
                     AssetDatabase.SaveAssets();
                     AssetDatabase.Refresh();
                 }
-
-                CsvDataLoader.LoadAllCsvData();
             };
         }
         catch (Exception e)

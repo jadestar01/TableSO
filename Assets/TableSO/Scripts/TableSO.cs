@@ -12,7 +12,7 @@ namespace TableSO.Scripts
         public TableType tableType { get; set; }
         
         [SerializeField] 
-        protected List<TData> dataList;
+        public List<TData> dataList;
         protected Dictionary<TKey, TData> dataDict;
         
         #region Unity Event

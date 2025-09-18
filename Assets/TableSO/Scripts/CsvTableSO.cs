@@ -11,17 +11,11 @@ namespace TableSO.Scripts
     {
         public virtual string csvPath { get => csvPath; }
 
-        protected virtual void OnEnable()
-        {
-            tableType = TableType.Data;
-            UpdateData();
-            CacheData();
-        }
+        protected virtual void OnEnable() => tableType = TableType.Data;
 
-        [ContextMenu("Test")]
         public override async void UpdateData()
         {
-            dataList.Clear();
+            dataList?.Clear();
             dataList = new List<TData>(await CsvDataLoader.LoadCsvDataAsync<TData>(csvPath));
         } 
     }

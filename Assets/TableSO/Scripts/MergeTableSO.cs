@@ -15,13 +15,7 @@ namespace TableSO.Scripts
         [SerializeField] protected List<ScriptableObject> referencedTables = new();
         public List<Type> refTableTypes { get; set; }
     
-        protected override void OnEnable()
-        {
-            tableType = TableType.Merge;
-            UpdateData();
-            CacheData();
-        }
-        
+        protected override void OnEnable() => tableType = TableType.Merge;
         
         #region IUpdatable Implementation
         public virtual void UpdateData()

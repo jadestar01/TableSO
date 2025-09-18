@@ -15,13 +15,10 @@ namespace TableData
 
         [field: SerializeField] public Sprite Asset { get; internal set; }
 
-        [field: SerializeField] public string AddressablePath { get; internal set; }
-
-        public ItemIconAsset(string id, Sprite asset, string addressablePath = "")
+        public ItemIconAsset(string id, Sprite asset)
         {
             this.ID = id;
             this.Asset = asset;
-            this.AddressablePath = addressablePath;
         }
     }
 }

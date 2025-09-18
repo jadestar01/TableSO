@@ -9,13 +9,14 @@ using UnityEditor;
 using UnityEngine;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 
 namespace TableSO.Scripts.Generator
 {
     public class AssetTableGenerator
     {
         public static void GenerateAssetTable(string selectedFolderPath ,string tableName,
-            Type selectedAssetType, bool createAddressableGroup,string addressableGroupName, bool autoRegister)
+            Type selectedAssetType, bool createAddressableGroup)
         {
             try
             {
@@ -35,7 +36,7 @@ namespace TableSO.Scripts.Generator
                 
                 if (createAddressableGroup)
                 {
-                    CreateAddressableGroup(assets, addressableGroupName);
+                    CreateAddressableGroup(assets, $"{tableName}TableSO");
                 }
 
                 // Refresh to compile new scripts
@@ -95,13 +96,10 @@ namespace TableSO.Scripts.Generator
             classCode.AppendLine();
             classCode.AppendLine($"        [field: SerializeField] public {assetType.Name} Asset {{ get; internal set; }}");
             classCode.AppendLine();
-            classCode.AppendLine("        [field: SerializeField] public string AddressablePath { get; internal set; }");
-            classCode.AppendLine();
-            classCode.AppendLine($"        public {className}(string id, {assetType.Name} asset, string addressablePath = \"\")");
+            classCode.AppendLine($"        public {className}(string id, {assetType.Name} asset)");
             classCode.AppendLine("        {");
             classCode.AppendLine("            this.ID = id;");
             classCode.AppendLine("            this.Asset = asset;");
-            classCode.AppendLine("            this.AddressablePath = addressablePath;");
             classCode.AppendLine("        }");
             classCode.AppendLine("    }");
             classCode.AppendLine("}");
@@ -115,90 +113,18 @@ namespace TableSO.Scripts.Generator
         private static void GenerateAssetTableSO(string className, Type assetType, string folderPath)
         {
             StringBuilder tableCode = new StringBuilder();
-            
+
             tableCode.AppendLine("using UnityEngine;");
-            tableCode.AppendLine("using TableData;");
-            tableCode.AppendLine("using System.Threading.Tasks;");
-            tableCode.AppendLine("using System.Linq;");
             tableCode.AppendLine("using System;");
-            tableCode.AppendLine("using System.Collections.Generic;");
-            tableCode.AppendLine("using UnityEditor;");
-            tableCode.AppendLine("using System.IO;");
-            tableCode.AppendLine("using TableSO.Scripts;");
             tableCode.AppendLine();
             tableCode.AppendLine("namespace Table");
             tableCode.AppendLine("{");
-            tableCode.AppendLine($"    public class {className}TableSO : TableSO.Scripts.AssetTableSO<TableData.{className}>");
+            tableCode.AppendLine(
+                $"    public class {className}TableSO : TableSO.Scripts.AssetTableSO<TableData.{className}>");
             tableCode.AppendLine("    {");
             tableCode.AppendLine($"        [SerializeField] private string assetFolderPath = \"{folderPath}\";");
-            tableCode.AppendLine($"        public string fileName => \"{className}TableSO\";");
-            tableCode.AppendLine($"        public Type assetType => typeof({assetType.Name});");
-            tableCode.AppendLine();
-            tableCode.AppendLine("        protected override void OnEnable()");
-            tableCode.AppendLine("        {");
-            tableCode.AppendLine("            LoadAllAssetsFromFolder();");
-            tableCode.AppendLine("            base.OnEnable();");
-            tableCode.AppendLine("        }");
-            tableCode.AppendLine();
-            tableCode.AppendLine("        private void LoadAllAssetsFromFolder()");
-            tableCode.AppendLine("        {");
-            tableCode.AppendLine("#if UNITY_EDITOR");
-            tableCode.AppendLine("            if (dataList == null)");
-            tableCode.AppendLine($"                dataList = new List<TableData.{className}>();");
-            tableCode.AppendLine();
-            tableCode.AppendLine("            dataList.Clear();");
-            tableCode.AppendLine();
-            tableCode.AppendLine($"            // Load all {assetType.Name} assets from the specified folder");
-            tableCode.AppendLine($"            string[] guids = AssetDatabase.FindAssets(\"t:{assetType.Name}\", new[] {{ assetFolderPath }});");
-            tableCode.AppendLine();
-            tableCode.AppendLine("            foreach (string guid in guids)");
-            tableCode.AppendLine("            {");
-            tableCode.AppendLine("                string assetPath = AssetDatabase.GUIDToAssetPath(guid);");
-            tableCode.AppendLine($"                var asset = AssetDatabase.LoadAssetAtPath<{assetType.Name}>(assetPath);");
-            tableCode.AppendLine();
-            tableCode.AppendLine("                if (asset != null)");
-            tableCode.AppendLine("                {");
-            tableCode.AppendLine("                    string assetName = Path.GetFileNameWithoutExtension(assetPath);");
-            tableCode.AppendLine($"                    var assetData = new TableData.{className}(assetName, asset, assetName);");
-            tableCode.AppendLine("                    dataList.Add(assetData);");
-            tableCode.AppendLine("                }");
-            tableCode.AppendLine("            }");
-            tableCode.AppendLine();
-            tableCode.AppendLine("            // Sort by name for consistency");
-            tableCode.AppendLine("            dataList = dataList.OrderBy(data => data.ID).ToList();");
-            tableCode.AppendLine("            ");
-            tableCode.AppendLine("            // Mark as updated to refresh cache");
-            tableCode.AppendLine("            CacheData();");
-            tableCode.AppendLine("#endif");
-            tableCode.AppendLine("        }");
-            tableCode.AppendLine();
-            tableCode.AppendLine($"        public {assetType.Name} GetAsset(string id)");
-            tableCode.AppendLine("        {");
-            tableCode.AppendLine("            var data = GetData(id);");
-            tableCode.AppendLine("            return data?.Asset;");
-            tableCode.AppendLine("        }");
-            tableCode.AppendLine();
-            tableCode.AppendLine($"        public async Task<{assetType.Name}> Get{assetType.Name}Async(string id)");
-            tableCode.AppendLine("        {");
-            tableCode.AppendLine($"            return await LoadAssetAsync<{assetType.Name}>(id);");
-            tableCode.AppendLine("        }");
-            tableCode.AppendLine();
-            tableCode.AppendLine($"        public {assetType.Name} Get{assetType.Name}Sync(string id)");
-            tableCode.AppendLine("        {");
-            tableCode.AppendLine($"            return LoadAssetSync<{assetType.Name}>(id);");
-            tableCode.AppendLine("        }");
-            tableCode.AppendLine();
-            tableCode.AppendLine("        public string GetAddressablePath(string id)");
-            tableCode.AppendLine("        {");
-            tableCode.AppendLine("            var data = GetData(id);");
-            tableCode.AppendLine("            return data?.AddressablePath ?? string.Empty;");
-            tableCode.AppendLine("        }");
-            tableCode.AppendLine();
-            tableCode.AppendLine($"        public {assetType.Name}[] GetAll{assetType.Name}s()");
-            tableCode.AppendLine("        {");
-            tableCode.AppendLine("            CacheData();");
-            tableCode.AppendLine($"            return dataDict.Values.Select(data => data.Asset).Where(asset => asset != null).ToArray();");
-            tableCode.AppendLine("        }");
+            tableCode.AppendLine($"        public override string label {{ get => \"{className}TableSO\"; }}");
+            tableCode.AppendLine($"        public override Type assetType {{ get => typeof({assetType.Name}); }}");
             tableCode.AppendLine("    }");
             tableCode.AppendLine("}");
 
@@ -209,42 +135,53 @@ namespace TableSO.Scripts.Generator
         }
         
         
-        private static void CreateAddressableGroup(List<UnityEngine.Object> assets, string groupName)
+        private static void CreateAddressableGroup(List<UnityEngine.Object> assets, string tableName)
         {
-            try
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
+            if (settings == null)
             {
-                var settings = AddressableAssetSettingsDefaultObject.Settings;
-                if (settings == null)
-                {
-                    Debug.LogWarning("[TableSO] Addressables not initialized. Please initialize Addressables first.");
-                    return;
-                }
-
-                // Create or find existing group
-                var group = settings.FindGroup(groupName);
-                if (group == null)
-                {
-                    group = settings.CreateGroup(groupName, false, false, true, null, typeof(UnityEditor.AddressableAssets.Settings.GroupSchemas.ContentUpdateGroupSchema));
-                }
-
-                // Add assets to the group
-                foreach (var asset in assets)
-                {
-                    string assetPath = AssetDatabase.GetAssetPath(asset);
-                    string assetGUID = AssetDatabase.AssetPathToGUID(assetPath);
-                    
-                    var entry = settings.CreateOrMoveEntry(assetGUID, group, false, false);
-                    entry.address = GetAssetName(asset); // Use filename as address
-                }
-
-                settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, null, true);
-                Debug.Log($"[TableSO] Created Addressable group '{groupName}' with {assets.Count} assets");
+                Debug.LogWarning("[TableSO] Addressables not initialized.");
+                return;
             }
-            catch (Exception e)
+
+            var group = settings.FindGroup(tableName);
+            if (group == null)
             {
-                Debug.LogWarning($"[TableSO] Could not create Addressable group: {e.Message}");
+                group = settings.CreateGroup(
+                    tableName,
+                    false,
+                    false,
+                    true,
+                    null,
+                    typeof(ContentUpdateGroupSchema),
+                    typeof(BundledAssetGroupSchema)
+                );
+
+                var bundleSchema = group.GetSchema<BundledAssetGroupSchema>();
+                if (bundleSchema != null)
+                {
+                    bundleSchema.BuildPath.SetVariableByName(settings, "LocalBuildPath");
+                    bundleSchema.LoadPath.SetVariableByName(settings, "LocalLoadPath");
+
+                    bundleSchema.BundleNaming = BundledAssetGroupSchema.BundleNamingStyle.AppendHash;
+                }
             }
+
+            // Add assets
+            foreach (var asset in assets)
+            {
+                string assetPath = AssetDatabase.GetAssetPath(asset);
+                string assetGUID = AssetDatabase.AssetPathToGUID(assetPath);
+
+                var entry = settings.CreateOrMoveEntry(assetGUID, group, false, false);
+                entry.address = asset.name; // filename as address
+                entry.SetLabel(tableName, true, true);
+            }
+
+            settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, null, true);
+            Debug.Log($"[TableSO] Created Addressable group '{tableName}' with {assets.Count} assets");
         }
+
 
         private static void EnsureDirectoryExists(string path)
         {

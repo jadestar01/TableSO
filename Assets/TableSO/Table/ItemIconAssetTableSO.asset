@@ -13,6 +13,4 @@ MonoBehaviour:
   m_Name: ItemIconAssetTableSO
   m_EditorClassIdentifier: 
   dataList: []
-  preloadOnAwake: 0
-  useAddressableLoading: 1
   assetFolderPath: Assets/TableSO/Asset/ItemIcon

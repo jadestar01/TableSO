@@ -24,7 +24,7 @@ namespace TableSO.Scripts
     public interface IAssetData
     {
         public Type assetType { get; } 
-        public string fileName { get; }   
+        public string label { get; }   
     }
     
     public interface IUpdatable

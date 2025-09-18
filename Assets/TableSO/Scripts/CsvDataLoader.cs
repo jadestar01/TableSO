@@ -18,10 +18,8 @@ namespace TableSO.Scripts.Generator
         {
             List<T> dataList = new List<T>();
 
-            // Addressable 키 구성
-            string addressKey = $"{FilePath.CSV_PATH}/{csvPath}.csv";
+            string addressKey = $"{FilePath.CSV_PATH}{csvPath}.csv";
 
-            // CSV(TextAsset) 로드
             AsyncOperationHandle<TextAsset> handle = Addressables.LoadAssetAsync<TextAsset>(addressKey);
             await handle.Task;
 
@@ -44,14 +42,12 @@ namespace TableSO.Scripts.Generator
             string[] fieldNames = ParseCsvLine(lines[0]);
             string[] fieldTypes = ParseCsvLine(lines[1]);
 
-            // Find matching constructor
             ConstructorInfo constructor = FindMatchingConstructor(typeof(T), fieldTypes, fieldNames);
             if (constructor == null)
             {
                 return null; // 에러 메시지는 FindMatchingConstructor 내에서 출력
             }
 
-            // Process data rows (starting from row 3)
             for (int i = 2; i < lines.Length; i++)
             {
                 if (string.IsNullOrWhiteSpace(lines[i])) continue;
@@ -85,178 +81,6 @@ namespace TableSO.Scripts.Generator
             return dataList;
         }
         
-        public static void LoadAllCsvData()
-        {
-            string csvDataPath = FilePath.CSV_PATH;
-            string tableOutputPath = FilePath.TABLE_OUTPUT_PATH;
-            
-            if (!Directory.Exists(csvDataPath))
-            {
-                Debug.LogError($"[TableSO] CSV Data folder does not exist: {csvDataPath}");
-                return;
-            }
-
-            string[] csvFiles = Directory.GetFiles(csvDataPath, "*.csv");
-
-            List<ScriptableObject> sos = new();
-            
-            foreach (string csvPath in csvFiles)
-            {
-                var tableSO = LoadCsvDataToTableSO(csvPath, tableOutputPath);
-                if (tableSO != null)
-                {
-                    sos.Add(tableSO);
-                }
-            }
-            
-            RegisterTablesToCenter(sos);
-            
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-        }
-        
-        private static void RegisterTablesToCenter(List<ScriptableObject> tables)
-        {
-            if (tables.Count == 0) return;
-            
-            // Find TableCenter
-            string[] guids = AssetDatabase.FindAssets("t:TableCenter");
-            
-            TableCenter tableCenter = null;
-            
-            if (guids.Length > 0)
-            {
-                string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-                tableCenter = AssetDatabase.LoadAssetAtPath<TableCenter>(path);
-            }
-            
-            if (tableCenter == null)
-            {
-                Debug.LogWarning("[TableSO] Cannot find TableCenter. Please register manually");
-                return;
-            }
-            
-            // Register tables
-            foreach (var table in tables)
-            {
-                if (table != null)
-                {
-                    tableCenter.RegisterTable(table);
-                }
-            }
-            
-            EditorUtility.SetDirty(tableCenter);
-        }
-
-        private static ScriptableObject LoadCsvDataToTableSO(string csvPath, string tableOutputPath)
-        {
-            string fileName = Path.GetFileNameWithoutExtension(csvPath);
-            string tableSOPath = Path.Combine(tableOutputPath, $"{fileName}TableSO.asset");
-            ScriptableObject tableSO = AssetDatabase.LoadAssetAtPath<ScriptableObject>(tableSOPath);
-
-            try
-            {
-                if (tableSO == null)
-                {
-                    // Find TableSO type
-                    Type tableSOType = FindTableSOType($"{fileName}TableSO");
-                    if (tableSOType == null)
-                    {
-                        Debug.LogError($"[TableSO] Cannot find {fileName}TableSO type. Please generate code first");
-                        return null;
-                    }
-                    
-                    tableSO = ScriptableObject.CreateInstance(tableSOType);
-                    AssetDatabase.CreateAsset(tableSO, tableSOPath);
-                }
-
-                // Load CSV data
-                List<object> dataList = LoadCsvData(csvPath, fileName);
-                
-                if (dataList == null)
-                {
-                    Debug.LogError($"[TableSO] Failed to load CSV data for {fileName}");
-                    return null;
-                }
-                
-                // Set data to TableSO's dataList field
-                SetTableSOData(tableSO, dataList);
-                
-                EditorUtility.SetDirty(tableSO);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[TableSO] Error loading {fileName} CSV: {e.Message}\nStack trace: {e.StackTrace}");
-                return null;
-            }
-            
-            return tableSO;
-        }
-
-        private static List<object> LoadCsvData(string csvPath, string className)
-        {
-            List<object> dataList = new List<object>();
-            string[] lines = File.ReadAllLines(csvPath);
-            
-            if (lines.Length < 3) // Header, type, minimum 1 data
-            {
-                Debug.LogWarning($"[TableSO] {className}.csv: No data found");
-                return dataList;
-            }
-
-            string[] fieldNames = ParseCsvLine(lines[0]);
-            string[] fieldTypes = ParseCsvLine(lines[1]);
-            
-            // Find data class type
-            Type dataType = FindDataClassType(className);
-            if (dataType == null)
-            {
-                Debug.LogError($"[TableSO] Cannot find {className} data class");
-                return null;
-            }
-            
-            // Find matching constructor
-            ConstructorInfo constructor = FindMatchingConstructor(dataType, fieldTypes, fieldNames);
-            if (constructor == null)
-            {
-                return null; // 에러 메시지는 FindMatchingConstructor 내에서 출력
-            }
-
-            // Process data rows (starting from row 3)
-            for (int i = 2; i < lines.Length; i++)
-            {
-                if (string.IsNullOrWhiteSpace(lines[i])) continue;
-                
-                string[] values = ParseCsvLine(lines[i]);
-                
-                if (values.Length != fieldNames.Length)
-                {
-                    Debug.LogWarning($"[TableSO] {className}.csv row {i+1}: Field count mismatch. Expected: {fieldNames.Length}, Got: {values.Length}");
-                    continue;
-                }
-
-                object[] constructorArgs = new object[values.Length];
-                
-                for (int j = 0; j < values.Length; j++)
-                {
-                    constructorArgs[j] = ConvertValue(values[j], fieldTypes[j]);
-                }
-                
-                try
-                {
-                    object dataInstance = constructor.Invoke(constructorArgs);
-                    dataList.Add(dataInstance);
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"[TableSO] Error creating instance for {className} row {i+1}: {e.Message}");
-                    Debug.LogError($"[TableSO] Constructor args: [{string.Join(", ", constructorArgs.Select(arg => arg?.ToString() ?? "null"))}]");
-                }
-            }
-            
-            return dataList;
-        }
-
         private static ConstructorInfo FindMatchingConstructor(Type dataType, string[] fieldTypes, string[] fieldNames)
         {
             ConstructorInfo[] constructors = dataType.GetConstructors();
@@ -273,7 +97,6 @@ namespace TableSO.Scripts.Generator
                 string paramInfo = string.Join(", ", parameters.Select(p => $"{p.ParameterType.Name} {p.Name}"));
             }
 
-            // 1. 매개변수 개수가 일치하는 생성자부터 찾기
             var matchingCountConstructors = constructors.Where(c => c.GetParameters().Length == fieldTypes.Length).ToArray();
             
             if (matchingCountConstructors.Length == 0)
@@ -283,7 +106,6 @@ namespace TableSO.Scripts.Generator
                 return null;
             }
 
-            // 2. 타입이 정확히 일치하는 생성자 찾기
             foreach (var constructor in matchingCountConstructors)
             {
                 var parameters = constructor.GetParameters();
@@ -378,75 +200,7 @@ namespace TableSO.Scripts.Generator
             fields.Add(currentField.ToString().Trim());
             return fields.ToArray();
         }
-
-        private static Type FindTableSOType(string typeName)
-        {
-            Type type = null;
-            
-            // 첫 번째 시도
-            type = FindTypeInAssemblies($"Table.{typeName}");
-            
-            if (type == null)
-            {
-                // 어셈블리 새로고침 후 재시도
-                Debug.LogWarning($"[TableSO] Type {typeName} not found, refreshing assemblies...");
-                AssetDatabase.Refresh();
-                System.Threading.Thread.Sleep(1000); // 잠시 대기
-                
-                type = FindTypeInAssemblies($"Table.{typeName}");
-            }
-            
-            return type;
-        }
-
-        private static Type FindDataClassType(string className)
-        {
-            Type type = null;
-            
-            // 1. 기본 네임스페이스로 시도
-            type = FindTypeInAssemblies($"TableData.{className}");
-            
-            if (type == null)
-            {
-                // 2. 네임스페이스 없이 시도
-                type = FindTypeInAssemblies(className);
-            }
-            
-            if (type == null)
-            {
-                // 3. 어셈블리 새로고침 후 재시도
-                Debug.LogWarning($"[TableSO] Type {className} not found, refreshing assemblies...");
-                AssetDatabase.Refresh();
-                System.Threading.Thread.Sleep(1000);
-                
-                type = FindTypeInAssemblies($"TableData.{className}");
-                if (type == null)
-                {
-                    type = FindTypeInAssemblies(className);
-                }
-            }
-            
-            return type;
-        }
-
-        private static Type FindTypeInAssemblies(string typeName)
-        {
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                try
-                {
-                    Type type = assembly.GetType(typeName);
-                    if (type != null) return type;
-                }
-                catch (Exception e)
-                {
-                    // 어셈블리 로딩 오류는 무시하고 계속 진행
-                    Debug.LogWarning($"[TableSO] Error loading type from assembly {assembly.FullName}: {e.Message}");
-                }
-            }
-            return null;
-        }
-
+        
         private static Type GetTypeFromString(string typeString)
         {
             if (string.IsNullOrEmpty(typeString)) return typeof(string);
@@ -550,11 +304,6 @@ namespace TableSO.Scripts.Generator
             {
                 // 첫 번째 후보 사용 (가장 적합한 것으로 추정)
                 Type selectedType = candidateTypes[0];
-                
-                if (candidateTypes.Count > 1)
-                {
-                    Debug.LogWarning($"[TableSO] Multiple types found for '{typeName}', using: {selectedType.FullName}");
-                }
                 
                 return selectedType;
             }
@@ -696,61 +445,5 @@ namespace TableSO.Scripts.Generator
             }
         }
 
-        private static void SetTableSOData(ScriptableObject tableSO, List<object> dataList)
-        {
-            Type tableSOType = tableSO.GetType();
-            FieldInfo dataListField = null;
-            
-            // Find dataList field in parent class
-            Type currentType = tableSOType;
-            while (currentType != null && dataListField == null)
-            {
-                dataListField = currentType.GetField("dataList", BindingFlags.NonPublic | BindingFlags.Instance);
-                currentType = currentType.BaseType;
-            }
-            
-            if (dataListField != null)
-            {
-                // Create new list of type List<TData>
-                Type dataType = dataListField.FieldType.GetGenericArguments()[0];
-                Type listType = typeof(List<>).MakeGenericType(dataType);
-                object newList = Activator.CreateInstance(listType);
-                
-                // Add data
-                MethodInfo addMethod = listType.GetMethod("Add");
-                foreach (object data in dataList)
-                {
-                    addMethod.Invoke(newList, new[] { data });
-                }
-                
-                dataListField.SetValue(tableSO, newList);
-                
-                // Set isUpdated flag - 현재 타입에서 찾기
-                Type searchType = tableSOType;
-                while (searchType != null)
-                {
-                    FieldInfo isUpdatedField = searchType.GetField("isUpdated", BindingFlags.Public | BindingFlags.Instance);
-                    if (isUpdatedField != null)
-                    {
-                        isUpdatedField.SetValue(tableSO, true);
-                        break;
-                    }
-                    searchType = searchType.BaseType;
-                }
-
-                MethodInfo onDataUpdatedMethod = tableSOType.GetMethod("OnDataUpdated",
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-
-                if (onDataUpdatedMethod != null)
-                {
-                    onDataUpdatedMethod.Invoke(tableSO, null);
-                }
-
-            }
-            else
-            {
-                Debug.LogError($"[TableSO] Cannot find dataList field in {tableSOType.Name}");
-            }
-        }
     }
 }
