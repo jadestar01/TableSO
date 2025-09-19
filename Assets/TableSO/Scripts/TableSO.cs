@@ -18,7 +18,7 @@ namespace TableSO.Scripts
         #region Unity Event
         protected virtual void OnEnable()
         {
-            tableType = TableType.Data;
+            tableType = TableType.Csv;
             UpdateData();
             CacheData();
             Debug.Log($"[{GetType().Name}] ({typeof(TKey).Name}, {typeof(TData).Name}) : {dataList.Count}");

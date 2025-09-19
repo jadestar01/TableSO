@@ -11,7 +11,7 @@ namespace TableSO.Scripts
     {
         public virtual string csvPath { get => csvPath; }
 
-        protected virtual void OnEnable() => tableType = TableType.Data;
+        protected virtual void OnEnable() => tableType = TableType.Csv;
 
         public override async void UpdateData()
         {

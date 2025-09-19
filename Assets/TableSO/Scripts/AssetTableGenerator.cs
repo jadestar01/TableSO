@@ -28,10 +28,7 @@ namespace TableSO.Scripts.Generator
                     return;
                 }
 
-                // Generate Data Class
                 GenerateAssetDataClass(tableName, selectedAssetType);
-                
-                // Generate TableSO Class
                 GenerateAssetTableSO(tableName, selectedAssetType, selectedFolderPath);
                 
                 if (createAddressableGroup)
@@ -39,7 +36,6 @@ namespace TableSO.Scripts.Generator
                     CreateAddressableGroup(assets, $"{tableName}TableSO");
                 }
 
-                // Refresh to compile new scripts
                 AssetDatabase.Refresh();
                 
                 Debug.Log($"[TableSO] Asset table '{tableName}' generated successfully with {assets.Count} assets");

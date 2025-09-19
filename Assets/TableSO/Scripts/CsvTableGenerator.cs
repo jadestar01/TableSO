@@ -13,7 +13,7 @@ namespace TableSO.Scripts.Generator
 {
     public class CsvTableGenerator
     {
-        public static void GenerateTableFromCSV(string csvPath)
+        public static void GenerateCsvTable(string csvPath)
         {
             string fileName = Path.GetFileNameWithoutExtension(csvPath);
             
@@ -27,7 +27,6 @@ namespace TableSO.Scripts.Generator
                     return;
                 }
 
-                // CSV parsing
                 string[] fieldNames = ParseCSVLine(lines[0]);
                 string[] fieldTypes = ParseCSVLine(lines[1]);
                 
@@ -37,19 +36,16 @@ namespace TableSO.Scripts.Generator
                     return;
                 }
 
-                // Validate first field (ID field)
                 if (!ValidateIDField(fieldNames[0], fieldTypes[0], fileName))
                     return;
 
-                // Validate all field types
                 if (!ValidateFieldTypes(fieldTypes, fileName))
                     return;
 
-                // Generate class
                 GenerateDataClass(fileName, fieldNames, fieldTypes);
-                
-                // Generate TableSO
                 GenerateTableSO(fileName, fieldTypes[0], fileName);
+                
+                AssetDatabase.Refresh();
                 
                 Debug.Log($"[CsvTableSO] {fileName} table generated successfully");
             }

@@ -12,7 +12,6 @@ namespace TableSO.Scripts.Generator
 {
     public class MergeTableGenerator
     {
-        // 키 타입을 받도록 메서드 시그니처 수정
         public static void GenerateMergeTable(string tableName, List<ScriptableObject> referencedTables, string keyType, bool autoRegister)
         {
             try
@@ -35,13 +34,8 @@ namespace TableSO.Scripts.Generator
                     return;
                 }
 
-                // Generate RefData class
                 GenerateMergeDataClass(tableName, keyType, referencedTables);
-                
-                // Generate MergeTableSO class
                 GenerateMergeTableSOClass(tableName, keyType, referencedTables);
-
-                // Refresh to compile new scripts
                 AssetDatabase.Refresh();
                 
                 Debug.Log($"[TableSO] RefTable '{tableName}' generated successfully with key type '{keyType}'");
@@ -126,8 +120,6 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine($"    public class {className}MergeTableSO : TableSO.Scripts.MergeTableSO<{keyType}, TableData.{className}>");
             tableCode.AppendLine("    {");
             tableCode.AppendLine($"        public string fileName => \"{className}MergeTableSO\";");
-            
-            // 참조된 테이블들을 위한 private 필드들
             foreach (var table in referencedTables)
             {
                 if (table == null) continue;
@@ -137,13 +129,9 @@ namespace TableSO.Scripts.Generator
                 
                 tableCode.AppendLine($"        [SerializeField] private {tableTypeName} {propertyName}Table;");
             }
-            
             tableCode.AppendLine();
-            
-            // refTableTypes 속성 구현
-            tableCode.AppendLine($"        public List<Type> refTableTypes {{ get; set; }} = new List<Type>()");
+            tableCode.AppendLine($"        public override List<Type> refTableTypes {{ get; set; }} = new List<Type>()");
             tableCode.AppendLine($"        {{");
-            
             foreach (var table in referencedTables)
             {
                 if (table == null) continue;

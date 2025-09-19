@@ -130,7 +130,6 @@ public static class AssemblyReloadHandler
             {
                 try
                 {
-                    // Check if this is a MergeTableSO implementing IReferencable
                     if (typeof(IMergable).IsAssignableFrom(tableType))
                     {
                         string assetName = tableType.Name;
@@ -141,7 +140,6 @@ public static class AssemblyReloadHandler
                         {
                             AssignReferencesToRefTable(tableCenter, refTableAsset, referencable);
                             
-                            // Call MergeTableSO's OnRefreshFromReferencedTables to initialize data
                             try
                             {
                                 var refreshMethod = refTableAsset.GetType().GetMethod("RefreshFromReferencedTables");
@@ -193,11 +191,6 @@ public static class AssemblyReloadHandler
                         break;
                     }
                 }
-            }
-
-            if (refTableAsset is IUpdatable updatable)
-            {
-                updatable.UpdateData();
             }
 
             EditorUtility.SetDirty(refTableAsset);

@@ -82,10 +82,9 @@ namespace TableSO.Scripts.Editor
             EditorPrefs.SetBool("AutoReload", autoReload);
         }
         
-
+        #region Editor Drawing Methods
         private void LoadStyles()
         {
-            // Style loading will be handled in OnGUI for better compatibility
         }
 
         private void OnGUI()
@@ -184,7 +183,6 @@ namespace TableSO.Scripts.Editor
                 margin = new RectOffset(0, 0, 10, 5)
             };
 
-            // Find TableCenter
             string[] guids = AssetDatabase.FindAssets("t:TableCenter");
             
             if (guids.Length == 0)
@@ -210,23 +208,19 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space(10);
 
-            // Get tables by type using interface filtering
             var allTables = GetTablesByInterface();
-            var dataTables = allTables.Where(t => GetTableType(t) == TableType.Data).ToList();
+            var dataTables = allTables.Where(t => GetTableType(t) == TableType.Csv).ToList();
             var assetTables = allTables.Where(t => GetTableType(t) == TableType.Asset).ToList();
             var mergeTables = allTables.Where(t => GetTableType(t) == TableType.Merge).ToList();
             
-            // Display statistics
             DrawTableStatistics(allTables.Count, dataTables.Count, assetTables.Count, mergeTables.Count);
 
             EditorGUILayout.Space(20);
 
-            // Quick actions
             DrawQuickActions(tableCenter);
 
             EditorGUILayout.Space(20);
 
-            // All Tables List
             DrawAllTablesList();
         }
 
@@ -245,19 +239,15 @@ namespace TableSO.Scripts.Editor
 
             assetListScrollPosition = EditorGUILayout.BeginScrollView(assetListScrollPosition, GUILayout.MaxHeight(300));
 
-            // Get tables by interface implementation
             var allTables = GetTablesByInterface();
-            var dataTables = allTables.Where(t => GetTableType(t) == TableType.Data).ToList();
+            var dataTables = allTables.Where(t => GetTableType(t) == TableType.Csv).ToList();
             var assetTables = allTables.Where(t => GetTableType(t) == TableType.Asset).ToList();
             var mergeTables = allTables.Where(t => GetTableType(t) == TableType.Merge).ToList();
 
-            // Data Tables
             DrawTableSection("Data Tables", dataTables, new Color(0.3f, 0.8f, 0.3f));
 
-            // Asset Tables
             DrawTableSection("Asset Tables", assetTables, new Color(0.9f, 0.6f, 0.2f));
 
-            // Merge Tables
             DrawTableSection("Merge Tables", mergeTables, new Color(0.8f, 0.3f, 0.8f));
 
             EditorGUILayout.EndScrollView();
@@ -292,7 +282,6 @@ namespace TableSO.Scripts.Editor
                         csvFilePath = path;
                     }
                     
-                    // Auto-generate table name from CSV filename
                     tableName = Path.GetFileNameWithoutExtension(csvFilePath);
                 }
             }
@@ -310,7 +299,6 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space();
 
-            // Preview CSV content if file is selected
             if (!string.IsNullOrEmpty(csvFilePath) && File.Exists(csvFilePath))
             {
                 DrawCSVPreview();
@@ -318,21 +306,19 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space(20);
 
-            // Generate button
             GUI.enabled = !string.IsNullOrEmpty(csvFilePath) && 
                          !string.IsNullOrEmpty(tableName) && 
                          File.Exists(csvFilePath);
 
             if (GUILayout.Button("Generate Csv Table", GUILayout.Height(40)))
             {
-                GenerateTableFromCSV();
+                GenerateCsvTable();
             }
             GUI.enabled = true;
 
             EditorGUILayout.Space(20);
 
-            // Show existing Data Tables
-            var dataTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Data).ToList();
+            var dataTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Csv).ToList();
             DrawTabSpecificTableList("Data Tables", dataTables, new Color(0.3f, 0.8f, 0.3f));
         }
 
@@ -401,7 +387,6 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space();
 
-            // Preview assets
             if (!string.IsNullOrEmpty(selectedFolderPath) && Directory.Exists(selectedFolderPath))
             {
                 DrawAssetPreview();
@@ -409,7 +394,6 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space(20);
 
-            // Generate button
             GUI.enabled = !string.IsNullOrEmpty(selectedFolderPath) && 
                          !string.IsNullOrEmpty(assetTableName) && 
                          Directory.Exists(selectedFolderPath);
@@ -422,7 +406,6 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space(20);
 
-            // Show existing Asset Tables
             var assetTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Asset).ToList();
             DrawTabSpecificTableList("Asset Tables", assetTables, new Color(0.9f, 0.6f, 0.2f));
         }
@@ -440,7 +423,6 @@ namespace TableSO.Scripts.Editor
             DrawSectionHeader("Table Settings");
             mergeTableName = EditorGUILayout.TextField("Merge Table Name", mergeTableName);
             
-            // 키 타입 선택 기능 추가
             EditorGUILayout.Space();
             DrawKeyTypeSelection();
             
@@ -458,12 +440,10 @@ namespace TableSO.Scripts.Editor
             if (showAdvancedOptions)
             {
                 EditorGUILayout.HelpBox("Advanced options for MergeTable generation", MessageType.Info);
-                // 추후 고급 옵션들 추가 가능
             }
 
             EditorGUILayout.Space(20);
 
-            // Generate button
             GUI.enabled = !string.IsNullOrEmpty(mergeTableName) && 
                          selectedReferenceTables.Count > 0 &&
                          !string.IsNullOrEmpty(mergeTableKeyType);
@@ -476,24 +456,18 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space(20);
 
-            // Show existing Merge Tables
             var mergeTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Merge).ToList();
             DrawTabSpecificTableList("Merge Tables", mergeTables, new Color(0.8f, 0.3f, 0.8f));
         }
+        #endregion
 
         #region Interface-based CsvTable Detection Methods
-
-        /// <summary>
-        /// ITableType 인터페이스를 구현한 모든 ScriptableObject를 FilePath.TABLE_OUTPUT_PATH 경로에서 찾습니다.
-        /// </summary>
         private List<ScriptableObject> GetTablesByInterface()
         {
             var tables = new List<ScriptableObject>();
             
-            // FilePath.TABLE_OUTPUT_PATH 경로에서 모든 .asset 파일 검색
-            string searchPath = "Assets"; // FilePath.TABLE_OUTPUT_PATH가 정의되지 않아 기본 경로 사용
+            string searchPath = "Assets";
             
-            // 모든 ScriptableObject 검색
             string[] guids = AssetDatabase.FindAssets("t:ScriptableObject", new[] { searchPath });
             
             foreach (string guid in guids)
@@ -510,24 +484,18 @@ namespace TableSO.Scripts.Editor
             return tables.OrderBy(t => t.name).ToList();
         }
 
-        /// <summary>
-        /// ScriptableObject가 ITableType 인터페이스를 구현하는지 확인합니다.
-        /// </summary>
         private bool IsTableType(ScriptableObject obj)
         {
             return obj is ITableType;
         }
 
-        /// <summary>
-        /// ITableType을 구현한 ScriptableObject의 TableType을 반환합니다.
-        /// </summary>
         private TableType GetTableType(ScriptableObject obj)
         {
             if (obj is ITableType tableType)
             {
                 return tableType.tableType;
             }
-            return TableType.Data; // 기본값
+            return TableType.Csv;
         }
 
         #endregion
@@ -719,7 +687,7 @@ namespace TableSO.Scripts.Editor
                 Color color = Color.black;
                 if (table is ITableType tt)
                 {
-                    if (tt.tableType == TableType.Data) color = new Color(0.3f, 0.8f, 0.3f);
+                    if (tt.tableType == TableType.Csv) color = new Color(0.3f, 0.8f, 0.3f);
                     else if (tt.tableType == TableType.Asset) color = new Color(0.9f, 0.6f, 0.2f);
                     else if (tt.tableType == TableType.Merge) color = new Color(0.8f, 0.3f, 0.8f);
                 }
@@ -946,20 +914,20 @@ namespace TableSO.Scripts.Editor
         #endregion
 
         #region Generation Methods
-
         private void CreateTableCenter()
         {
-            // Implementation for creating TableCenter
             Debug.Log("[TableSO] Creating TableCenter...");
             EditorUtility.DisplayDialog("Info", "TableCenter creation functionality needs to be implemented.", "OK");
         }
 
-        private void GenerateTableFromCSV()
+        private void GenerateCsvTable()
         {
-            // Use the existing CsvTableGenerator logic
             try
             {
-                CsvTableGenerator.GenerateTableFromCSV(csvFilePath);
+                CsvTableGenerator.GenerateCsvTable(csvFilePath);
+                Debug.Log($"[TableSO] Csv table '{tableName}' generation completed from {csvFilePath}");
+                EditorUtility.DisplayDialog("Success", $"CSV table '{tableName}' generated successfully!", "OK");
+
             }
             catch (Exception e)
             {

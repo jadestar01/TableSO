@@ -13,7 +13,7 @@ namespace TableSO.Scripts
     {
         [Header("Merge Table Settings")]
         [SerializeField] protected List<ScriptableObject> referencedTables = new();
-        public List<Type> refTableTypes { get; set; }
+        public virtual List<Type> refTableTypes { get; set; }
     
         protected override void OnEnable() => tableType = TableType.Merge;
         

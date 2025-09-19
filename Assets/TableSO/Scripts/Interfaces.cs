@@ -15,12 +15,11 @@ namespace TableSO.Scripts
     
     public enum TableType
     {
-        Data,
+        Csv,
         Asset,
         Merge
     }
     
-
     public interface IAssetData
     {
         public Type assetType { get; } 
