@@ -20,12 +20,15 @@ namespace TableData
 
         [field: SerializeField] public ExampleEnum EnumEle { get; internal set; }
 
-        public ExampleData(int ID, string[] IconName, string Text, ExampleEnum EnumEle)
+        [field: SerializeField] public int Dummy { get; internal set; }
+
+        public ExampleData(int ID, string[] IconName, string Text, ExampleEnum EnumEle, int Dummy)
         {
             this.ID = ID;
             this.IconName = IconName;
             this.Text = Text;
             this.EnumEle = EnumEle;
+            this.Dummy = Dummy;
         }
     }
 }

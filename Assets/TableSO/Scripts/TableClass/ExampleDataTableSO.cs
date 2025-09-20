@@ -9,5 +9,9 @@ namespace Table
         public override TableType tableType => TableType.Csv;
 
         public override string csvPath { get => "ExampleData"; }
+
+        public void Method()
+        {
+        }
     }
 }

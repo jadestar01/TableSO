@@ -48,7 +48,9 @@ public class Example : MonoBehaviour
         foreach (var image in imageList) image.gameObject.SetActive(false);
         text.text = "";
         
+        // Get Table from TableCenter
         var table = tableCenter.GetTable<ExampleGroupMergeTableSO>();
+        // Get Data from Table
         var data = table.GetData(id);
         
         foreach (var icon in data.Icons)

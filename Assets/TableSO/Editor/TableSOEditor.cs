@@ -66,7 +66,7 @@ namespace TableSO.Scripts.Editor
             {"TextAsset", typeof(TextAsset)}
         };
 
-        [MenuItem("TableSO/TableSO Editor")]
+        [MenuItem("TableSO/TableSO Editor %t")]
         public static void ShowWindow()
         {
             var window = GetWindow<TableSOEditor>("TableSO Editor");
@@ -272,7 +272,7 @@ namespace TableSO.Scripts.Editor
             csvFilePath = EditorGUILayout.TextField("CSV File", csvFilePath);
             if (GUILayout.Button("Browse", GUILayout.Width(80)))
             {
-                string path = EditorUtility.OpenFilePanel("Select CSV File", "Assets/TableSO/Data", "csv");
+                string path = EditorUtility.OpenFilePanel("Select CSV File", FilePath.CSV_PATH, "csv");
                 if (!string.IsNullOrEmpty(path))
                 {
                     if (path.StartsWith(Application.dataPath))
@@ -312,6 +312,10 @@ namespace TableSO.Scripts.Editor
                          !string.IsNullOrEmpty(tableName) && 
                          File.Exists(csvFilePath);
 
+            if (GUILayout.Button("Update Csv Data", GUILayout.Height(40)))
+            {
+                UpdateCsvData();
+            }
             if (GUILayout.Button("Generate Csv Table", GUILayout.Height(40)))
             {
                 GenerateCsvTable();
@@ -340,7 +344,7 @@ namespace TableSO.Scripts.Editor
             selectedFolderPath = EditorGUILayout.TextField("Folder Path", selectedFolderPath);
             if (GUILayout.Button("Browse", GUILayout.Width(80)))
             {
-                string path = EditorUtility.OpenFolderPanel("Select Asset Folder", "Assets/TableSO/Asset", "");
+                string path = EditorUtility.OpenFolderPanel("Select Asset Folder", FilePath.ASSET_PATH, "");
                 if (!string.IsNullOrEmpty(path))
                 {
                     if (path.StartsWith(Application.dataPath))
@@ -971,6 +975,22 @@ namespace TableSO.Scripts.Editor
             catch (Exception e)
             {
                 Debug.LogError($"[TableSO] Error generating table from CSV: {e.Message}");
+                EditorUtility.DisplayDialog("Error", $"Failed to generate table:\n{e.Message}", "OK");
+            }
+        }
+
+        private void UpdateCsvData()
+        {
+            try
+            {
+                CsvTableGenerator.UpdateCsvData(csvFilePath);
+                Debug.Log($"[TableSO] Csv data '{tableName}' update completed from {csvFilePath}");
+                EditorUtility.DisplayDialog("Success", $"CSV data '{tableName}' updated successfully!", "OK");
+
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[TableSO] Error updating data from CSV: {e.Message}");
                 EditorUtility.DisplayDialog("Error", $"Failed to generate table:\n{e.Message}", "OK");
             }
         }

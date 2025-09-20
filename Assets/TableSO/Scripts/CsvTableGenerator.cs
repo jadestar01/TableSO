@@ -55,6 +55,47 @@ namespace TableSO.Scripts.Generator
             }
         }
 
+        public static void UpdateCsvData(string csvPath)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(csvPath);
+
+            try
+            {
+                string[] lines = File.ReadAllLines(csvPath);
+
+                if (lines.Length < 2)
+                {
+                    Debug.LogError(
+                        $"[CsvTableSO] {fileName}.csv requires correct format: row 1 for variable names, row 2 for type names");
+                    return;
+                }
+
+                string[] fieldNames = ParseCSVLine(lines[0]);
+                string[] fieldTypes = ParseCSVLine(lines[1]);
+                
+                if (fieldNames.Length != fieldTypes.Length)
+                {
+                    Debug.LogError($"[CsvTableSO] {fileName}.csv: Variable name count and type count do not match");
+                    return;
+                }
+                
+                if (!ValidateIDField(fieldNames[0], fieldTypes[0], fileName))
+                    return;
+
+                if (!ValidateFieldTypes(fieldTypes, fileName))
+                    return;
+                
+                GenerateDataClass(fileName, fieldNames, fieldTypes);
+                AssetDatabase.Refresh();
+                
+                Debug.Log($"[CsvTableSO] {fileName} data updated successfully");
+            } 
+            catch (Exception e)
+            {
+                Debug.LogError($"[CsvTableSO] Error processing {fileName}.csv: {e.Message}");
+            }
+        }
+
         private static string[] ParseCSVLine(string line)
         {
             List<string> fields = new List<string>();
