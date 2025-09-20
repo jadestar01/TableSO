@@ -108,6 +108,7 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine("using System.Linq;");
             tableCode.AppendLine("using System;");
             tableCode.AppendLine("using TableSO.Scripts;");
+            tableCode.AppendLine("using System.Threading.Tasks;");
             tableCode.AppendLine();
             tableCode.AppendLine("/// <summary>");
             tableCode.AppendLine($"/// Merge Table - Made by TableSO MergeTableGenerator");
@@ -142,13 +143,14 @@ namespace TableSO.Scripts.Generator
             }
             tableCode.AppendLine($"        }};");
             tableCode.AppendLine();
-            tableCode.AppendLine($"        public override void UpdateData()");
+            tableCode.AppendLine($"        public override async Task UpdateData()");
             tableCode.AppendLine("        {");
             tableCode.AppendLine("            // TODO: Implement UpdateDatalogic");
             tableCode.AppendLine("        }");
             tableCode.AppendLine();
             tableCode.AppendLine($"        public override TableData.{className} GetData({keyType} key)");
             tableCode.AppendLine("        {");
+            tableCode.AppendLine($"            ReleaseData();");
             tableCode.AppendLine("            // TODO: Implement GetData logic");
             tableCode.AppendLine("            // This should return the RefData that matches the key");
             tableCode.AppendLine("            // You may want to create data dynamically based on referenced tables");

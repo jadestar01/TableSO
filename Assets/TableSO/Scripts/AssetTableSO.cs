@@ -14,8 +14,9 @@ namespace TableSO.Scripts
         public virtual string label { get; }
         public virtual Type assetType { get; }
         
-        public override async void UpdateData()
+        public override async Task UpdateData()
         {
+            ReleaseData();
             await LoadAllAssetsWithLabelGeneric(label, assetType);
             CacheData();
             base.UpdateData();

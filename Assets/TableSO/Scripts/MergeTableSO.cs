@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace TableSO.Scripts
@@ -15,7 +16,7 @@ namespace TableSO.Scripts
         public virtual List<Type> refTableTypes { get; set; }
         
         #region IUpdatable Implementation
-        public override void UpdateData()
+        public override async Task UpdateData()
         {
             CacheData();
             base.UpdateData();

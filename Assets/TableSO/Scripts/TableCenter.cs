@@ -13,17 +13,28 @@ namespace TableSO.Scripts
         private Dictionary<Type, ScriptableObject> tableCache = new();
         private bool isCacheInitialized = false;
 
-        private void OnEnable()
+        private async void OnEnable()
         {
+            List<ScriptableObject> mergeTables = new();
             foreach (var table in registeredTables)
-                if (table is IUpdatable updatable)
+                if (table is ITableType type)
                 {
-                    updatable.UpdateData();
+                    if (type.tableType == TableType.Merge)
+                        mergeTables.Add(table);
+                    else
+                    {
+                        if (table is IUpdatable updatable)
+                            await updatable.UpdateData();
+                    }
                 }
+            
+            Debug.Log($"[TableSO] {mergeTables.Count} merge tables found");
+            
+            foreach (var table in mergeTables)
+                if (table is IUpdatable updatable)
+                    await updatable.UpdateData();
         }
         
-        
-
         public T GetTable<T>() where T : ScriptableObject
         {
             if (!isCacheInitialized)

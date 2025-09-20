@@ -572,26 +572,33 @@ namespace TableSO.Scripts.Editor
                 string soPath = $"{FilePath.TABLE_OUTPUT_PATH}{asset.name}.asset";
                 string tablePath = $"{FilePath.TABLE_CLASS_PATH}{asset.name}.cs";
                 string dataPath = $"{FilePath.DATA_CLASS_PATH}{asset.name.Replace("TableSO", "")}.cs";
-
-                if (asset is ITableType tableType && tableType.tableType == TableType.Asset)
-                {
-                    var settings = AddressableAssetSettingsDefaultObject.Settings;
-                    if (settings == null)
-                    {
-                        Debug.LogError("[TableSO] Cannot Find Addressable Setting");
-                        return;
-                    }
-
-                    string groupName = $"{asset.name}";
-                    var group = settings.FindGroup(groupName);
-                    if (group == null)
-                    { 
-                        Debug.LogError($"[TableSO] Cannot Find Group {groupName}");
-                        return;
-                    }
-                    settings.RemoveGroup(group);    
-                }
                 
+                if (asset is ITableType tableType)
+                {
+                    if (tableType.tableType == TableType.Asset)
+                    {
+                        var settings = AddressableAssetSettingsDefaultObject.Settings;
+                        if (settings == null)
+                        {
+                            Debug.LogError("[TableSO] Cannot Find Addressable Setting");
+                            return;
+                        }
+
+                        string groupName = $"{asset.name}";
+                        var group = settings.FindGroup(groupName);
+                        if (group == null)
+                        { 
+                            Debug.LogError($"[TableSO] Cannot Find Group {groupName}");
+                            return;
+                        }
+                        settings.RemoveGroup(group);
+                    }
+                    else if (tableType.tableType == TableType.Merge)
+                    {
+                        dataPath = dataPath.Replace("Merge", "");
+                    }
+                }
+
                 AssetDatabase.DeleteAsset(soPath);
                 AssetDatabase.DeleteAsset(tablePath);
                 AssetDatabase.DeleteAsset(dataPath);

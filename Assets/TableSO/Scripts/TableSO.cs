@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace TableSO.Scripts
 {
@@ -51,9 +52,10 @@ namespace TableSO.Scripts
             }
         }
 
-        public virtual void UpdateData()
+        public virtual Task UpdateData()
         {
             Debug.Log($"[{GetType().Name}] ({typeof(string).Name}, {typeof(TData).Name}) : {dataDict?.Count}");
+            return Task.CompletedTask;
         }
 
         public void ReleaseData()

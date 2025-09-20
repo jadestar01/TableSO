@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace TableSO.Scripts
 {
@@ -28,7 +29,7 @@ namespace TableSO.Scripts
     
     public interface IUpdatable
     {
-        public void UpdateData();
+        public Task UpdateData();
     }
 
     public interface IMergable
