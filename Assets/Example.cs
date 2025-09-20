@@ -14,9 +14,9 @@ public class Example : MonoBehaviour
     private void Update()
     {
         string str = "";
-        str += $"{tableCenter.GetTable<EquippableItemDataTableSO>().GetType().Name} : {tableCenter.GetTable<EquippableItemDataTableSO>().dataList.Count}\n";
-        str += $"{tableCenter.GetTable<ItemStringDataTableSO>().GetType().Name} : {tableCenter.GetTable<ItemStringDataTableSO>().dataList.Count}\n";
-        str += $"{tableCenter.GetTable<ItemIconAssetTableSO>().GetType().Name} : {tableCenter.GetTable<ItemIconAssetTableSO>().dataList.Count}\n";
+        str += $"{tableCenter.GetTable<EquippableItemDataTableSO>().GetType().Name} : {tableCenter.GetTable<EquippableItemDataTableSO>().GetAllKey().Count}\n";
+        str += $"{tableCenter.GetTable<ItemStringDataTableSO>().GetType().Name} : {tableCenter.GetTable<ItemStringDataTableSO>().GetAllKey().Count}\n";
+        str += $"{tableCenter.GetTable<ItemIconAssetTableSO>().GetType().Name} : {tableCenter.GetTable<ItemIconAssetTableSO>().GetAllKey().Count}\n";
 
         text.text = str;
     }

@@ -381,6 +381,7 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine("{");
             tableCode.AppendLine($"    public class {className}TableSO : TableSO.Scripts.CsvTableSO<{ConvertToValidType(idType)}, TableData.{className}>");
             tableCode.AppendLine("    {");
+            tableCode.AppendLine($"        public override TableType tableType => TableType.Csv;\n");
             tableCode.AppendLine($"        public override string csvPath {{ get => \"{fileName}\"; }}");
             tableCode.AppendLine("    }");
             tableCode.AppendLine("}");

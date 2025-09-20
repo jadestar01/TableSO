@@ -119,6 +119,7 @@ namespace TableSO.Scripts.Generator
             tableCode.AppendLine("{");
             tableCode.AppendLine($"    public class {className}MergeTableSO : TableSO.Scripts.MergeTableSO<{keyType}, TableData.{className}>");
             tableCode.AppendLine("    {");
+            tableCode.AppendLine($"        public override TableType tableType => TableType.Merge;\n");
             tableCode.AppendLine($"        public string fileName => \"{className}MergeTableSO\";");
             foreach (var table in referencedTables)
             {

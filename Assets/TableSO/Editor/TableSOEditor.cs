@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TableSO.FileUtility;
 using UnityEditor;
 using UnityEngine;
 using TableSO.Scripts.Generator;
+using UnityEditor.AddressableAssets;
 
 namespace TableSO.Scripts.Editor
 {
@@ -270,7 +272,7 @@ namespace TableSO.Scripts.Editor
             csvFilePath = EditorGUILayout.TextField("CSV File", csvFilePath);
             if (GUILayout.Button("Browse", GUILayout.Width(80)))
             {
-                string path = EditorUtility.OpenFilePanel("Select CSV File", "Assets", "csv");
+                string path = EditorUtility.OpenFilePanel("Select CSV File", "Assets/TableSO/Data", "csv");
                 if (!string.IsNullOrEmpty(path))
                 {
                     if (path.StartsWith(Application.dataPath))
@@ -338,7 +340,7 @@ namespace TableSO.Scripts.Editor
             selectedFolderPath = EditorGUILayout.TextField("Folder Path", selectedFolderPath);
             if (GUILayout.Button("Browse", GUILayout.Width(80)))
             {
-                string path = EditorUtility.OpenFolderPanel("Select Asset Folder", "Assets", "");
+                string path = EditorUtility.OpenFolderPanel("Select Asset Folder", "Assets/TableSO/Asset", "");
                 if (!string.IsNullOrEmpty(path))
                 {
                     if (path.StartsWith(Application.dataPath))
@@ -565,15 +567,45 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.BeginHorizontal();
             
+            if (GUILayout.Button("X", GUILayout.Width(20), GUILayout.Height(16)))
+            {
+                string soPath = $"{FilePath.TABLE_OUTPUT_PATH}{asset.name}.asset";
+                string tablePath = $"{FilePath.TABLE_CLASS_PATH}{asset.name}.cs";
+                string dataPath = $"{FilePath.DATA_CLASS_PATH}{asset.name.Replace("TableSO", "")}.cs";
 
-            // Asset icon
+                if (asset is ITableType tableType && tableType.tableType == TableType.Asset)
+                {
+                    var settings = AddressableAssetSettingsDefaultObject.Settings;
+                    if (settings == null)
+                    {
+                        Debug.LogError("[TableSO] Cannot Find Addressable Setting");
+                        return;
+                    }
+
+                    string groupName = $"{asset.name}";
+                    var group = settings.FindGroup(groupName);
+                    if (group == null)
+                    { 
+                        Debug.LogError($"[TableSO] Cannot Find Group {groupName}");
+                        return;
+                    }
+                    settings.RemoveGroup(group);    
+                }
+                
+                AssetDatabase.DeleteAsset(soPath);
+                AssetDatabase.DeleteAsset(tablePath);
+                AssetDatabase.DeleteAsset(dataPath);
+                
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+            }
+            
             var icon = AssetDatabase.GetCachedIcon(AssetDatabase.GetAssetPath(asset));
             if (icon != null)
             {
                 GUILayout.Label(icon, GUILayout.Width(16), GUILayout.Height(16));
             }
 
-            // Asset name (clickable)
             var nameStyle = new GUIStyle(EditorStyles.label)
             {
                 fontSize = 11,

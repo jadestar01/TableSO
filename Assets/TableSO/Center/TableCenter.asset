@@ -14,6 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   registeredTables:
   - {fileID: 11400000, guid: 0db0a186baef6324d979f96aea041587, type: 2}
-  - {fileID: 11400000, guid: 009dcc285111afa41ae207d64d0b457a, type: 2}
-  - {fileID: 11400000, guid: 3f7d479719794d24c96cc6f65684b4af, type: 2}
+  - {fileID: 11400000, guid: f352499483fcd444baf0f72c73ff7a62, type: 2}
   - {fileID: 11400000, guid: 65c582c2fdabfd8419e7074d04d51624, type: 2}

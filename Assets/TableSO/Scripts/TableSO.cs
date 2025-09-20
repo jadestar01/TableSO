@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TableSO.Scripts
 {
@@ -9,29 +10,16 @@ namespace TableSO.Scripts
     {
         public string fileName { get; }
         
-        public TableType tableType { get; set; }
+        public virtual TableType tableType { get; set; }
         
         [SerializeField] 
         public List<TData> dataList;
         protected Dictionary<TKey, TData> dataDict;
         
-        #region Unity Event
-        protected virtual void OnEnable()
-        {
-            tableType = TableType.Csv;
-            UpdateData();
-            CacheData();
-            Debug.Log($"[{GetType().Name}] ({typeof(TKey).Name}, {typeof(TData).Name}) : {dataList.Count}");
-        }
-        #endregion
-        
         #region Utils
         public List<TKey> GetAllKey()
         {
-            List<TKey> keys = new List<TKey>();
-            foreach (var kvp in dataDict)
-                keys.Add(kvp.Key);
-            return keys;
+            return dataDict == null ? new List<TKey>() : dataDict.Keys.ToList();
         }
 
         public virtual TData GetData(TKey key)
@@ -65,6 +53,13 @@ namespace TableSO.Scripts
 
         public virtual void UpdateData()
         {
+            Debug.Log($"[{GetType().Name}] ({typeof(string).Name}, {typeof(TData).Name}) : {dataDict?.Count}");
+        }
+
+        public void ReleaseData()
+        {
+            dataList?.Clear();
+            dataDict?.Clear();
         }
         #endregion
     }

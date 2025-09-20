@@ -112,12 +112,14 @@ namespace TableSO.Scripts.Generator
 
             tableCode.AppendLine("using UnityEngine;");
             tableCode.AppendLine("using System;");
+            tableCode.AppendLine("using TableSO.Scripts;");
             tableCode.AppendLine();
             tableCode.AppendLine("namespace Table");
             tableCode.AppendLine("{");
             tableCode.AppendLine(
                 $"    public class {className}TableSO : TableSO.Scripts.AssetTableSO<TableData.{className}>");
             tableCode.AppendLine("    {");
+            tableCode.AppendLine($"        public override TableType tableType => TableType.Asset;\n");
             tableCode.AppendLine($"        [SerializeField] private string assetFolderPath = \"{folderPath}\";");
             tableCode.AppendLine($"        public override string label {{ get => \"{className}TableSO\"; }}");
             tableCode.AppendLine($"        public override Type assetType {{ get => typeof({assetType.Name}); }}");

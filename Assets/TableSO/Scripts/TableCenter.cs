@@ -13,12 +13,16 @@ namespace TableSO.Scripts
         private Dictionary<Type, ScriptableObject> tableCache = new();
         private bool isCacheInitialized = false;
 
-        private void Awake()
+        private void OnEnable()
         {
             foreach (var table in registeredTables)
                 if (table is IUpdatable updatable)
+                {
                     updatable.UpdateData();
+                }
         }
+        
+        
 
         public T GetTable<T>() where T : ScriptableObject
         {
