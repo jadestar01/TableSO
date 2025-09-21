@@ -12,6 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d77c618a7593df41bec57c0541937b8, type: 3}
   m_Name: TableCenter
   m_EditorClassIdentifier: 
-  registeredTables:
-  - {fileID: 11400000, guid: 5d869482b2534264a939b8508f2c3b6a, type: 2}
-  - {fileID: 11400000, guid: 39b07e67843ec334890801b2a79f403a, type: 2}
+  registeredTables: []

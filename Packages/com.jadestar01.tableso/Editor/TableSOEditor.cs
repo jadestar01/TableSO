@@ -965,6 +965,8 @@ namespace TableSO.Scripts.Editor
             
             string path = $"{FilePath.CENTER_PATH}TableCenter.asset";
 
+            InitializeAddressableGroupSettings();
+            
             if (!Directory.Exists(FilePath.CENTER_PATH))
             {
                 EnsureFolderExists(FilePath.CENTER_PATH);
@@ -1217,6 +1219,47 @@ namespace TableSO.Scripts.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
+
+        public static void InitializeAddressableGroupSettings()
+        {
+            if (AddressableAssetSettingsDefaultObject.SettingsExists)
+                return;
+
+            Debug.Log("[Addressables] Initializing Addressables...");
+
+            // 1. 폴더 생성
+            string settingsFolder = "Assets/AddressableAssetsData";
+            if (!AssetDatabase.IsValidFolder(settingsFolder))
+            {
+                AssetDatabase.CreateFolder("Assets", "AddressableAssetsData");
+            }
+
+            // 2. Settings 생성
+            AddressableAssetSettings settings = AddressableAssetSettings.Create(
+                settingsFolder,
+                "AddressableAssetSettings.asset",
+                true,
+                true
+            );
+
+            // 3. 기본 그룹 Schema 설정
+            if (settings.DefaultGroup != null)
+            {
+                var bundledSchema = settings.DefaultGroup.AddSchema<BundledAssetGroupSchema>();
+                bundledSchema.BuildPath.SetVariableByName(settings, "LocalBuildPath");
+                bundledSchema.LoadPath.SetVariableByName(settings, "LocalLoadPath");
+            }
+
+            // 4. Settings 등록
+            AddressableAssetSettingsDefaultObject.Settings = settings;
+
+            // 5. 저장
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
+        
+            Debug.Log("[Addressables] Successfully initialized!");
+        }
+
 
         #endregion
     }

@@ -1,9 +1,0 @@
-﻿ID,IconName,Text
-int,string[],string
-1,T,Hello
-2,T|A,World
-3,T|A|B,TableSO
-4,T|A|B|L,Is
-5,T|A|B|L|E,Easy
-6,T|A|B|L|E|S,And
-7,T|A|B|L|E|S|O,Fun
