@@ -1,6 +1,6 @@
 {
     "name": "com.jadestar01.tableso",
-    "version": "1.0.0",
+    "version": "v1.0.0",
     "displayName": "TableSO",
     "description": "A Unity package for table-driven data management using ScriptableObjects.",
     "unity": "2021.3",
