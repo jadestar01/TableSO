@@ -1,0 +1,15 @@
+{
+  "name": "TableSO",
+  "references": [
+    "Unity.Addressables",
+    "Unity.ResourceManager"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "noEngineReferences": false
+}

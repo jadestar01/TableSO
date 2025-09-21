@@ -385,6 +385,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 260186122}
+  - component: {fileID: 260186123}
   m_Layer: 5
   m_Name: Content
   m_TagString: Untagged
@@ -412,6 +413,32 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 700, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &260186123
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 260186121}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 4
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &348308255
 GameObject:
   m_ObjectHideFlags: 0
@@ -424,7 +451,6 @@ GameObject:
   - component: {fileID: 348308260}
   - component: {fileID: 348308259}
   - component: {fileID: 348308258}
-  - component: {fileID: 348308261}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -515,30 +541,6 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
---- !u!114 &348308261
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 348308255}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0f253039f7a69764db744e3fca1f9af4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  tableCenter: {fileID: 11400000, guid: 4aeee178843882a42b774c7a7eb0be71, type: 2}
-  text: {fileID: 580254919}
-  buttons:
-  - {fileID: 427649520}
-  - {fileID: 1424562459}
-  - {fileID: 1370692747}
-  - {fileID: 2027678623}
-  - {fileID: 25837892}
-  - {fileID: 2036619911}
-  - {fileID: 1564800654}
-  imageTemplate: {fileID: 1388124010}
-  imageList: []
 --- !u!1 &427649518
 GameObject:
   m_ObjectHideFlags: 0
@@ -1710,8 +1712,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 260186122}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}

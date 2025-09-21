@@ -1,0 +1,21 @@
+{
+    "name": "com.jadestar.tableso",
+    "version": "1.0.0",
+    "displayName": "TableSO",
+    "description": "A Unity package for table-driven data management using ScriptableObjects.",
+    "unity": "2021.3",
+    "license": "MIT",
+    "author": {
+        "name": "Jadestar",
+        "email": "jadestar0904@gmail.com",
+        "url": "https://github.com/jadestar01/TableSO"
+    },
+    "dependencies": {
+        "com.unity.addressables": "1.20.5"
+    },
+    "keywords": [
+        "table",
+        "data",
+        "scriptableobject"
+    ]
+}
