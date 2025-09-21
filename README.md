@@ -7,6 +7,7 @@ TableSO는 유니티에서 **ScriptableObject**를 기반으로 구조화된 데
 TableSO는 에셋과 CSV를 원활하게 처리하기 위해 다음을 사용합니다.
 
 * **Addressables**: CSV와 에셋을 해결하고 관리하는 데 필수적입니다.
+  * Addressables를 잘 몰라도 걱정하지마세요. 모든 과정은 자동화되어 사용자의 관심범위 밖에서 동작합니다.
 
 ---
 
