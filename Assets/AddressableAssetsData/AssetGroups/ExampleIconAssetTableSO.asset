@@ -10,20 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
-  m_Name: Csv
+  m_Name: ExampleIconAssetTableSO
   m_EditorClassIdentifier: 
-  m_GroupName: Csv
-  m_GUID: 1fc7d49880ba4e247a572d8abb553b83
+  m_GroupName: ExampleIconAssetTableSO
+  m_GUID: 9e45697efa4089642959595770a7e4e5
   m_SerializeEntries:
-  - m_GUID: 1b62b7cf2bca47248be30b788ee4eff6
-    m_Address: Assets/TableSO/Data
+  - m_GUID: baa7e884f383eb04c82fa62f725be89a
+    m_Address: Assets/TableSO/Asset/ExampleIcon
     m_ReadOnly: 0
     m_SerializedLabels:
-    - Csv
+    - ExampleIconAssetTableSO
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 0eaa9ec078070584aa542d23bef5bb79, type: 2}
   m_SchemaSet:
     m_Schemas:
-    - {fileID: 11400000, guid: 3adebaf17d906244ea2cba0d17d05163, type: 2}
-    - {fileID: 11400000, guid: 480c15614e28def459b6ff06ee912030, type: 2}
+    - {fileID: 11400000, guid: 9ebbd364a2ab7a44c93038909ce25be5, type: 2}
+    - {fileID: 11400000, guid: 1ceb7179341d5a540aa68dad10937f6d, type: 2}

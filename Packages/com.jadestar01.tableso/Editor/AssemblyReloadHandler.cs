@@ -55,6 +55,8 @@ public static class AssemblyReloadHandler
             // First, check the generated .cs files
             var generatedFiles = FindGeneratedTableFiles();
 
+            TableSOEditor.CreateCsvAddressableGroup();
+
             if (generatedFiles.Count == 0)
             {
                 return;
@@ -74,7 +76,6 @@ public static class AssemblyReloadHandler
 
             tableCenter.ClearRegisteredTables();
 
-            // Step 1: Create and register all TableSOs first
             foreach (var tableType in tableSoTypes)
             {
                 try
@@ -105,7 +106,6 @@ public static class AssemblyReloadHandler
                 }
             }
 
-            // Step 2: Automatically assign references for RefTableSOs (after all tables are registered)
             EditorApplication.delayCall += () => {
                 AssignRefTableReferences(tableCenter, tableSoTypes);
                 

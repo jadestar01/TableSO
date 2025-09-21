@@ -7,6 +7,8 @@ using UnityEditor;
 using UnityEngine;
 using TableSO.Scripts.Generator;
 using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
+using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 
 namespace TableSO.Scripts.Editor
 {
@@ -964,12 +966,19 @@ namespace TableSO.Scripts.Editor
             string path = $"{FilePath.CENTER_PATH}TableCenter.asset";
 
             if (!Directory.Exists(FilePath.CENTER_PATH))
-                Directory.CreateDirectory(FilePath.CENTER_PATH);
+            {
+                EnsureFolderExists(FilePath.CENTER_PATH);
+            }
 
             if (!Directory.Exists(FilePath.ASSET_PATH))
-                Directory.CreateDirectory(FilePath.ASSET_PATH);
+            {
+                EnsureFolderExists(FilePath.ASSET_PATH);
+            }
+
             if (!Directory.Exists(FilePath.CSV_PATH))
-                Directory.CreateDirectory(FilePath.CSV_PATH);
+            {
+                EnsureFolderExists(FilePath.CSV_PATH);
+            }
 
             if (AssetDatabase.LoadAssetAtPath(path, typeof(TableCenter)) != null)
                 return;
@@ -1130,6 +1139,83 @@ namespace TableSO.Scripts.Editor
             result.SetPixels(pix);
             result.Apply();
             return result;
+        }
+
+        public static void CreateCsvAddressableGroup()
+        {
+            string folderPath = FilePath.CSV_PATH.TrimEnd('/');
+            string tableName = "Csv";
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
+            if (settings == null)
+            {
+                Debug.LogWarning("[TableSO] Addressables not initialized.");
+                return;
+            }
+
+            var group = settings.FindGroup(tableName);
+            if (group == null)
+            {
+                group = settings.CreateGroup(
+                    tableName,
+                    false,
+                    false,
+                    true,
+                    null,
+                    typeof(ContentUpdateGroupSchema),
+                    typeof(BundledAssetGroupSchema)
+                );
+
+                var bundleSchema = group.GetSchema<BundledAssetGroupSchema>();
+                if (bundleSchema != null)
+                {
+                    bundleSchema.BuildPath.SetVariableByName(settings, "LocalBuildPath");
+                    bundleSchema.LoadPath.SetVariableByName(settings, "LocalLoadPath");
+
+                    bundleSchema.BundleNaming = BundledAssetGroupSchema.BundleNamingStyle.AppendHash;
+                }
+            }
+            
+            string folderGUID = AssetDatabase.AssetPathToGUID(folderPath);
+            if (string.IsNullOrEmpty(folderGUID))
+                return;
+
+            var entry = settings.CreateOrMoveEntry(folderGUID, group, false, false);
+            entry.address = folderPath;
+            entry.SetLabel(tableName, true, true);
+
+            settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, null, true);
+        }
+
+        
+        public static void EnsureFolderExists(string fullPath)
+        {
+            if (fullPath.EndsWith("/"))
+                fullPath = fullPath.TrimEnd('/');
+
+            string[] split = fullPath.Split('/');
+            if (split.Length < 2 || split[0] != "Assets")
+            {
+                Debug.LogError($"[TableSO] Path must start with 'Assets': {fullPath}");
+                return;
+            }
+
+            string current = "Assets";
+
+            for (int i = 1; i < split.Length; i++)
+            {
+                string nextFolder = split[i];
+                string nextPath = $"{current}/{nextFolder}";
+
+                if (!AssetDatabase.IsValidFolder(nextPath))
+                {
+                    AssetDatabase.CreateFolder(current, nextFolder);
+                }
+
+                current = nextPath;
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
 
         #endregion

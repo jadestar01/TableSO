@@ -33,7 +33,7 @@ namespace TableSO.Scripts.Generator
                 
                 if (createAddressableGroup)
                 {
-                    CreateAddressableGroup(assets, $"{tableName}TableSO");
+                    CreateAddressableGroup(selectedFolderPath, $"{tableName}TableSO");
                 }
 
                 AssetDatabase.Refresh();
@@ -133,7 +133,7 @@ namespace TableSO.Scripts.Generator
         }
         
         
-        private static void CreateAddressableGroup(List<UnityEngine.Object> assets, string tableName)
+        private static void CreateAddressableGroup(string folderPath, string tableName)
         {
             var settings = AddressableAssetSettingsDefaultObject.Settings;
             if (settings == null)
@@ -164,23 +164,20 @@ namespace TableSO.Scripts.Generator
                     bundleSchema.BundleNaming = BundledAssetGroupSchema.BundleNamingStyle.AppendHash;
                 }
             }
+            
+            string folderGUID = AssetDatabase.AssetPathToGUID(folderPath);
+            if (string.IsNullOrEmpty(folderGUID))
+                return;
 
-            // Add assets
-            foreach (var asset in assets)
-            {
-                string assetPath = AssetDatabase.GetAssetPath(asset);
-                string assetGUID = AssetDatabase.AssetPathToGUID(assetPath);
-
-                var entry = settings.CreateOrMoveEntry(assetGUID, group, false, false);
-                entry.address = asset.name; // filename as address
-                entry.SetLabel(tableName, true, true);
-            }
+            var entry = settings.CreateOrMoveEntry(folderGUID, group, false, false);
+            Debug.Log("folderPath");
+            entry.address = folderPath;
+            entry.SetLabel(tableName, true, true);
 
             settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, null, true);
-            Debug.Log($"[TableSO] Created Addressable group '{tableName}' with {assets.Count} assets");
+            Debug.Log($"[TableSO] Created Addressable group '{tableName}'");
         }
-
-
+        
         private static void EnsureDirectoryExists(string path)
         {
             if (!Directory.Exists(path))

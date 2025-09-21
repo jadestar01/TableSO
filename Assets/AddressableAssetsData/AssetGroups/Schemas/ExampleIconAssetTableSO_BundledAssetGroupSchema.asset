@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e5d17a21594effb4e9591490b009e7aa, type: 3}
-  m_Name: ExampleSpriteAssetTableSO_BundledAssetGroupSchema
+  m_Name: ExampleIconAssetTableSO_BundledAssetGroupSchema
   m_EditorClassIdentifier: 
-  m_Group: {fileID: 11400000, guid: 3b1cd863f79bb74459ed3195a5e4d617, type: 2}
+  m_Group: {fileID: 11400000, guid: e5da7868a9221224e99707e20a86b3b6, type: 2}
   m_InternalBundleIdMode: 1
   m_Compression: 1
   m_IncludeAddressInCatalog: 1
