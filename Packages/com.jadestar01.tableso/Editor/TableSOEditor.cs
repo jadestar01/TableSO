@@ -966,6 +966,11 @@ namespace TableSO.Scripts.Editor
             if (!Directory.Exists(FilePath.CENTER_PATH))
                 Directory.CreateDirectory(FilePath.CENTER_PATH);
 
+            if (!Directory.Exists(FilePath.ASSET_PATH))
+                Directory.CreateDirectory(FilePath.ASSET_PATH);
+            if (!Directory.Exists(FilePath.CSV_PATH))
+                Directory.CreateDirectory(FilePath.CSV_PATH);
+
             if (AssetDatabase.LoadAssetAtPath(path, typeof(TableCenter)) != null)
                 return;
             

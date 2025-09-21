@@ -8,6 +8,14 @@
         "com.unity.addressables": "1.20.5"
       }
     },
+    "com.jadestar01.tableso": {
+      "version": "file:com.jadestar01.tableso",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.addressables": "1.20.5"
+      }
+    },
     "com.unity.addressables": {
       "version": "2.2.2",
       "depth": 1,
