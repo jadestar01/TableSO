@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Obsidian_0: 6522594400000613951
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

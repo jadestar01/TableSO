@@ -960,7 +960,27 @@ namespace TableSO.Scripts.Editor
         private void CreateTableCenter()
         {
             Debug.Log("[TableSO] Creating TableCenter...");
-            EditorUtility.DisplayDialog("Info", "TableCenter creation functionality needs to be implemented.", "OK");
+            
+            string path = $"{FilePath.CENTER_PATH}TableCenter.asset";
+
+            if (!Directory.Exists(FilePath.CENTER_PATH))
+                Directory.CreateDirectory(FilePath.CENTER_PATH);
+
+            if (AssetDatabase.LoadAssetAtPath(path, typeof(TableCenter)) != null)
+                return;
+            
+            TableCenter tableCenter = ScriptableObject.CreateInstance<TableCenter>();
+            
+            AssetDatabase.CreateAsset(tableCenter, path);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            
+            EditorUtility.FocusProjectWindow();
+            Selection.activeObject = tableCenter;
+            
+            EditorUtility.DisplayDialog("Success",
+                "TableCenter has been successfully created.",
+                "OK");
         }
 
         private void GenerateCsvTable()
