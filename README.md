@@ -61,6 +61,7 @@ TableSO는 모든 데이터 요구사항을 충족시키기 위해 세 가지 �
 * **구조**: 폴더에서 데이터를 읽는 `[string, TData]` 형태의 테이블입니다. 파일 이름(`string`)을 `TKey`로 사용하고 `TData`를 생성합니다.
 * 읽을 에셋을 필터링하여 지정할 수 있습니다.
 * 모든 에셋은 **Addressables**로 저장되며, 게임 시작 시 자동으로 로드됩니다.
+* 에셋 필터의 종류 : Sprite, Prefab, ScriptableObject, Texture2D, AudioClip, AnimationClip, Material, TextAsset
 
 ### 3. MergeTable
 
