@@ -84,4 +84,135 @@ TableSO는 모든 데이터 요구사항을 충족시키기 위해 세 가지 �
 8.  **테이블 가져오기**: `tableCenter.GetTable<ItemMergeTable>()`을 사용하여 병합된 아이템 테이블을 가져옵니다.
 9.  **데이터 검색**: `GetAllKey()`를 사용하여 모든 아이템 키 목록을 가져오고, `GetData(key)`로 특정 `Item` 객체에 접근합니다.
 
+## 시나리오 : Data와 Asset을 통해 UI에 표기하는 예제
+
+### 1. Data 테이블 만들기
+ - 자동 생성된 경로 `Assets/TableSO/Data`에 원하는 데이터가 담긴 파일인 ExampleData.csv 를 생성합니다.
+    - 첫번째 행은 반드시 요소의 이름입니다.
+    - 두번째 행은 반드시 요소의 타입입니다.
+    - 배열형은 '\|' 기호로 원소를 구분합니다.
+    - 열거형은 자동으로 대상을 추적합니다.
+ - TableSOEditor를 열고, Csv 탭으로 이동합니다. 이후 Browse를 눌러 ExampleData.csv를 선택하고, 버튼을 눌러 코드를 생성합니다.
+ - 코드 생성이 완료되면, Center 탭으로 이동합니다. 이후 Refresh All Tables를 눌러 Center에 Table을 등록합니다.
+ - 이제 ExampleData.csv는 유니티에서 참조 가능한 형태로 변경되었습니다.
+
+| ID | IconName | Text |
+|----|----------|------|
+| int | string[] | string |
+| 1 | T | Hello |
+| 2 | T\|A | World |
+| 3 | T\|A\|B | TableSO |
+| 1 | T\|A\|B\|L | Is |
+| 2 | T\|A\|B\|L\|E | Fun |
+| 3 | T\|A\|B\|L\|E\|S | And |
+| 3 | T\|A\|B\|L\|E\|S\|O | Easy |
+
+ - 위 테이블은 IconName이라는 Icon Sprite Asset의 파일 이름을 참조합니다.
+
+
+### 2. Asset 테이블 만들기
+ - 자동 생성된 경로 `Assets/TableSO/Asset`에 원하는 에셋이 담긴 폴더인 ExampleIcon 을 생성합니다.
+    - AssetTable은 폴더 내의 특정 Type만을 추출합니다.
+    - 이는 기본적인 폴더 구조에 대한 반영입니다.
+    - 복잡한 Asset Table 구축을 위해선 Custom Table을 사용하십시오.
+ - TableSOEditor를 열고, Asset 탭으로 이동합니다. 이후 Browse를 눌러 ExampleIcon 폴더를 선택하고, Type을 선택하고, 버튼을 눌러 코드를 생성합니다.
+ - 코드 생성이 완료되면, Center 탭으로 이동합니다. 이후 Refresh All Tables를 눌러 Center에 Table을 등록합니다.
+ - 이제 ExampleIcon의 Type이 같은 모든 에셋들은 유니티에서 참조 가능한 형태로 변경되었습니다.
+
+
+### 3. Custom 테이블 만들기
+ - ExampleData.csv는 ExampleIcon의 Icon을 배열로 참조합니다.
+ - 이는 물론 코드에서 해결할 수 있는 참조이기도 하지만, 자주 사용된다면, Custom 테이블로 묶는 것이 좋습니다.
+ - TableSOEditor를 열고, Custom 탭으로 이동합니다. 이후 ExampleDataCsvTableSO와 ExampleIconAssetTableSO를 선택합니다.
+ - Table Name에 최종적인 클래스 명을 작성합시다. 여기선 Example이라는 이름을 사용하겠습니다.
+ - 사용할 키 타입을 선택해줍시다. 여기선 ExampleData가 ExampleIcon을 다수 참조하니, ExampleData와 같은 int 형 키를 사용합니다.
+ - TableSOEditor를 열고, Asset 탭으로 이동합니다. 이후 Browse를 눌러 ExampleIcon 폴더를 선택하고, Type을 선택하고, 버튼을 눌러 코드를 생성합니다.
+ - 코드 생성이 완료되면, Center 탭으로 이동합니다. 이후 Refresh All Tables를 눌러 Center에 Table을 등록합니다.
+ - 아직 유니티에서 제대로 참조가 불가한 형태입니다. 두 테이블의 연결을 정의해줘야 하며, 이를 위해서 Custom Table은 사전에 선택한 테이블들에 대한 참조를 해결해줍니다.
+ - 이후, 생성된 데이터 클래스인 `Example`과 테이블 클래스인 `ExampleTableSO`를 작성해주면 됩니다.
+ - `Example`의 경우 아래와 같이 작성해서 생성자로 Data를 구성하게 만듭시다.
+
+#### Example.cs
+```csharp
+namespace TableData
+{
+    [System.Serializable]
+    public class Example : IIdentifiable<int>
+    {
+        [field: SerializeField] public int ID { get; internal set; }
+
+        public List<Sprite> Icons = new List<Sprite>();
+
+        public string Text;
+
+        public Example(int ID, List<Sprite> Icons, string Text)
+        {
+            this.ID = ID;
+            this.Icons = Icons;
+            this.Text = Text;
+        }
+    }
+}
+```
+
+ - `ExampleTableSO`의 경우 아래와 같이 작성해서, 모든 참조를 해결하고 dataList에 추가하도록 합시다.
+    - 이 과정 전에는 ReleaseData를 해줌으로써, 데이터를 비워주고, 후에는 UpdateData를 해줌으로써, 캐싱할 수 있습니다.
+
+#### ExampleTableSO.cs
+```csharp
+namespace Table
+{
+    public class ExampleTableSO : TableSO.Scripts.CustomTableSO<int, TableData.Example>
+    {
+        public override TableType tableType => TableType.Custom;
+
+        public string fileName => "ExampleTableSO";
+        [SerializeField] private ExampleDataTableSO ExampleDataTable;
+        [SerializeField] private ExampleIconAssetTableSO ExampleIconAssetTable;
+
+        public override List<Type> refTableTypes { get; set; } = new List<Type>()
+        {
+            typeof(ExampleDataTableSO),
+            typeof(ExampleIconAssetTableSO),
+        };
+
+        public override async Task UpdateData()
+        {
+            ReleaseData();
+
+            foreach (var id in ExampleDataTable.GetAllKey())
+            {
+                List<Sprite> icons = new List<Sprite>();
+                foreach (var icon in ExampleDataTable.GetData(id).IconName)
+                    icons.Add(ExampleIconAssetTable.GetData(icon).Asset);
+                
+                dataList.Add(new TableData.Example(id, icons, ExampleDataTable.GetData(id).Text));
+            }
+
+            base.UpdateData();
+        }
+
+        public override TableData.Example GetData(int key)
+        {
+            // TODO: Implement GetData logic
+            return base.GetData(key);
+        }
+    }
+}
+```
+ - 결과적으로 코드에서는 아래와 같이 접근할 수 있습니다.
+```csharp
+    var table = tableCenter.GetTable<ExampleMergeTableSO>();
+    var data = table.GetData(id);
+
+    foreach (var icon in data.Icons)
+    {
+        Image image = GetImage();
+        image.sprite = icon;
+    }
+
+    text.text = data.Text;
+```
+
 ---
+
