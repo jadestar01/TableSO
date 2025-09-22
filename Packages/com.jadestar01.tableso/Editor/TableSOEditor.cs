@@ -360,12 +360,23 @@ namespace TableSO.Scripts.Editor
             EditorGUILayout.Space();
 
             DrawSectionHeader("Asset Type");
-            string[] typeNames = supportedTypes.Keys.ToArray();
-            int selectedIndex = Array.IndexOf(typeNames, selectedAssetType.Name);
-            if (selectedIndex == -1) selectedIndex = 0;
             
-            selectedIndex = EditorGUILayout.Popup("Type", selectedIndex, typeNames);
-            selectedAssetType = supportedTypes[typeNames[selectedIndex]];
+            string[] displayNames = GetDisplayNames();
+            string currentDisplayName = GetDisplayNameForType(selectedAssetType);
+            
+            int selectedIndex = Array.IndexOf(displayNames, currentDisplayName);
+            if (selectedIndex == -1) 
+            {
+                selectedIndex = 0;
+                selectedAssetType = GetTypeForDisplayName(displayNames[0]);
+            }
+            
+            int newSelectedIndex = EditorGUILayout.Popup("Type", selectedIndex, displayNames);
+            
+            if (newSelectedIndex != selectedIndex)
+            {
+                selectedAssetType = GetTypeForDisplayName(displayNames[newSelectedIndex]);
+            }
 
             EditorGUILayout.Space();
 
@@ -416,6 +427,43 @@ namespace TableSO.Scripts.Editor
 
             var assetTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Asset).ToList();
             DrawTabSpecificTableList("Asset Tables", assetTables, new Color(0.9f, 0.6f, 0.2f));
+        }
+
+        private string[] GetDisplayNames()
+        {
+            return new string[]
+            {
+                "Sprite",
+                "Prefab",
+                "ScriptableObject", 
+                "Texture2D",
+                "AudioClip",
+                "AnimationClip",
+                "Material",
+                "TextAsset"
+            };
+        }
+
+        private string GetDisplayNameForType(Type type)
+        {
+            if (type == typeof(GameObject)) return "Prefab";
+            return type.Name;
+        }
+
+        private Type GetTypeForDisplayName(string displayName)
+        {
+            switch (displayName)
+            {
+                case "Sprite": return typeof(Sprite);
+                case "Prefab": return typeof(GameObject);
+                case "ScriptableObject": return typeof(ScriptableObject);
+                case "Texture2D": return typeof(Texture2D);
+                case "AudioClip": return typeof(AudioClip);
+                case "AnimationClip": return typeof(AnimationClip);
+                case "Material": return typeof(Material);
+                case "TextAsset": return typeof(TextAsset);
+                default: return typeof(Sprite);
+            }
         }
 
         private void DrawCustomTableTab()
