@@ -25,7 +25,7 @@ TableSO는 에셋과 CSV를 원활하게 처리하기 위해 다음을 사용합
 ## 다운로드 및 환경 설정
 
 1. Unity 상단 탭의 Windows > PackageManager > 좌상단 + 버튼 > install package from git URL
- - 입력 : https://github.com/jadestar01/TableSO.git?path=Packages/com.jadestar01.tableso#v1.0.0
+ - 입력 : https://github.com/jadestar01/TableSO.git?path=Packages/com.jadestar01.tableso#1.0.0
 2. Unity 상단 탭의 TableSO를 눌러 Editor를 실행합니다.
 3. Editor의 Center 탭의 'Create TableCenter'를 클릭하여 디렉토리의 구조와 Addressable 설정을 마치고, Table Center가 생성됩니다.
 
