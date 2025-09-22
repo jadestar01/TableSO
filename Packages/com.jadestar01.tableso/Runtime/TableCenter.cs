@@ -15,12 +15,12 @@ namespace TableSO.Scripts
 
         private async void OnEnable()
         {
-            List<ScriptableObject> mergeTables = new();
+            List<ScriptableObject> customTables = new();
             foreach (var table in registeredTables)
                 if (table is ITableType type)
                 {
-                    if (type.tableType == TableType.Merge)
-                        mergeTables.Add(table);
+                    if (type.tableType == TableType.Custom)
+                        customTables.Add(table);
                     else
                     {
                         if (table is IUpdatable updatable)
@@ -28,9 +28,9 @@ namespace TableSO.Scripts
                     }
                 }
             
-            Debug.Log($"[TableSO] {mergeTables.Count} merge tables found");
+            Debug.Log($"[TableSO] {customTables.Count} custom tables found");
             
-            foreach (var table in mergeTables)
+            foreach (var table in customTables)
                 if (table is IUpdatable updatable)
                     await updatable.UpdateData();
         }

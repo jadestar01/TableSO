@@ -23,15 +23,14 @@ namespace TableSO.Scripts.Generator
 
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
-                Debug.LogError($"[TableSO] Addressables 로드 실패: {addressKey}");
+                Debug.LogError($"[TableSO] Fail to Load Addressable : {addressKey}");
                 return null;
             }
 
-            // 텍스트 전체 가져오기
             string csvText = handle.Result.text;
             string[] lines = csvText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-            if (lines.Length < 3) // Header, type, minimum 1 data
+            if (lines.Length < 3) 
             {
                 Debug.LogWarning($"[TableSO] {csvPath}.csv: No data found");
                 return dataList;
@@ -43,7 +42,7 @@ namespace TableSO.Scripts.Generator
             ConstructorInfo constructor = FindMatchingConstructor(typeof(T), fieldTypes, fieldNames);
             if (constructor == null)
             {
-                return null; // 에러 메시지는 FindMatchingConstructor 내에서 출력
+                return null; 
             }
 
             for (int i = 2; i < lines.Length; i++)
@@ -143,28 +142,23 @@ namespace TableSO.Scripts.Generator
         {
             if (expectedType == actualType) return true;
             
-            // null 허용
             if (expectedType == null || actualType == null) return false;
             
-            // 배열 타입 검사
             if (expectedType.IsArray && actualType.IsArray)
             {
                 return IsTypeCompatible(expectedType.GetElementType(), actualType.GetElementType());
             }
             
-            // 기본 타입 변환 가능한지 검사
             try
             {
                 if (actualType.IsAssignableFrom(expectedType)) return true;
                 if (expectedType.IsAssignableFrom(actualType)) return true;
                 
-                // 숫자 타입 간 호환성 검사
                 var numericTypes = new[] { typeof(int), typeof(float), typeof(double), typeof(decimal), typeof(long), typeof(short), typeof(byte) };
                 if (numericTypes.Contains(expectedType) && numericTypes.Contains(actualType)) return true;
             }
             catch
             {
-                // 예외 발생 시 false 반환
             }
             
             return false;
@@ -237,7 +231,6 @@ namespace TableSO.Scripts.Generator
                 case "double":
                     return typeof(double);
                 default:
-                    // Handle enum or custom types - 사용자 정의 타입만 찾기
                     Type foundType = FindUserDefinedType(typeString);
                     return foundType ?? typeof(string); // Default value
             }
@@ -245,7 +238,6 @@ namespace TableSO.Scripts.Generator
 
         private static Type FindUserDefinedType(string typeName)
         {
-            // Unity 내부 어셈블리 제외 목록
             HashSet<string> excludedAssemblies = new HashSet<string>
             {
                 "UnityEngine",
@@ -265,21 +257,18 @@ namespace TableSO.Scripts.Generator
             {
                 try
                 {
-                    // Unity 내부 어셈블리 건너뛰기
                     string assemblyName = assembly.GetName().Name;
                     if (excludedAssemblies.Any(excluded => assemblyName.StartsWith(excluded)))
                     {
                         continue;
                     }
 
-                    // 정확한 타입 이름으로 찾기
                     Type type = assembly.GetType(typeName);
                     if (type != null && type.IsPublic && !type.IsNested)
                     {
                         candidateTypes.Add(type);
                     }
                     
-                    // 네임스페이스 없이 타입 이름으로 찾기
                     foreach (Type assemblyType in assembly.GetTypes())
                     {
                         if (assemblyType.Name == typeName && assemblyType.IsPublic && !assemblyType.IsNested)
@@ -293,14 +282,12 @@ namespace TableSO.Scripts.Generator
                 }
                 catch (Exception e)
                 {
-                    // 어셈블리 로딩 오류는 무시하고 계속 진행
                     Debug.LogWarning($"[TableSO] Error loading types from assembly {assembly.FullName}: {e.Message}");
                 }
             }
 
             if (candidateTypes.Count > 0)
             {
-                // 첫 번째 후보 사용 (가장 적합한 것으로 추정)
                 Type selectedType = candidateTypes[0];
                 
                 return selectedType;
@@ -432,7 +419,6 @@ namespace TableSO.Scripts.Generator
                 case "double":
                     return 0.0;
                 default:
-                    // Handle enum default values
                     Type enumType = GetSingleTypeFromString(typeString);
                     if (enumType != null && enumType.IsEnum)
                     {

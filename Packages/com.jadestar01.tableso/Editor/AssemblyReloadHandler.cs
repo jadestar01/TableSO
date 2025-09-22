@@ -130,13 +130,13 @@ public static class AssemblyReloadHandler
             {
                 try
                 {
-                    if (typeof(IMergable).IsAssignableFrom(tableType))
+                    if (typeof(ICustomizable).IsAssignableFrom(tableType))
                     {
                         string assetName = tableType.Name;
                         string assetPath = Path.Combine(GENERATED_TABLES_FOLDER, $"{assetName}.asset");
                         var refTableAsset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(assetPath);
 
-                        if (refTableAsset != null && refTableAsset is IMergable referencable)
+                        if (refTableAsset != null && refTableAsset is ICustomizable referencable)
                         {
                             AssignReferencesToRefTable(tableCenter, refTableAsset, referencable);
                             
@@ -168,7 +168,7 @@ public static class AssemblyReloadHandler
     }
 
     private static void AssignReferencesToRefTable(TableCenter tableCenter, ScriptableObject refTableAsset,
-        IMergable consultable)
+        ICustomizable consultable)
     {
         try
         {

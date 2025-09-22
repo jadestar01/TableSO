@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "com.jadestar.tableso": "https://github.com/jadestar01/TableSO.git#1.0.0",
-    "com.unity.render-pipelines.universal": "17.0.3"
+    "com.jadestar.tableso": "https://github.com/jadestar01/TableSO.git#1.0.0"
   }
 }

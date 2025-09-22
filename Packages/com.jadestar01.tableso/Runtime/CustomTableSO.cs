@@ -5,13 +5,13 @@ using UnityEngine;
 
 namespace TableSO.Scripts
 {
-    public abstract class MergeTableSO<TKey, TData> : TableSO<TKey, TData>, IMergable
+    public abstract class CustomTableSO<TKey, TData> : TableSO<TKey, TData>, ICustomizable
         where TData : class, IIdentifiable<TKey> 
         where TKey : IConvertible
     {
-        public override TableType tableType => TableType.Merge;
+        public override TableType tableType => TableType.Custom;
         
-        [Header("Merge Table Settings")]
+        [Header("Custom Table Settings")]
         [SerializeField] protected List<ScriptableObject> referencedTables = new();
         public virtual List<Type> refTableTypes { get; set; }
         

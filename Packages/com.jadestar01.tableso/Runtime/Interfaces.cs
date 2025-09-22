@@ -18,7 +18,7 @@ namespace TableSO.Scripts
     {
         Csv,
         Asset,
-        Merge
+        Custom
     }
     
     public interface IAssetData
@@ -32,7 +32,7 @@ namespace TableSO.Scripts
         public Task UpdateData();
     }
 
-    public interface IMergable
+    public interface ICustomizable
     {
         public List<Type> refTableTypes { get; set; }
     }

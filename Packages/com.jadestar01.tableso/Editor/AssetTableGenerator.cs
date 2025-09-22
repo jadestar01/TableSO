@@ -50,8 +50,13 @@ namespace TableSO.Scripts.Generator
         private static List<UnityEngine.Object> GetAssetsInFolder(string folderPath, Type assetType)
         {
             List<UnityEngine.Object> assets = new List<UnityEngine.Object>();
-            
-            string[] guids = AssetDatabase.FindAssets($"t:{assetType.Name}", new[] { folderPath });
+
+            string[] guids;
+            if (assetType == typeof(GameObject))
+                guids = AssetDatabase.FindAssets($"t:Prefab", new[] { folderPath });
+            else
+                guids = AssetDatabase.FindAssets($"t:{assetType.Name}", new[] { folderPath });
+
             
             foreach (string guid in guids)
             {
