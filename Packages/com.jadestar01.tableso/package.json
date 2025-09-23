@@ -11,7 +11,8 @@
         "url": "https://github.com/jadestar01/TableSO"
     },
     "dependencies": {
-        "com.unity.addressables": "1.20.5"
+        "com.unity.addressables": "1.20.5",
+        "com.unity.test-framework": "1.4.6"
     },
     "keywords": [
         "table",
