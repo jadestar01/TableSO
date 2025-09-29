@@ -66,7 +66,7 @@ TableSO는 모든 데이터 요구사항을 충족시키기 위해 세 가지 �
 * 모든 에셋은 **Addressables**로 저장되며, 게임 시작 시 자동으로 로드됩니다.
 * 에셋 필터의 종류 : Sprite, Prefab, ScriptableObject, Texture2D, AudioClip, AnimationClip, Material, TextAsset
 
-### 3. MergeTable
+### 3. CustomTable
 
 * **구조**: 다른 테이블(`CsvTable`, `AssetTable` 등)을 참조하여 복합적인 데이터를 생성하는 `[TKey, TData]` 형태의 테이블입니다.
 * 생성하기 전에 연결할 관련 테이블을 선택할 수 있습니다.
@@ -80,12 +80,12 @@ TableSO는 모든 데이터 요구사항을 충족시키기 위해 세 가지 �
 
 1.  **`ItemSprite`에 대한 `AssetTable` 생성**: **Sprite 필터**를 사용하여 모든 아이템 스프라이트를 포함합니다.
 2.  **`ItemData`에 대한 `CsvTable` 생성**: 이 테이블은 스프라이트 이름을 변수로 포함하여 모든 아이템 정보를 담습니다.
-3.  **`Item`에 대한 `MergeTable` 생성**: 이것이 최종적으로 통합된 아이템 클래스가 될 것입니다.
+3.  **`Item`에 대한 `CustomTable` 생성**: 이것이 최종적으로 통합된 아이템 클래스가 될 것입니다.
 4.  **모든 테이블 새로고침**: TableEditor의 **Center** 탭으로 가서 `RefreshAllTable`을 클릭하여 ScriptableObject를 생성하고 참조를 해결합니다.
 5.  **클래스 정의**: 자동으로 생성된 `Item` 클래스에 `ItemData`와 `ItemSprite` 필드를 정의하고 생성자를 구축합니다.
-6.  **업데이트 로직 구현**: `ItemMergeTable`에서 `UpdateData` 로직을 구현하여 `ItemSpriteAssetTable`과 `ItemDataCsvTable`의 데이터를 사용하여 `Item` 객체를 구축합니다.
+6.  **업데이트 로직 구현**: `ItemCustomTable`에서 `UpdateData` 로직을 구현하여 `ItemSpriteAssetTable`과 `ItemDataCsvTable`의 데이터를 사용하여 `Item` 객체를 구축합니다.
 7.  **스크립트에서 접근**: `ItemManager` 스크립트(또는 다른 스크립트)에서 `tableCenter`를 참조합니다.
-8.  **테이블 가져오기**: `tableCenter.GetTable<ItemMergeTable>()`을 사용하여 병합된 아이템 테이블을 가져옵니다.
+8.  **테이블 가져오기**: `tableCenter.GetTable<ItemCustomTable>()`을 사용하여 병합된 아이템 테이블을 가져옵니다.
 9.  **데이터 검색**: `GetAllKey()`를 사용하여 모든 아이템 키 목록을 가져오고, `GetData(key)`로 특정 `Item` 객체에 접근합니다.
 
 ## 시나리오 : Data와 Asset을 통해 UI에 표기하는 예제
@@ -134,7 +134,7 @@ TableSO는 모든 데이터 요구사항을 충족시키기 위해 세 가지 �
  - 코드 생성이 완료되면, Center 탭으로 이동합니다. 이후 Refresh All Tables를 눌러 Center에 Table을 등록합니다.
  - 아직 유니티에서 제대로 참조가 불가한 형태입니다. 두 테이블의 연결을 정의해줘야 하며, 이를 위해서 Custom Table은 사전에 선택한 테이블들에 대한 참조를 해결해줍니다.
  - 이후, 생성된 데이터 클래스인 `Example`과 테이블 클래스인 `ExampleTableSO`를 작성해주면 됩니다.
- - `Example`의 경우 아래와 같이 작성해서 생성자로 Data를 구성하게 만듭시다.
+ - `Example`의 경우 아래와 같이 작성해서 생성자로 Data를 구성하게 만듭니다.
 
 #### Example.cs
 ```csharp
@@ -159,7 +159,7 @@ namespace TableData
 }
 ```
 
- - `ExampleTableSO`의 경우 아래와 같이 작성해서, 모든 참조를 해결하고 dataList에 추가하도록 합시다.
+ - `ExampleTableSO`의 경우 아래와 같이 작성해서, 모든 참조를 해결하고 dataList에 추가합니다.
     - 이 과정 전에는 ReleaseData를 해줌으로써, 데이터를 비워주고, 후에는 UpdateData를 해줌으로써, 캐싱할 수 있습니다.
 
 #### ExampleTableSO.cs
@@ -206,7 +206,7 @@ namespace Table
 ```
  - 결과적으로 코드에서는 아래와 같이 접근할 수 있습니다.
 ```csharp
-    var table = tableCenter.GetTable<ExampleMergeTableSO>();
+    var table = tableCenter.GetTable<ExampleCustomTableSO>();
     var data = table.GetData(id);
 
     foreach (var icon in data.Icons)
