@@ -1,5 +1,11 @@
 # TableSO: 당신의 올인원 데이터 관리 도구 🛠️
 
+[English](README.md) | [한국어](README.ko.md)
+
+[![Unity](https://img.shields.io/badge/Made%20with-Unity-black?style=for-the-badge&logo=unity&logoColor=white)](https://unity.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
+
 **TableSO**는 Unity에서 **ScriptableObject**와 **Addressables**를 기반으로 구조화된 데이터와 테이블을 자동으로 생성하고 관리하는 강력한 툴입니다. `.csv` 파일, 폴더에 있는 에셋, 그리고 다른 테이블을 참조하는 커스텀 테이블을 손쉽게 처리하여 게임 데이터를 효율적으로 관리할 수 있도록 돕습니다.
 
 ## 🧐 의존성
@@ -165,8 +171,7 @@ namespace TableData
 }
 ```
 
-
-ExampleTableSO.cs (데이터 업데이트 로직 구현)
+#### ExampleTableSO.cs (데이터 업데이트 로직 구현)
 ```csharp
 namespace Table
 {
@@ -220,7 +225,7 @@ namespace Table
 }
 ```
 
-4. 코드에서 접근
+### 4. 코드에서 접근
 최종적으로 코드에서는 아래와 같이 접근하여 UI에 데이터를 표시할 수 있습니다.
 ```csharp
     // tableCenter는 미리 참조되어 있어야 합니다.
