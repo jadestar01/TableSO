@@ -54,6 +54,8 @@ namespace TableSO.Scripts.Editor
         private Dictionary<string, bool> assetFoldouts = new Dictionary<string, bool>();
 
         public bool autoReload = false;
+        
+        private List<ScriptableObject> cachedTables = new List<ScriptableObject>();
 
         // Supported asset types
         private readonly Dictionary<string, Type> supportedTypes = new Dictionary<string, Type>()
@@ -78,6 +80,7 @@ namespace TableSO.Scripts.Editor
         private void OnEnable()
         {
             autoReload = EditorPrefs.GetBool("AutoReload");
+            UpdateCacheTables();
             LoadStyles();
         }
 
@@ -211,13 +214,12 @@ namespace TableSO.Scripts.Editor
             }
 
             EditorGUILayout.Space(10);
-
-            var allTables = GetTablesByInterface();
-            var dataTables = allTables.Where(t => GetTableType(t) == TableType.Csv).ToList();
-            var assetTables = allTables.Where(t => GetTableType(t) == TableType.Asset).ToList();
-            var customTables = allTables.Where(t => GetTableType(t) == TableType.Custom).ToList();
             
-            DrawTableStatistics(allTables.Count, dataTables.Count, assetTables.Count, customTables.Count);
+            var dataTables = cachedTables.Where(t => GetTableType(t) == TableType.Csv).ToList();
+            var assetTables = cachedTables.Where(t => GetTableType(t) == TableType.Asset).ToList();
+            var customTables = cachedTables.Where(t => GetTableType(t) == TableType.Custom).ToList();
+            
+            DrawTableStatistics(cachedTables.Count, dataTables.Count, assetTables.Count, customTables.Count);
 
             EditorGUILayout.Space(20);
 
@@ -243,10 +245,9 @@ namespace TableSO.Scripts.Editor
 
             assetListScrollPosition = EditorGUILayout.BeginScrollView(assetListScrollPosition, GUILayout.MaxHeight(300));
 
-            var allTables = GetTablesByInterface();
-            var dataTables = allTables.Where(t => GetTableType(t) == TableType.Csv).ToList();
-            var assetTables = allTables.Where(t => GetTableType(t) == TableType.Asset).ToList();
-            var customTables = allTables.Where(t => GetTableType(t) == TableType.Custom).ToList();
+            var dataTables = cachedTables.Where(t => GetTableType(t) == TableType.Csv).ToList();
+            var assetTables = cachedTables.Where(t => GetTableType(t) == TableType.Asset).ToList();
+            var customTables = cachedTables.Where(t => GetTableType(t) == TableType.Custom).ToList();
 
             DrawTableSection("Data Tables", dataTables, new Color(0.3f, 0.8f, 0.3f));
 
@@ -326,7 +327,7 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space(20);
 
-            var dataTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Csv).ToList();
+            var dataTables = cachedTables.Where(t => GetTableType(t) == TableType.Csv).ToList();
             DrawTabSpecificTableList("Data Tables", dataTables, new Color(0.3f, 0.8f, 0.3f));
         }
 
@@ -425,7 +426,7 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space(20);
 
-            var assetTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Asset).ToList();
+            var assetTables = cachedTables.Where(t => GetTableType(t) == TableType.Asset).ToList();
             DrawTabSpecificTableList("Asset Tables", assetTables, new Color(0.9f, 0.6f, 0.2f));
         }
 
@@ -512,15 +513,15 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.Space(20);
 
-            var customTables = GetTablesByInterface().Where(t => GetTableType(t) == TableType.Custom).ToList();
+            var customTables = cachedTables.Where(t => GetTableType(t) == TableType.Custom).ToList();
             DrawTabSpecificTableList("Custom Tables", customTables, new Color(0.8f, 0.3f, 0.8f));
         }
         #endregion
 
         #region Interface-based CsvTable Detection Methods
-        private List<ScriptableObject> GetTablesByInterface()
+        private void UpdateCacheTables()
         {
-            var tables = new List<ScriptableObject>();
+            cachedTables = new List<ScriptableObject>();
             
             string searchPath = "Assets";
             
@@ -533,13 +534,13 @@ namespace TableSO.Scripts.Editor
                 
                 if (asset != null && IsTableType(asset))
                 {
-                    tables.Add(asset);
+                    cachedTables.Add(asset);
                 }
             }
             
-            return tables.OrderBy(t => t.name).ToList();
+            cachedTables.OrderBy(t => t.name).ToList();
         }
-
+        
         private bool IsTableType(ScriptableObject obj)
         {
             return obj is ITableType;
@@ -748,7 +749,7 @@ namespace TableSO.Scripts.Editor
 
         private void DrawReferencedTablesSelection()
         {
-            var availableTables = GetTablesByInterface(); // 인터페이스 기반으로 변경
+            var availableTables = cachedTables;
             
             if (availableTables.Count == 0)
             {
@@ -913,6 +914,7 @@ namespace TableSO.Scripts.Editor
             {
                 Debug.Log("[TableSO] Refreshing all tables...");
                 AssemblyReloadHandler.InitializeGeneratedTables();
+                UpdateCacheTables();
                 Repaint();
             }
             EditorGUILayout.EndHorizontal();
