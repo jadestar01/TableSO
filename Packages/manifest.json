@@ -1,13 +1,13 @@
 {
+    "dependencies": {
+        "com.jadestar.tableso": "https://github.com/jadestar01/TableSO.git#1.0.1",
+        "com.unity.test-framework": "1.4.6"
+    },
     "scopedRegistries": [
-    {
-      "name": "package.openupm.com",
-      "url": "https://package.openupm.com",
-      "scopes": [ "com.jadestar" ]
-    }
-  ],
-  "dependencies": {
-    "com.jadestar.tableso": "https://github.com/jadestar01/TableSO.git#1.0.1",
-    "com.unity.test-framework": "1.4.6"
-  }
+        {
+            "name": "package.openupm.com",
+            "url": "https://package.openupm.com",
+            "scopes": [ "com.jadestar" ]
+        }
+    ]
 }
