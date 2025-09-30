@@ -1,6 +1,6 @@
 {
     "dependencies": {
-        "com.jadestar.tableso": "https://github.com/jadestar01/TableSO.git#1.0.1",
+        "com.jadestar.tableso": "https://github.com/jadestar01/TableSO.git#1.0.0",
         "com.unity.test-framework": "1.4.6"
     },
     "scopedRegistries": [
