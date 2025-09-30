@@ -46,7 +46,7 @@ TableSO relies on the following Unity packages to seamlessly handle assets and C
 
 The **TableEditor** is the central hub for managing all your tables. It can be opened via:
 * **Keyboard Shortcut**: `[CTRL + T]` on Windows, `[CMD + T]` on Mac.
-* **Menu Tab**: Through the **`[TableSO]`** tab in the Unity Editor's main menu.
+* **Menu Tab**: Through the `[TableSO]` tab in the Unity Editor's main menu.
 
 ### 2. TableCenter
 
@@ -64,6 +64,7 @@ TableSO supports three distinct table types to satisfy all your data requirement
 * **CSV Rules**:
     * **First Row**: Must contain **variable names**. (Follow standard variable naming conventions.)
     * **Second Row**: Must contain **variable types**. (`enum` and `array` types are supported.)
+    * **First column**: The variable name must be **ID**.
     * **Arrays**: Elements are separated using the pipe character `|` (e.g., `1|2|3`).
 * A `DataClass` is generated based on each row, and a `TableClass` is generated based on the `ID`.
 
