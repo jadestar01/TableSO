@@ -7,7 +7,9 @@
         {
             "name": "package.openupm.com",
             "url": "https://package.openupm.com",
-            "scopes": [ "com.jadestar" ]
+            "scopes": [
+                "com.jadestar01.tableso"
+            ]
         }
     ]
 }
