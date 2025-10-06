@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/jadestar01/TableSO/compare/v1.0.1...v1.0.2) (2025-10-06)
+
+
+### Bug Fixes
+
+* table_update_logic ([c7788f7](https://github.com/jadestar01/TableSO/commit/c7788f79436db62b492861047563beaea4b51980))
+
 ## [1.0.1](https://github.com/jadestar01/TableSO/compare/v1.0.0...v1.0.1) (2025-09-30)
 
 
