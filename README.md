@@ -9,7 +9,7 @@
 
 ## 🧐 Dependencies
 
-TableSO relies on the following Unity packages to seamlessly handle assets and CSVs: 
+TableSO relies on the following Unity packages to seamlessly handle assets and CSVs:
 
 * **Addressables**: Essential for resolving and managing CSV data and assets.
     * *Don't worry if you're unfamiliar with Addressables. The entire process is automated and operates outside the user's focus.*
