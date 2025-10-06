@@ -17,6 +17,7 @@ namespace TableSO.Scripts
         {
             ReleaseData();
             dataList = new List<TData>(await CsvDataLoader.LoadCsvDataAsync<TData>(csvPath));
+            CsvDataLoader.ClearCaches();
             CacheData();
             base.UpdateData();
         } 

@@ -12,10 +12,15 @@ namespace TableSO.Scripts.Generator
 {
     public static class CsvDataLoader
     {
+        // Type cache to avoid repeated reflection calls
+        private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
+        private static readonly Dictionary<Type, ConstructorInfo> _constructorCache = new Dictionary<Type, ConstructorInfo>();
+        private static readonly Dictionary<Type, Dictionary<string, Type[]>> _constructorSignatureCache = new Dictionary<Type, Dictionary<string, Type[]>>();
+        private static Type[] _cachedAssemblyTypes = null;
+        private static readonly object _cacheLock = new object();
+
         public static async Task<List<T>> LoadCsvDataAsync<T>(string csvPath) where T : class
         {
-            List<T> dataList = new List<T>();
-
             string addressKey = $"{FilePath.CSV_PATH}{csvPath}.csv";
 
             AsyncOperationHandle<TextAsset> handle = Addressables.LoadAssetAsync<TextAsset>(addressKey);
@@ -33,17 +38,30 @@ namespace TableSO.Scripts.Generator
             if (lines.Length < 3) 
             {
                 Debug.LogWarning($"[TableSO] {csvPath}.csv: No data found");
-                return dataList;
+                return new List<T>();
             }
 
             string[] fieldNames = ParseCsvLine(lines[0]);
             string[] fieldTypes = ParseCsvLine(lines[1]);
+            
+            int dataRowCount = lines.Length - 2;
+            List<T> dataList = new List<T>(dataRowCount);
 
-            ConstructorInfo constructor = FindMatchingConstructor(typeof(T), fieldTypes, fieldNames);
+            string constructorKey = string.Join("|", fieldTypes);
+            ConstructorInfo constructor = GetCachedConstructor<T>(constructorKey, fieldTypes, fieldNames);
+            
             if (constructor == null)
             {
                 return null; 
             }
+
+            Type[] parameterTypes = new Type[fieldTypes.Length];
+            for (int i = 0; i < fieldTypes.Length; i++)
+            {
+                parameterTypes[i] = GetTypeFromString(fieldTypes[i]);
+            }
+
+            object[] constructorArgs = new object[fieldNames.Length];
 
             for (int i = 2; i < lines.Length; i++)
             {
@@ -57,11 +75,9 @@ namespace TableSO.Scripts.Generator
                     continue;
                 }
 
-                object[] constructorArgs = new object[values.Length];
-
                 for (int j = 0; j < values.Length; j++)
                 {
-                    constructorArgs[j] = ConvertValue(values[j], fieldTypes[j]);
+                    constructorArgs[j] = ConvertValue(values[j], fieldTypes[j], parameterTypes[j]);
                 }
 
                 try
@@ -71,361 +87,386 @@ namespace TableSO.Scripts.Generator
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"[TableSO] Constructor args: [{string.Join(", ", constructorArgs.Select(arg => arg?.ToString() ?? "null"))}]");
+                    Debug.LogError($"[TableSO] Constructor invocation failed at row {i + 1}: {e.Message}");
                 }
             }
 
             return dataList;
         }
-        
+
+        private static ConstructorInfo GetCachedConstructor<T>(string cacheKey, string[] fieldTypes, string[] fieldNames)
+        {
+            Type dataType = typeof(T);
+            
+            if (!_constructorSignatureCache.TryGetValue(dataType, out var signatureCache))
+            {
+                signatureCache = new Dictionary<string, Type[]>();
+                _constructorSignatureCache[dataType] = signatureCache;
+            }
+
+            if (signatureCache.TryGetValue(cacheKey, out Type[] cachedTypes))
+            {
+                if (_constructorCache.TryGetValue(dataType, out ConstructorInfo cachedConstructor))
+                {
+                    return cachedConstructor;
+                }
+            }
+
+            ConstructorInfo constructor = FindMatchingConstructor(dataType, fieldTypes, fieldNames);
+            if (constructor != null)
+            {
+                _constructorCache[dataType] = constructor;
+                signatureCache[cacheKey] = constructor.GetParameters().Select(p => p.ParameterType).ToArray();
+            }
+
+            return constructor;
+        }
+
         private static ConstructorInfo FindMatchingConstructor(Type dataType, string[] fieldTypes, string[] fieldNames)
         {
             ConstructorInfo[] constructors = dataType.GetConstructors();
-            
+
             if (constructors.Length == 0)
             {
                 Debug.LogError($"[TableSO] No public constructors found");
                 return null;
             }
 
+            int targetParamCount = fieldTypes.Length;
+            ConstructorInfo[] matchingCountConstructors = new ConstructorInfo[constructors.Length];
+            int matchCount = 0;
+
             for (int i = 0; i < constructors.Length; i++)
             {
-                var parameters = constructors[i].GetParameters();
-                string paramInfo = string.Join(", ", parameters.Select(p => $"{p.ParameterType.Name} {p.Name}"));
+                if (constructors[i].GetParameters().Length == targetParamCount)
+                {
+                    matchingCountConstructors[matchCount++] = constructors[i];
+                }
             }
 
-            var matchingCountConstructors = constructors.Where(c => c.GetParameters().Length == fieldTypes.Length).ToArray();
-            
-            if (matchingCountConstructors.Length == 0)
+            if (matchCount == 0)
             {
-                Debug.LogError($"[TableSO] No constructor with {fieldTypes.Length} parameters found " +
-                              $"CSV has {fieldTypes.Length} fields but available constructors have: {string.Join(", ", constructors.Select(c => $"{c.GetParameters().Length}"))} parameters");
+                Debug.LogError($"[TableSO] No constructor with {targetParamCount} parameters found");
                 return null;
             }
 
-            foreach (var constructor in matchingCountConstructors)
+            for (int i = 0; i < matchCount; i++)
             {
-                var parameters = constructor.GetParameters();
+                var parameters = matchingCountConstructors[i].GetParameters();
                 bool typeMatch = true;
-                
-                for (int i = 0; i < parameters.Length; i++)
+
+                for (int j = 0; j < parameters.Length; j++)
                 {
-                    Type expectedType = GetTypeFromString(fieldTypes[i]);
-                    Type paramType = parameters[i].ParameterType;
-                    
+                    Type expectedType = GetTypeFromString(fieldTypes[j]);
+                    Type paramType = parameters[j].ParameterType;
+
                     if (!IsTypeCompatible(expectedType, paramType))
                     {
-                        Debug.LogWarning($"[TableSO] Type mismatch at parameter {i}: expected {expectedType?.Name ?? "null"}, got {paramType.Name}");
                         typeMatch = false;
                         break;
                     }
                 }
-                
+
                 if (typeMatch)
                 {
-                    return constructor;
+                    return matchingCountConstructors[i];
                 }
             }
 
             var fallbackConstructor = matchingCountConstructors[0];
-            var fallbackParams = fallbackConstructor.GetParameters();
-            
-            Debug.LogWarning($"[TableSO] No exact type match found for constructor. Using fallback constructor:");
-            Debug.LogWarning($"Expected types: [{string.Join(", ", fieldTypes)}]");
-            Debug.LogWarning($"Constructor types: [{string.Join(", ", fallbackParams.Select(p => p.ParameterType.Name))}]");
-            
+            Debug.LogWarning($"[TableSO] No exact type match found. Using fallback constructor");
             return fallbackConstructor;
         }
 
         private static bool IsTypeCompatible(Type expectedType, Type actualType)
         {
             if (expectedType == actualType) return true;
-            
             if (expectedType == null || actualType == null) return false;
-            
+
             if (expectedType.IsArray && actualType.IsArray)
             {
                 return IsTypeCompatible(expectedType.GetElementType(), actualType.GetElementType());
             }
-            
-            try
-            {
-                if (actualType.IsAssignableFrom(expectedType)) return true;
-                if (expectedType.IsAssignableFrom(actualType)) return true;
-                
-                var numericTypes = new[] { typeof(int), typeof(float), typeof(double), typeof(decimal), typeof(long), typeof(short), typeof(byte) };
-                if (numericTypes.Contains(expectedType) && numericTypes.Contains(actualType)) return true;
-            }
-            catch
-            {
-            }
-            
+
+            if (actualType.IsAssignableFrom(expectedType)) return true;
+            if (expectedType.IsAssignableFrom(actualType)) return true;
+
+            // Fast numeric type check
+            if (IsNumericType(expectedType) && IsNumericType(actualType)) return true;
+
             return false;
+        }
+
+        private static bool IsNumericType(Type type)
+        {
+            return type == typeof(int) || type == typeof(float) || type == typeof(double) || 
+                   type == typeof(decimal) || type == typeof(long) || type == typeof(short) || 
+                   type == typeof(byte);
         }
 
         private static string[] ParseCsvLine(string line)
         {
-            List<string> fields = new List<string>();
+            List<string> fields = new List<string>(16);
             bool inQuotes = false;
-            System.Text.StringBuilder currentField = new System.Text.StringBuilder();
-            
+            int fieldStart = 0;
+
             for (int i = 0; i < line.Length; i++)
             {
                 char c = line[i];
-                
+
                 if (c == '"')
                 {
                     inQuotes = !inQuotes;
                 }
                 else if (c == ',' && !inQuotes)
                 {
-                    fields.Add(currentField.ToString().Trim());
-                    currentField.Clear();
-                }
-                else
-                {
-                    currentField.Append(c);
+                    fields.Add(line.Substring(fieldStart, i - fieldStart).Trim());
+                    fieldStart = i + 1;
                 }
             }
-            
-            fields.Add(currentField.ToString().Trim());
+
+            // Add last field
+            if (fieldStart < line.Length)
+            {
+                fields.Add(line.Substring(fieldStart).Trim());
+            }
+            else
+            {
+                fields.Add(string.Empty);
+            }
+
             return fields.ToArray();
         }
-        
+
         private static Type GetTypeFromString(string typeString)
         {
             if (string.IsNullOrEmpty(typeString)) return typeof(string);
-            
+
+            if (_typeCache.TryGetValue(typeString, out Type cachedType))
+            {
+                return cachedType;
+            }
+
+            Type resultType;
+
             if (typeString.EndsWith("[]"))
             {
                 string elementTypeString = typeString.Substring(0, typeString.Length - 2).Trim();
                 Type elementType = GetSingleTypeFromString(elementTypeString);
-                if (elementType != null)
-                {
-                    return elementType.MakeArrayType();
-                }
-                return typeof(string[]);
+                resultType = elementType != null ? elementType.MakeArrayType() : typeof(string[]);
+            }
+            else
+            {
+                resultType = GetSingleTypeFromString(typeString);
             }
 
-            return GetSingleTypeFromString(typeString);
+            _typeCache[typeString] = resultType;
+            return resultType;
         }
 
         private static Type GetSingleTypeFromString(string typeString)
         {
             if (string.IsNullOrEmpty(typeString)) return typeof(string);
-            
-            string normalizedType = typeString.ToLower().Trim();
-            
+
+            string normalizedType = typeString.ToLower();
+
             switch (normalizedType)
             {
-                case "int":
-                    return typeof(int);
-                case "float":
-                    return typeof(float);
-                case "string":
-                    return typeof(string);
-                case "bool":
-                    return typeof(bool);
-                case "double":
-                    return typeof(double);
+                case "int": return typeof(int);
+                case "float": return typeof(float);
+                case "string": return typeof(string);
+                case "bool": return typeof(bool);
+                case "double": return typeof(double);
                 default:
                     Type foundType = FindUserDefinedType(typeString);
-                    return foundType ?? typeof(string); // Default value
+                    return foundType ?? typeof(string);
             }
         }
 
         private static Type FindUserDefinedType(string typeName)
         {
-            HashSet<string> excludedAssemblies = new HashSet<string>
+            if (_cachedAssemblyTypes == null)
             {
-                "UnityEngine",
-                "UnityEditor", 
-                "Unity.Collections",
-                "Unity.Mathematics",
-                "Unity.Burst",
-                "Unity.Jobs",
-                "UnityEngine.UI",
-                "UnityEngine.CoreModule",
-                "UnityEditor.CoreModule"
-            };
-
-            List<Type> candidateTypes = new List<Type>();
-
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                try
+                lock (_cacheLock)
                 {
-                    string assemblyName = assembly.GetName().Name;
-                    if (excludedAssemblies.Any(excluded => assemblyName.StartsWith(excluded)))
+                    if (_cachedAssemblyTypes == null)
                     {
-                        continue;
+                        InitializeAssemblyTypesCache();
                     }
-
-                    Type type = assembly.GetType(typeName);
-                    if (type != null && type.IsPublic && !type.IsNested)
-                    {
-                        candidateTypes.Add(type);
-                    }
-                    
-                    foreach (Type assemblyType in assembly.GetTypes())
-                    {
-                        if (assemblyType.Name == typeName && assemblyType.IsPublic && !assemblyType.IsNested)
-                        {
-                            if (!candidateTypes.Contains(assemblyType))
-                            {
-                                candidateTypes.Add(assemblyType);
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning($"[TableSO] Error loading types from assembly {assembly.FullName}: {e.Message}");
                 }
             }
 
-            if (candidateTypes.Count > 0)
+            for (int i = 0; i < _cachedAssemblyTypes.Length; i++)
             {
-                Type selectedType = candidateTypes[0];
-                
-                return selectedType;
+                Type type = _cachedAssemblyTypes[i];
+                if (type.Name == typeName && type.IsPublic && !type.IsNested)
+                {
+                    return type;
+                }
             }
 
-            Debug.LogWarning($"[TableSO] Cannot find user-defined type '{typeName}'");
             return null;
         }
 
-        private static object ConvertValue(string value, string targetType)
+        private static void InitializeAssemblyTypesCache()
         {
-            if (string.IsNullOrEmpty(value)) return GetDefaultValue(targetType);
+            HashSet<string> excludedAssemblies = new HashSet<string>
+            {
+                "UnityEngine", "UnityEditor", "Unity.Collections", "Unity.Mathematics",
+                "Unity.Burst", "Unity.Jobs", "UnityEngine.UI", "UnityEngine.CoreModule",
+                "UnityEditor.CoreModule"
+            };
+
+            List<Type> allTypes = new List<Type>(128);
+
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
             
-            // Handle array types
+            for (int i = 0; i < assemblies.Length; i++)
+            {
+                try
+                {
+                    string assemblyName = assemblies[i].GetName().Name;
+                    
+                    bool shouldExclude = false;
+                    foreach (string excluded in excludedAssemblies)
+                    {
+                        if (assemblyName.StartsWith(excluded))
+                        {
+                            shouldExclude = true;
+                            break;
+                        }
+                    }
+
+                    if (shouldExclude) continue;
+
+                    Type[] types = assemblies[i].GetTypes();
+                    allTypes.AddRange(types);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[TableSO] Error loading types from assembly: {e.Message}");
+                }
+            }
+
+            _cachedAssemblyTypes = allTypes.ToArray();
+        }
+
+        private static object ConvertValue(string value, string targetType, Type targetTypeObj)
+        {
+            if (string.IsNullOrEmpty(value)) return GetDefaultValue(targetType, targetTypeObj);
+
             if (targetType.EndsWith("[]"))
             {
                 string elementTypeString = targetType.Substring(0, targetType.Length - 2).Trim();
-                return ConvertToArray(value, elementTypeString);
+                return ConvertToArray(value, elementTypeString, targetTypeObj.GetElementType());
             }
 
-            return ConvertSingleValue(value, targetType);
+            return ConvertSingleValue(value, targetType, targetTypeObj);
         }
 
-        private static object ConvertToArray(string value, string elementType)
+        private static object ConvertToArray(string value, string elementType, Type elementTypeObj)
         {
             if (string.IsNullOrEmpty(value))
             {
-                // Return empty array
-                Type _elementTypeObj = GetSingleTypeFromString(elementType);
-                return Array.CreateInstance(_elementTypeObj, 0);
+                return Array.CreateInstance(elementTypeObj, 0);
             }
 
-            // Parse values separated by pipe (|)
-            string[] elements = value.Split('|').Select(s => s.Trim()).ToArray();
-            Type elementTypeObj = GetSingleTypeFromString(elementType);
+            string[] elements = value.Split('|');
             Array resultArray = Array.CreateInstance(elementTypeObj, elements.Length);
 
             for (int i = 0; i < elements.Length; i++)
             {
-                if (!string.IsNullOrEmpty(elements[i]))
+                string trimmed = elements[i].Trim();
+                if (!string.IsNullOrEmpty(trimmed))
                 {
-                    object convertedElement = ConvertSingleValue(elements[i], elementType);
+                    object convertedElement = ConvertSingleValue(trimmed, elementType, elementTypeObj);
                     resultArray.SetValue(convertedElement, i);
                 }
                 else
                 {
-                    // Set empty elements to default value
-                    object defaultValue = GetSingleDefaultValue(elementType);
-                    resultArray.SetValue(defaultValue, i);
+                    resultArray.SetValue(GetSingleDefaultValue(elementType, elementTypeObj), i);
                 }
             }
 
             return resultArray;
         }
 
-        private static object ConvertSingleValue(string value, string targetType)
+        private static object ConvertSingleValue(string value, string targetType, Type targetTypeObj)
         {
-            if (string.IsNullOrEmpty(value)) return GetSingleDefaultValue(targetType);
-            
-            string normalizedType = targetType.ToLower().Trim();
-            
+            if (string.IsNullOrEmpty(value)) return GetSingleDefaultValue(targetType, targetTypeObj);
+
+            string normalizedType = targetType.ToLower();
+
             try
             {
                 switch (normalizedType)
                 {
-                    case "int":
-                        return int.Parse(value);
-                    case "float":
-                        return float.Parse(value);
-                    case "string":
-                        return value;
-                    case "bool":
-                        return bool.Parse(value);
-                    case "double":
-                        return double.Parse(value);
+                    case "int": return int.Parse(value);
+                    case "float": return float.Parse(value);
+                    case "string": return value;
+                    case "bool": return bool.Parse(value);
+                    case "double": return double.Parse(value);
                     default:
-                        // Handle enum
-                        Type enumType = GetSingleTypeFromString(targetType);
-                        if (enumType != null && enumType.IsEnum)
+                        if (targetTypeObj != null && targetTypeObj.IsEnum)
                         {
                             try
                             {
-                                return Enum.Parse(enumType, value, true); // ignoreCase = true
+                                return Enum.Parse(targetTypeObj, value, true);
                             }
                             catch (ArgumentException)
                             {
-                                Debug.LogWarning($"[TableSO] Cannot find enum value '{value}' in {targetType}. Using first value");
-                                Array enumValues = Enum.GetValues(enumType);
+                                Array enumValues = Enum.GetValues(targetTypeObj);
                                 return enumValues.Length > 0 ? enumValues.GetValue(0) : null;
                             }
                         }
-                        return value; // Return as string
+                        return value;
                 }
             }
             catch (Exception e)
             {
                 Debug.LogWarning($"[TableSO] Cannot convert value '{value}' to {targetType}: {e.Message}");
-                return GetSingleDefaultValue(targetType);
+                return GetSingleDefaultValue(targetType, targetTypeObj);
             }
         }
 
-        private static object GetDefaultValue(string typeString)
+        private static object GetDefaultValue(string typeString, Type typeObj)
         {
-            // For array types
             if (typeString.EndsWith("[]"))
             {
-                string elementTypeString = typeString.Substring(0, typeString.Length - 2).Trim();
-                Type elementType = GetSingleTypeFromString(elementTypeString);
-                return Array.CreateInstance(elementType, 0); // Empty array
+                Type elementType = typeObj?.GetElementType() ?? typeof(string);
+                return Array.CreateInstance(elementType, 0);
             }
 
-            return GetSingleDefaultValue(typeString);
+            return GetSingleDefaultValue(typeString, typeObj);
         }
 
-        private static object GetSingleDefaultValue(string typeString)
+        private static object GetSingleDefaultValue(string typeString, Type typeObj)
         {
-            string normalizedType = typeString.ToLower().Trim();
-            
+            string normalizedType = typeString.ToLower();
+
             switch (normalizedType)
             {
-                case "int":
-                    return 0;
-                case "float":
-                    return 0f;
-                case "string":
-                    return string.Empty;
-                case "bool":
-                    return false;
-                case "double":
-                    return 0.0;
+                case "int": return 0;
+                case "float": return 0f;
+                case "string": return string.Empty;
+                case "bool": return false;
+                case "double": return 0.0;
                 default:
-                    Type enumType = GetSingleTypeFromString(typeString);
-                    if (enumType != null && enumType.IsEnum)
+                    if (typeObj != null && typeObj.IsEnum)
                     {
-                        Array enumValues = Enum.GetValues(enumType);
+                        Array enumValues = Enum.GetValues(typeObj);
                         return enumValues.Length > 0 ? enumValues.GetValue(0) : null;
                     }
                     return null;
             }
         }
 
+        public static void ClearCaches()
+        {
+            _typeCache.Clear();
+            _constructorCache.Clear();
+            _constructorSignatureCache.Clear();
+            _cachedAssemblyTypes = null;
+        }
     }
 }
