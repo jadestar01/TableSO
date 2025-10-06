@@ -35,7 +35,7 @@ TableSO relies on the following Unity packages to seamlessly handle assets and C
 2.  Click the `+` button in the upper-left corner and select `Add package from git URL...`.
 3.  Enter the following URL and install the package:
     ```
-    https://github.com/jadestar01/TableSO.git?path=Packages/com.jadestar01.tableso#1.0.2
+    https://github.com/jadestar01/TableSO.git?path=Packages/com.jadestar01.tableso#v1.0.2
     ```
 4.  Run the **TableEditor** by clicking the **`TableSO`** tab in the Unity top menu.
 5.  In the Editor's **Center** tab, click **`Create TableCenter`** to finalize the directory structure and Addressable settings, creating the central **TableCenter** asset.
