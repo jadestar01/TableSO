@@ -1,0 +1,10 @@
+ID,ItemIconPath,ItemName,ItemDescription,ItemType,ItemQuality,DropRate,Price,MaterialType,UpgradeRate,Health,Spirit,Swift,Haste,PhysicalDamage,PhysicalCritRate,PhysicalCritDamage,PhysicalAttackSpeed,PhysicalPenetration,MagicalDamage,MagicalCritRate,MagicalCritDamage,MagicalAttackSpeed,MagicalPenetration,Armor,Resistance,Dodge
+int,string,string,string,ItemType,ItemQuality,int,string,MaterialType,int,float,float,float,float,string,float,float,float,float,string,float,float,float,float,float,float,float
+4301,ItemIcon_4301,ItemName_4301,ItemDescription_4301,Material,Rare,1,80~160,Normal,80,20,10,1,,,,,,,,,,,,,,
+4302,ItemIcon_4302,ItemName_4302,ItemDescription_4302,Material,Rare,1,80~160,Normal,70,,30,,10,,,,,,,4~6,,,,,,
+5301,ItemIcon_5301,ItemName_5301,ItemDescription_5301,Material,Rare,1,80~160,Special,40,10,10,1,1,,5,,10,5,5,,5,,10,,,
+5401,ItemIcon_5401,ItemName_5401,ItemDescription_5401,Material,Epic,1,150~220,Special,80,20,20,,,6,,,,,10,6,,,,,,
+5402,ItemIcon_5402,ItemName_5402,ItemDescription_5402,Material,Epic,1,150~220,Special,70,50,10,,5,,,,,,,,,,,,,
+5403,ItemIcon_5403,ItemName_5403,ItemDescription_5403,Material,Epic,1,150~220,Special,60,30,20,5,5,4,,,,,,4,,,,,,
+5404,ItemIcon_5404,ItemName_5404,ItemDescription_5404,Material,Epic,1,150~220,Special,80,,,,,6,10,,20,10,10,6,10,,20,,,
+5501,ItemIcon_5501,ItemName_5501,ItemDescription_5501,Material,Legendary,1,200~280,Special,90,100,,,,,,,,,,,,,,,,

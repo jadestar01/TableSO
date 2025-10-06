@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace TableSO.Scripts
 {
@@ -13,28 +17,53 @@ namespace TableSO.Scripts
         private Dictionary<Type, ScriptableObject> tableCache = new();
         private bool isCacheInitialized = false;
 
-        private async void OnEnable()
+        public async void Initalize()
         {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            
             List<ScriptableObject> customTables = new();
+            List<Task> nonCustomUpdateTasks = new();
+    
             foreach (var table in registeredTables)
+            {
+                if (table is IUpdatable updatable1)
+                    updatable1.isUpdated = false;
+            
                 if (table is ITableType type)
                 {
                     if (type.tableType == TableType.Custom)
                         customTables.Add(table);
-                    else
-                    {
-                        if (table is IUpdatable updatable)
-                            await updatable.UpdateData();
-                    }
+                    else if (table is IUpdatable updatable2)
+                        nonCustomUpdateTasks.Add(updatable2.UpdateData());
                 }
-            
+            }
+    
+            await Task.WhenAll(nonCustomUpdateTasks);
             Debug.Log($"[TableSO] {customTables.Count} custom tables found");
-            
+
             foreach (var table in customTables)
+            {
+                if (table is ICustomizable custom)
+                {
+                    List<Task> refUpdateTasks = new();
+                    foreach (var refTable in custom.refTableTypes)
+                    {
+                        var target = registeredTables.FirstOrDefault(t => t != null && t.GetType() == refTable);
+                        if (target is IUpdatable u && !u.isUpdated)
+                            refUpdateTasks.Add(u.UpdateData());
+                    }
+                    await Task.WhenAll(refUpdateTasks);
+                }
+
                 if (table is IUpdatable updatable)
                     await updatable.UpdateData();
+            }
+            
+            sw.Stop();
+            Debug.Log($"[TableSO] Elapsed Time : {sw.ElapsedMilliseconds} ms");
         }
-        
+
         public T GetTable<T>() where T : ScriptableObject
         {
             if (!isCacheInitialized)

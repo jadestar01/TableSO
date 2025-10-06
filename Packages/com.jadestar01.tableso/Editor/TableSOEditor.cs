@@ -30,7 +30,7 @@ namespace TableSO.Scripts.Editor
         private string tableName = "";
         private bool tableAutoRegister = true;
 
-        // AssetTable Tab Variables
+        // AsstTable Tab Variables
         private string selectedFolderPath = "Assets/";
         private Type selectedAssetType = typeof(Sprite);
         private string assetTableName = "";
@@ -52,8 +52,6 @@ namespace TableSO.Scripts.Editor
         private Vector2 assetListScrollPosition;
         private bool showAssetList = true;
         private Dictionary<string, bool> assetFoldouts = new Dictionary<string, bool>();
-
-        public bool autoReload = false;
         
         private List<ScriptableObject> cachedTables = new List<ScriptableObject>();
 
@@ -79,14 +77,8 @@ namespace TableSO.Scripts.Editor
         
         private void OnEnable()
         {
-            autoReload = EditorPrefs.GetBool("AutoReload");
             UpdateCacheTables();
             LoadStyles();
-        }
-
-        private void OnDisable()
-        {
-            EditorPrefs.SetBool("AutoReload", autoReload);
         }
         
         #region Editor Drawing Methods
@@ -300,7 +292,6 @@ namespace TableSO.Scripts.Editor
             EditorGUILayout.Space();
 
             DrawSectionHeader("Options");
-            tableAutoRegister = EditorGUILayout.Toggle("Auto Register to TableCenter", tableAutoRegister);
 
             EditorGUILayout.Space();
 
@@ -315,14 +306,23 @@ namespace TableSO.Scripts.Editor
                          !string.IsNullOrEmpty(tableName) && 
                          File.Exists(csvFilePath);
 
-            if (GUILayout.Button("Update Csv Data", GUILayout.Height(40)))
+            bool isRegisteredTable = false;
+            string targetName = $"{tableName}TableSO";
+            foreach (var table in cachedTables)
             {
-                UpdateCsvData();
+                if (table.name == targetName)
+                {
+                    isRegisteredTable = true;
+                    break;
+                }
             }
+
+            if (isRegisteredTable)
+                if (GUILayout.Button("Update Csv Data", GUILayout.Height(40)))
+                    UpdateCsvData();
             if (GUILayout.Button("Generate Csv Table", GUILayout.Height(40)))
-            {
                 GenerateCsvTable();
-            }
+            
             GUI.enabled = true;
 
             EditorGUILayout.Space(20);
@@ -906,9 +906,7 @@ namespace TableSO.Scripts.Editor
 
             EditorGUILayout.LabelField("Utility", titleStyle);
             EditorGUILayout.Space(5);
-
-            autoReload = EditorGUILayout.Toggle("Auto Reloader", autoReload);
-
+            
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Refresh All Tables", GUILayout.Height(25)))
             {

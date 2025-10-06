@@ -29,6 +29,7 @@ namespace TableSO.Scripts
     
     public interface IUpdatable
     {
+        public bool isUpdated { get; set; }
         public Task UpdateData();
     }
 

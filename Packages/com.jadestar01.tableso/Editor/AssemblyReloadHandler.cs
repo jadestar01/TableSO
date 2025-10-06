@@ -7,47 +7,13 @@ using System.Collections.Generic;
 using TableSO.Scripts;
 using System.IO;
 using TableSO.Scripts.Editor;
-using TableSO.Scripts.Generator;
 
-[InitializeOnLoad]
 public static class AssemblyReloadHandler
 {
     private const string GENERATED_TABLES_FOLDER = "Assets/TableSO/Table";
     private const string GENERATED_CODE_FOLDER = "Assets/TableSO/Scripts/TableClass";
     
 #if UNITY_EDITOR
-    static AssemblyReloadHandler()
-    {
-        AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
-        AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
-    }
-
-    private static void OnBeforeAssemblyReload()
-    {
-        SaveCurrentTableState();
-    }
-
-    private static void OnAfterAssemblyReload()
-    {
-        bool autoReload = EditorPrefs.GetBool("AutoReload");
-        Debug.Log($"[TableSO] Auto Reload: {autoReload}");
-        if (!autoReload)
-            return;
-        Debug.Log("[TableSO] Try to find Tables..");
-
-        // Wait with a longer delay until the assembly is fully loaded
-        EditorApplication.delayCall += () => { EditorApplication.delayCall += () => { InitializeGeneratedTables(); }; };
-    }
-
-    private static void SaveCurrentTableState()
-    {
-        var tableCenter = FindTableCenter();
-        if (tableCenter != null)
-        {
-            EditorUtility.SetDirty(tableCenter);
-            AssetDatabase.SaveAssets();
-        }
-    }
     public static void InitializeGeneratedTables()
     {
         try
@@ -105,17 +71,15 @@ public static class AssemblyReloadHandler
                     Debug.LogError($"[TableSO] Error while processing {tableType.Name}: {e.Message}");
                 }
             }
-
-            EditorApplication.delayCall += () => {
-                AssignRefTableReferences(tableCenter, tableSoTypes);
-                
-                if (createdCount > 0 || registeredCount > 0)
-                {
-                    EditorUtility.SetDirty(tableCenter);
-                    AssetDatabase.SaveAssets();
-                    AssetDatabase.Refresh();
-                }
-            };
+            
+            AssignRefTableReferences(tableCenter, tableSoTypes);
+            
+            if (createdCount > 0 || registeredCount > 0)
+            {
+                EditorUtility.SetDirty(tableCenter);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+            }
         }
         catch (Exception e)
         {

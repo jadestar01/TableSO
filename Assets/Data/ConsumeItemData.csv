@@ -1,0 +1,5 @@
+ID,ItemIconPath,ItemName,ItemDescription,ItemType,ItemQuality,DropRate,Price,Cooltime,ConsumeType,Health,Spirit,Effects,,
+int,string,string,string,ItemType,ItemQuality,int,string,float,ConsumeType,int,int,int[],,
+6101,ItemIcon_6101,ItemName_6101,ItemDescription_6101,Consume,Common,1,100~150,8,Instant,5,,,,체력을  5 회복
+6102,ItemIcon_6102,ItemName_6102,ItemDescription_6102,Consume,Common,1,100~150,8,Instant,,5,,,정신력을 5회복
+6201,ItemIcon_6201,ItemName_6201,ItemDescription_6201,Consume,Uncommon,1,100~150,30,OvertimeEffect,,,1001|1003,,

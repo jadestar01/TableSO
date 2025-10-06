@@ -1,0 +1,6 @@
+ID,EffectType,TimeType,Time,TickCount,Health,Spirit,DamageExpression,StatTypes,StatValues
+int,EffectType,TimeType,int,int,int,int,int,StatType[],int[]
+1001,Damage,Tick,3,3,,,2001,,
+2001,Regeneration,Tick,3,3,5,5,,,
+3001,Stat,Duration,15,,,,,Health|Spirit,
+3002,Stat,Stage,,,,,,Swift,10

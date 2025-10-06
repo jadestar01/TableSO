@@ -1,0 +1,64 @@
+ID,ko,en
+string,string,string
+ItemName_1101,초보자의 직검,Novice Straight Sword
+ItemName_1102,연습용 목검,Training Wooden Sword
+ItemName_1103,혹투성이 팔,Tumorous Arm
+ItemName_1201,대장간 망치,Blacksmith's Hammer
+ItemName_1202,고름투성이 팔,Festering Arm
+ItemName_1301,무딘 검,Dull Sword
+ItemName_1401,장식된 검,Ornamented Blade
+ItemName_2101,푸른 돌 완드,Azure Stone Wand
+ItemName_2102,혹투성이 지팡이,Tumorous Staff
+ItemName_2201,고름투성이 지팡이,Putrid Staff
+ItemName_2301,에메랄드 지팡이,Emerald Staff
+ItemName_2401,토파즈 지팡이,Topaz Staff
+ItemName_2402,짓물러진 살점,Festered Flesh
+ItemName_2501,루비 완드,Ruby Wand
+ItemName_3101,붉은 혈석의 탈리스만,Talisman of Crimson Bloodstone
+ItemName_3301,공격 속도의 룬,Rune of Swift Strikes
+ItemName_3302,전사의 두개골,Warrior’s Skull
+ItemName_3303,혹,Tumor
+ItemName_3304,부푼 혹,Swollen Tumor
+ItemName_3401,매의 깃털,Hawk Feather
+ItemName_4301,담대함의 원석,Stone of Valor
+ItemName_4302,사파이어,Sapphire
+ItemName_5301,수정 파편,Crystal Shard
+ItemName_5401,초월자의 혼,Soul of the Transcendent
+ItemName_5402,루비,Ruby
+ItemName_5403,진주,Pearl
+ItemName_5404,토파즈,Topaz
+ItemName_5501,다이아몬드,Diamond
+ItemName_6101,,
+ItemName_6102,,
+ItemName_6201,,
+ItemDescription_1101,견습 기사들을 위해 지급되던 무딘 날의 제식 직검.,A ceremonial straight sword of dull edge
+ItemDescription_1102,검술 훈련을 위해 널리 쓰이는 나무 목검. 타격이 목적이라면 쓰지 못할 것도 아니다.,A wooden practice blade
+ItemDescription_1103,"중증 낙타병 환자의 딱딱하게 굳은 팔. 일말의 살점도 느껴지지 않으며, 그저 딱딱한 나무, 그보다도 돌 같다.",The hardened arm of a plague-ridden sufferer. No flesh remains—only rigid as wood
+ItemDescription_1201,대장장이가 철을 벼릴 때 사용하는 망치. 무게중심은 엉망이지만 제 위력이 나오기는 한다.,A hammer for forging iron. Ill-balanced
+ItemDescription_1202,고름이 비져나올 정도의 중증 낙타병 환자의 굳은 팔. 낙타병의 고름은 사교도들에게 성수이자 오물이라고 여겨진다.,The festering arm of a plaguebearer
+ItemDescription_1301,날이 많이 상한 직검. 숱한 실전들을 버텨왔음이 느껴진다.,A straight sword with a battered edge
+ItemDescription_1401,화려한 장식이 달린 잘 관리된 직검. 전설 속 무구는 아닐지라도 여전히 위력적이다.,A finely kept straight sword adorned with ornament. Not legendary
+ItemDescription_2101,견습 마법사들을 위해 지급되던 제식 완드.,A ceremonial wand once bestowed to apprentice magi.
+ItemDescription_2102,낙타병 환자의 조직으로 이루어진 지팡이. 일말의 신앙심과 처절한 부정함이 느껴진다.,A staff wrought of diseased flesh
+ItemDescription_2201,고름이 비져나올 정도의 중증 낙타병 환자의 조직으로 이루어진 지팡이. 낙타병의 고름은 사교도들에게 성수이자 오물이라고 여겨진다.,A staff of plague-ridden tissue
+ItemDescription_2301,둥근 에메랄드로 마무리된 철제 지팡이. 방어를 위해 사용할 가능성이 엿보일 정도로 묵직하다.,An iron staff capped with emerald. Its weight suggests more shield than conduit.
+ItemDescription_2401,각진 토파즈를 더 반듯하게 가공하여 마무리한 나무 지팡이. 헛점을 날카롭게 파고들 수 있다.,A wooden staff mounted with cut topaz
+ItemDescription_2402,짓물러진 자가 남긴 거대한 살덩이. 기도하고 또 기도했다. 기도문이 떠오르지 않는 날부터는 그저 신을 부르짖었다. 그렇게 그의 정신은 짓뭉게졌다.,A grotesque lump of flesh left by the festering one. He prayed ceaselessly
+ItemDescription_2501,"마력이 담긴 루비로 마무리한 강력한 완드. 예로부터 루비는 대지의 피, 생명력이 응집된 보석이라 일컬어진다. 그 중에서도 마력을 담아 가공한 명품.",A potent wand set with ruby
+ItemDescription_3101,강한 생명력을 가진 생명체가 죽으며 남기는 미지의 수정을 가공하여 만든 탈리스만. 수정 너머에서 희미한 박동이 느껴진다. ,A talisman carved from crystal left by a creature of great vitality. Beyond its surface echoes a faint heartbeat.
+ItemDescription_3301,"""빠른 팔""을 의미하는 룬이 새겨진 돌. 룬 문자의 이해는 번역하는게 아니다. 받아들이는 것이다.",A rune-carved stone bearing the sign of “swift arm.” Runes are not read
+ItemDescription_3302,"이름 모를 전사의 유해, 그 중 두개골. 마저 싸우지 못한 한이 느껴진다.",The skull of an unnamed warrior
+ItemDescription_3303,돌멩이처럼 굳은 낙타병 환자의 혹. 그 중 마치 원래부터 돌이었던 듯한 물건.,The hardened tumor of a plague sufferer
+ItemDescription_3304,고름이 가득 차 그대로 굳은 낙타병 환자의 혹. 낙타병의 고름은 사교도들에게 성수이자 오물이라고 여겨진다.,A swollen tumor filled and hardened with pus. To cultists
+ItemDescription_3401,"흰 매, 백응의 깃털. 믿기 힘들 정도로 가볍다. ","A feather of the white hawk, Baek-eung. So light as to defy belief."
+ItemDescription_4301,용감한 자의 투지가 깃든 돌. 한낱 돌멩이에 지나지 않지만 누군가 부적이라 여겼기에 그 기운을 물려받았다.,"A stone infused with the valor of the brave. Once a mere pebble, yet hallowed as a talisman, it carries will beyond its weight."
+ItemDescription_4302,바다와 하늘의 푸른색이 담긴 보석. 안을 들여다보면 정신이 맑아지는 듯하다.,A gem of ocean and sky. To gaze within is to feel one’s spirit clear.
+ItemDescription_5301,"투명한 수정이 불규칙하게 파편화된 조각. 본디 한 덩어리에서 깨진 것인지, 이렇게 만들어진 것인지는 확답할 수 없다.","A shard of crystal, jagged and uncertain. Was it broken from a whole, or born fragmented? None can say."
+ItemDescription_5401,"초자연적인 힘이 잠재된 혼. 그 자체로는 존재가 희미하지만, 힘이 느껴짐에는 틀림없다.","A soul brimming with latent power. Its form is faint, yet its force undeniable."
+ItemDescription_5402,"예로부터 루비는 대지의 피, 생명력이 응집된 보석이라 일컬어진다.","Ruby, oft called the blood of the earth, vessel of life condensed."
+ItemDescription_5403,"한 생명의 생애와 함께 성장한다는 보석. 잠재력이 가득하지만, 그만큼 연약하기도 하다.","A gem said to grow alongside a life. Brimming with potential, fragile all the same."
+ItemDescription_5404,단단한 황옥. 자연적으로 날카로운 각이 만들어지는 광물. ,"A hardened topaz, its edges sharpened by nature’s hand."
+ItemDescription_5501,"가장 단단한 광물인 금강석. 단순히 강도가 높을 뿐 아니라, 질긴 생명력과 같은 인내력 품고 있다.","Diamond, hardest of stones. Its strength lies not only in hardness, but in endurance, like life unbroken."
+ItemDescription_6101,,
+ItemDescription_6102,,
+ItemDescription_6201,,

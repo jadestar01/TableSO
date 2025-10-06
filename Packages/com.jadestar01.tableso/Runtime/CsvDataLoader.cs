@@ -127,7 +127,6 @@ namespace TableSO.Scripts.Generator
                 }
             }
 
-            // 3. 타입이 완전히 일치하지 않는 경우, 첫 번째 생성자 사용하고 경고 출력
             var fallbackConstructor = matchingCountConstructors[0];
             var fallbackParams = fallbackConstructor.GetParameters();
             
@@ -197,7 +196,6 @@ namespace TableSO.Scripts.Generator
         {
             if (string.IsNullOrEmpty(typeString)) return typeof(string);
             
-            // Handle array types
             if (typeString.EndsWith("[]"))
             {
                 string elementTypeString = typeString.Substring(0, typeString.Length - 2).Trim();
@@ -206,7 +204,7 @@ namespace TableSO.Scripts.Generator
                 {
                     return elementType.MakeArrayType();
                 }
-                return typeof(string[]); // Default value
+                return typeof(string[]);
             }
 
             return GetSingleTypeFromString(typeString);

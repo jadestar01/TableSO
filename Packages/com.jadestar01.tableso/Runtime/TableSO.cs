@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,7 +12,9 @@ namespace TableSO.Scripts
         public string fileName { get; }
         
         public virtual TableType tableType { get; set; }
-        
+
+        public virtual bool isUpdated { get; set; }
+
         [SerializeField] 
         public List<TData> dataList;
         protected Dictionary<TKey, TData> dataDict;
@@ -56,6 +57,7 @@ namespace TableSO.Scripts
         public virtual Task UpdateData()
         {
             Debug.Log($"[{GetType().Name}] ({typeof(string).Name}, {typeof(TData).Name}) : {dataDict?.Count}");
+            isUpdated = true;
             return Task.CompletedTask;
         }
 

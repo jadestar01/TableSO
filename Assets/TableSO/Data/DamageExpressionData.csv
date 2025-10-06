@@ -1,0 +1,4 @@
+ID,Effects,Rates,UseHitStop,isDodgable,KnockbackCoef,DamageCoef,PhysicalCoef,BasePhysicalDamage,AddtionalPhysicalCritRawRate,AdditionalPhysicalCritDamage,AdditionalPhysicalPenetration,PhysicalStatTypes,PhysicalStatValues,MagicalCoef,BaseMagicalDamage,AddtionalMagicalCritRawRate,AdditionalMagicalCritDamage,AdditionalMagicalPenetration,MagicalStatTypes,MagicalStatValues
+int,int[],float[],bool,bool,float,float,float,int,int,int,int,StatType[],float[],float,float,int,int,int,StatType[],float[]
+1001,2001,0.1,FALSE,FALSE,,,,,,,,,,,,,,,,
+2001,,,FALSE,FALSE,,,,,,,,,,,,,,,,
