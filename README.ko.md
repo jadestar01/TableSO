@@ -53,6 +53,30 @@ TableSO는 에셋과 CSV를 원활하게 처리하기 위해 다음 Unity 패키
 ### 2. TableCenter
 
 **TableCenter**는 모든 테이블의 참조를 관리하는 중앙 저장소 역할을 합니다. `GetTable<T>` 메서드를 사용하여 특정 테이블을 쉽게 가져올 수 있습니다.
+* **Initialize()**: 모든 테이블의 데이터를 갱신하기 위해 Initialize()를 필요로 합니다. 이를 통해 데이터를 읽어올 수 있습니다.
+* **OnInitialized**: 이벤트를 통해 데이터 로딩이 끝난 이후, 씬 전환/특정 행동 수행 등 메서드를 등록할 수 있습니다.
+```csharp
+using TableSO.Scripts;
+using Table;
+
+public class TableLoader : MonoBehaviour
+{
+    public TableCenter center;
+
+    private void Awake()
+    {
+        center.OnInitialized += AfterInitialize;
+        center.Initialize();
+    }
+
+    private void AfterInitialize()
+    {
+        Debug.Log("Init Complete");
+        var table = center.GetTable<DamageExpressionDataTableSO>();
+    }
+}
+```
+
 
 ---
 
@@ -91,6 +115,7 @@ TableSO는 모든 데이터 요구사항을 충족시키기 위해 세 가지 �
 
 스프라이트와 아이템 정보를 통합하여 아이템 시스템을 만든다고 가정해 봅시다. TableSO를 사용하는 방법은 다음과 같습니다.
 
+0.  **`TableCenter`에 대한 Initialize: Loading, Title 등 메뉴에서 TableCenter를 Initialize 합니다.
 1.  **`ItemSprite`에 대한 `AssetTable` 생성**: **Sprite 필터**를 사용하여 모든 아이템 스프라이트를 포함합니다.
 2.  **`ItemData`에 대한 `CsvTable` 생성**: 이 테이블은 스프라이트 이름을 변수로 포함하여 모든 아이템 정보를 담습니다.
 3.  **`Item`에 대한 `CustomTable` 생성**: 이것이 최종적으로 통합된 아이템 클래스가 될 것입니다.
@@ -122,10 +147,10 @@ TableSO는 모든 데이터 요구사항을 충족시키기 위해 세 가지 �
 | 1 | T | Hello |
 | 2 | T\|A | World |
 | 3 | T\|A\|B | TableSO |
-| 1 | T\|A\|B\|L | Is |
-| 2 | T\|A\|B\|L\|E | Fun |
-| 3 | T\|A\|B\|L\|E\|S | And |
-| 3 | T\|A\|B\|L\|E\|S\|O | Easy |
+| 4 | T\|A\|B\|L | Is |
+| 5 | T\|A\|B\|L\|E | Fun |
+| 6 | T\|A\|B\|L\|E\|S | And |
+| 7 | T\|A\|B\|L\|E\|S\|O | Easy |
 
 *이 테이블은 IconName 필드를 통해 Icon Sprite Asset의 파일 이름을 배열로 참조합니다.*
 
