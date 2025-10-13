@@ -17,7 +17,9 @@ namespace TableSO.Scripts
         private Dictionary<Type, ScriptableObject> tableCache = new();
         private bool isCacheInitialized = false;
 
-        public async void Initalize()
+        public event Action OnInitialized;
+
+        public async void Initialize()
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
@@ -62,6 +64,8 @@ namespace TableSO.Scripts
             
             sw.Stop();
             Debug.Log($"[TableSO] Elapsed Time : {sw.ElapsedMilliseconds} ms");
+
+            OnInitialized?.Invoke();
         }
 
         public T GetTable<T>() where T : ScriptableObject
