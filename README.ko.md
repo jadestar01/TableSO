@@ -8,6 +8,11 @@
 
 **TableSO**는 Unity에서 **ScriptableObject**와 **Addressables**를 기반으로 구조화된 데이터와 테이블을 자동으로 생성하고 관리하는 강력한 툴입니다. `.csv` 파일, 폴더에 있는 에셋, 그리고 다른 테이블을 참조하는 커스텀 테이블을 손쉽게 처리하여 게임 데이터를 효율적으로 관리할 수 있도록 돕습니다.
 
+## 튜토리얼
+https://www.youtube.com/watch?v=siwB-cHZhvQ
+
+---
+
 ## 🧐 의존성
 
 TableSO는 에셋과 CSV를 원활하게 처리하기 위해 다음 Unity 패키지를 사용합니다.
