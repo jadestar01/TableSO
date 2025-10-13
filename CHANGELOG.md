@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/jadestar01/TableSO/compare/v1.0.3...v1.0.4) (2025-10-13)
+
+
+### Bug Fixes
+
+* 1.0.4 ([a614ba2](https://github.com/jadestar01/TableSO/commit/a614ba2b0194c381071f2731034f26ae21119ed3))
+
 ## [1.0.3](https://github.com/jadestar01/TableSO/compare/v1.0.2...v1.0.3) (2025-10-08)
 
 
