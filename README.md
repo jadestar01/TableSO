@@ -35,7 +35,7 @@ TableSO relies on the following Unity packages to seamlessly handle assets and C
 2.  Click the `+` button in the upper-left corner and select `Add package from git URL...`.
 3.  Enter the following URL and install the package:
     ```
-    https://github.com/jadestar01/TableSO.git?path=Packages/com.jadestar01.tableso#v1.0.3
+    https://github.com/jadestar01/TableSO.git?path=Packages/com.jadestar01.tableso#v1.0.4
     ```
 4.  Run the **TableEditor** by clicking the **`TableSO`** tab in the Unity top menu.
 5.  In the Editor's **Center** tab, click **`Create TableCenter`** to finalize the directory structure and Addressable settings, creating the central **TableCenter** asset.
@@ -51,7 +51,29 @@ The **TableEditor** is the central hub for managing all your tables. It can be o
 ### 2. TableCenter
 
 The **TableCenter** acts as the central repository, managing references to all tables. You can easily retrieve a specific table using the generic method `GetTable<T>`.
+* **Initialize()**: It is required to refresh the data of all tables. Through this method, the data can be read.
+* **OnInitialized**: An event that can be used to register methods to perform specific actions—such as scene transitions—after data loading is complete.
+```csharp
+using TableSO.Scripts;
+using Table;
 
+public class TableLoader : MonoBehaviour
+{
+    public TableCenter center;
+
+    private void Awake()
+    {
+        center.OnInitialized += AfterInitialize;
+        center.Initialize();
+    }
+
+    private void AfterInitialize()
+    {
+        Debug.Log("Init Complete");
+        var table = center.GetTable<DamageExpressionDataTableSO>();
+    }
+}
+```
 ---
 
 ## 📂 Table Types
@@ -64,7 +86,7 @@ TableSO supports three distinct table types to satisfy all your data requirement
 * **CSV Rules**:
     * **First Row**: Must contain **variable names**. (Follow standard variable naming conventions.)
     * **Second Row**: Must contain **variable types**. (`enum` and `array` types are supported.)
-    * **First column**: The variable name must be **ID**.
+    * **First column**: The variable name must be **ID**. (Must Unique)
     * **Arrays**: Elements are separated using the pipe character `|` (e.g., `1|2|3`).
 * A `DataClass` is generated based on each row, and a `TableClass` is generated based on the `ID`.
 
@@ -118,10 +140,10 @@ This scenario demonstrates combining CSV data and assets using a Custom Table fo
 | 1 | T | Hello |
 | 2 | T\|A | World |
 | 3 | T\|A\|B | TableSO |
-| 1 | T\|A\|B\|L | Is |
-| 2 | T\|A\|B\|L\|E | Fun |
-| 3 | T\|A\|B\|L\|E\|S | And |
-| 3 | T\|A\|B\|L\|E\|S\|O | Easy |
+| 4 | T\|A\|B\|L | Is |
+| 5 | T\|A\|B\|L\|E | Fun |
+| 6 | T\|A\|B\|L\|E\|S | And |
+| 7 | T\|A\|B\|L\|E\|S\|O | Easy |
 
 *This table references Icon Sprite Asset file names in the `IconName` array.*
 
