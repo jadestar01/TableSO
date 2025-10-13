@@ -36,7 +36,7 @@ TableSO는 에셋과 CSV를 원활하게 처리하기 위해 다음 Unity 패키
 2.  좌상단의 `+` 버튼을 클릭하고 `Add package from git URL...`을 선택합니다.
 3.  아래 URL을 입력하고 설치합니다.
     ```
-    https://github.com/jadestar01/TableSO.git?path=Packages/com.jadestar01.tableso#v1.0.3
+    https://github.com/jadestar01/TableSO.git?path=Packages/com.jadestar01.tableso#v1.0.4
     ```
 4.  Unity 상단 메뉴 탭의 `TableSO`를 눌러 **TableEditor**를 실행합니다.
 5.  Editor의 **Center** 탭에서 `Create TableCenter`를 클릭하여 디렉토리 구조와 Addressable 설정을 완료하고, **TableCenter**를 생성합니다.
@@ -90,7 +90,7 @@ TableSO는 모든 데이터 요구사항을 충족시키기 위해 세 가지 �
 * **CSV 규칙**:
     * **첫 번째 행**: **변수 이름**을 포함해야 합니다. (표준 변수 명명 규칙을 따르세요.)
     * **두 번째 행**: **변수 타입**을 포함합니다. (`enum`과 `array` 타입을 지원합니다.)
-    * **첫 번째 열**: 반드시 **ID**라는 변수이름 이어야 합니다.
+    * **첫 번째 열**: 반드시 **ID**라는 변수이름 이어야 합니다. (반드시 고유해야 합니다. 즉, 중복 없어야 합니다.)
     * **배열**: `|`를 사용하여 요소를 구분합니다 (예: `1|2|3`).
 * 각 행을 기반으로 `DataClass`가 생성되며, `ID`를 기반으로 `TableClass`가 생성됩니다.
 
