@@ -1,3 +1,0 @@
-ID,Rate,StatFlags,StatValues
-int,int,ItemMutationFactorFlag[],int[]
-1001,1,Health|Upgrade,5|1
