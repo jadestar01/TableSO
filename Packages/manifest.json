@@ -1,15 +1,18 @@
 {
-    "dependencies": {
-        "com.jadestar.tableso": "https://github.com/jadestar01/TableSO.git#1.0.2",
-        "com.unity.test-framework": "1.4.6"
-    },
-    "scopedRegistries": [
-        {
-            "name": "package.openupm.com",
-            "url": "https://package.openupm.com",
-            "scopes": [
-                "com.jadestar01.tableso"
-            ]
-        }
-    ]
+  "dependencies": {
+    "com.jadestar.tableso": "https://github.com/jadestar01/TableSO.git#1.0.2",
+    "com.unity.ide.rider": "3.0.39",
+    "com.unity.test-framework": "1.6.0",
+    "com.unity.modules.adaptiveperformance": "1.0.0",
+    "com.unity.modules.vectorgraphics": "1.0.0"
+  },
+  "scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.jadestar01.tableso"
+      ]
+    }
+  ]
 }

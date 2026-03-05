@@ -41,18 +41,23 @@ namespace TableSO.Scripts.Generator
                 return new List<T>();
             }
 
-            string[] fieldNames = ParseCsvLine(lines[0]);
-            string[] fieldTypes = ParseCsvLine(lines[1]);
-            
+            string[] allFieldNames = ParseCsvLine(lines[0]);
+            string[] allFieldTypes = ParseCsvLine(lines[1]);
+
+            int[] activeIndices = GetActiveColumnIndices(allFieldNames);
+            string[] fieldNames = FilterByIndices(allFieldNames, activeIndices);
+            string[] fieldTypes = FilterByIndices(allFieldTypes, activeIndices);
+            int totalColumnCount = allFieldNames.Length;
+
             int dataRowCount = lines.Length - 2;
             List<T> dataList = new List<T>(dataRowCount);
 
             string constructorKey = string.Join("|", fieldTypes);
             ConstructorInfo constructor = GetCachedConstructor<T>(constructorKey, fieldTypes, fieldNames);
-            
+
             if (constructor == null)
             {
-                return null; 
+                return null;
             }
 
             Type[] parameterTypes = new Type[fieldTypes.Length];
@@ -69,15 +74,15 @@ namespace TableSO.Scripts.Generator
 
                 string[] values = ParseCsvLine(lines[i]);
 
-                if (values.Length != fieldNames.Length)
+                if (values.Length != totalColumnCount)
                 {
-                    Debug.LogWarning($"[TableSO] {csvPath}.csv row {i + 1}: Field count mismatch. Expected: {fieldNames.Length}, Got: {values.Length}");
+                    Debug.LogWarning($"[TableSO] {csvPath}.csv row {i + 1}: Field count mismatch. Expected: {totalColumnCount}, Got: {values.Length}");
                     continue;
                 }
 
-                for (int j = 0; j < values.Length; j++)
+                for (int j = 0; j < activeIndices.Length; j++)
                 {
-                    constructorArgs[j] = ConvertValue(values[j], fieldTypes[j], parameterTypes[j]);
+                    constructorArgs[j] = ConvertValue(values[activeIndices[j]], fieldTypes[j], parameterTypes[j]);
                 }
 
                 try
@@ -202,6 +207,25 @@ namespace TableSO.Scripts.Generator
             return type == typeof(int) || type == typeof(float) || type == typeof(double) || 
                    type == typeof(decimal) || type == typeof(long) || type == typeof(short) || 
                    type == typeof(byte);
+        }
+
+        private static int[] GetActiveColumnIndices(string[] fieldNames)
+        {
+            List<int> indices = new List<int>();
+            for (int i = 0; i < fieldNames.Length; i++)
+            {
+                if (!fieldNames[i].StartsWith("#"))
+                    indices.Add(i);
+            }
+            return indices.ToArray();
+        }
+
+        private static string[] FilterByIndices(string[] source, int[] indices)
+        {
+            string[] result = new string[indices.Length];
+            for (int i = 0; i < indices.Length; i++)
+                result[i] = source[indices[i]];
+            return result;
         }
 
         private static string[] ParseCsvLine(string line)

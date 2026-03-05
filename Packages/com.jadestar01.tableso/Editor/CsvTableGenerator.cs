@@ -27,9 +27,9 @@ namespace TableSO.Scripts.Generator
                     return;
                 }
 
-                string[] fieldNames = ParseCSVLine(lines[0]);
-                string[] fieldTypes = ParseCSVLine(lines[1]);
-                
+                string[] fieldNames = FilterCommentColumns(ParseCSVLine(lines[0]), out int[] activeIndices0);
+                string[] fieldTypes = FilterByIndices(ParseCSVLine(lines[1]), activeIndices0);
+
                 if (fieldNames.Length != fieldTypes.Length)
                 {
                     Debug.LogError($"[CsvTableSO] {fileName}.csv: Variable name count and type count do not match");
@@ -70,21 +70,21 @@ namespace TableSO.Scripts.Generator
                     return;
                 }
 
-                string[] fieldNames = ParseCSVLine(lines[0]);
-                string[] fieldTypes = ParseCSVLine(lines[1]);
-                
+                string[] fieldNames = FilterCommentColumns(ParseCSVLine(lines[0]), out int[] activeIndices1);
+                string[] fieldTypes = FilterByIndices(ParseCSVLine(lines[1]), activeIndices1);
+
                 if (fieldNames.Length != fieldTypes.Length)
                 {
                     Debug.LogError($"[CsvTableSO] {fileName}.csv: Variable name count and type count do not match");
                     return;
                 }
-                
+
                 if (!ValidateIDField(fieldNames[0], fieldTypes[0], fileName))
                     return;
 
                 if (!ValidateFieldTypes(fieldTypes, fileName))
                     return;
-                
+
                 GenerateDataClass(fileName, fieldNames, fieldTypes);
                 AssetDatabase.Refresh();
                 
@@ -123,6 +123,30 @@ namespace TableSO.Scripts.Generator
             
             fields.Add(currentField.ToString().Trim());
             return fields.ToArray();
+        }
+
+        private static string[] FilterCommentColumns(string[] fieldNames, out int[] activeIndices)
+        {
+            List<string> filtered = new List<string>();
+            List<int> indices = new List<int>();
+            for (int i = 0; i < fieldNames.Length; i++)
+            {
+                if (!fieldNames[i].StartsWith("#"))
+                {
+                    filtered.Add(fieldNames[i]);
+                    indices.Add(i);
+                }
+            }
+            activeIndices = indices.ToArray();
+            return filtered.ToArray();
+        }
+
+        private static string[] FilterByIndices(string[] source, int[] indices)
+        {
+            string[] result = new string[indices.Length];
+            for (int i = 0; i < indices.Length; i++)
+                result[i] = source[indices[i]];
+            return result;
         }
 
         private static bool ValidateIDField(string idFieldName, string idFieldType, string fileName)
