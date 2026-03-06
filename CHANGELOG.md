@@ -1,3 +1,10 @@
+## [1.0.6](https://github.com/jadestar01/TableSO/compare/v1.0.5...v1.0.6) (2026-03-06)
+
+
+### Bug Fixes
+
+* Editor Error, support objectType ([ec7cf3b](https://github.com/jadestar01/TableSO/commit/ec7cf3b322a3a12202e9b33aa5caa21fa0680952))
+
 ## [1.0.5](https://github.com/jadestar01/TableSO/compare/v1.0.4...v1.0.5) (2026-03-05)
 
 
