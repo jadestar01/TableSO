@@ -1047,10 +1047,12 @@ namespace TableSO.Scripts.Editor
         {
             try
             {
-                CsvTableGenerator.GenerateCsvTable(csvFilePath);
-                Debug.Log($"[TableSO] Csv table '{tableName}' generation completed from {csvFilePath}");
-                EditorUtility.DisplayDialog("Success", $"CSV table '{tableName}' generated successfully!", "OK");
-
+                bool success = CsvTableGenerator.GenerateCsvTable(csvFilePath);
+                if (success)
+                {
+                    Debug.Log($"[TableSO] Csv table '{tableName}' generation completed from {csvFilePath}");
+                    EditorUtility.DisplayDialog("Success", $"CSV table '{tableName}' generated successfully!", "OK");
+                }
             }
             catch (Exception e)
             {
@@ -1063,15 +1065,17 @@ namespace TableSO.Scripts.Editor
         {
             try
             {
-                CsvTableGenerator.UpdateCsvData(csvFilePath);
-                Debug.Log($"[TableSO] Csv data '{tableName}' update completed from {csvFilePath}");
-                EditorUtility.DisplayDialog("Success", $"CSV data '{tableName}' updated successfully!", "OK");
-
+                bool success = CsvTableGenerator.UpdateCsvData(csvFilePath);
+                if (success)
+                {
+                    Debug.Log($"[TableSO] Csv data '{tableName}' update completed from {csvFilePath}");
+                    EditorUtility.DisplayDialog("Success", $"CSV data '{tableName}' updated successfully!", "OK");
+                }
             }
             catch (Exception e)
             {
                 Debug.LogError($"[TableSO] Error updating data from CSV: {e.Message}");
-                EditorUtility.DisplayDialog("Error", $"Failed to generate table:\n{e.Message}", "OK");
+                EditorUtility.DisplayDialog("Error", $"Failed to update data:\n{e.Message}", "OK");
             }
         }
 

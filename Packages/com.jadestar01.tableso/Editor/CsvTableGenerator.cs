@@ -13,18 +13,18 @@ namespace TableSO.Scripts.Generator
 {
     public class CsvTableGenerator
     {
-        public static void GenerateCsvTable(string csvPath)
+        public static bool GenerateCsvTable(string csvPath)
         {
             string fileName = Path.GetFileNameWithoutExtension(csvPath);
-            
+
             try
             {
                 string[] lines = File.ReadAllLines(csvPath);
-                
+
                 if (lines.Length < 2)
                 {
                     Debug.LogError($"[CsvTableSO] {fileName}.csv requires correct format: row 1 for variable names, row 2 for type names");
-                    return;
+                    return false;
                 }
 
                 string[] fieldNames = FilterCommentColumns(ParseCSVLine(lines[0]), out int[] activeIndices0);
@@ -33,29 +33,31 @@ namespace TableSO.Scripts.Generator
                 if (fieldNames.Length != fieldTypes.Length)
                 {
                     Debug.LogError($"[CsvTableSO] {fileName}.csv: Variable name count and type count do not match");
-                    return;
+                    return false;
                 }
 
                 if (!ValidateIDField(fieldNames[0], fieldTypes[0], fileName))
-                    return;
+                    return false;
 
                 if (!ValidateFieldTypes(fieldTypes, fileName))
-                    return;
+                    return false;
 
                 GenerateDataClass(fileName, fieldNames, fieldTypes);
                 GenerateTableSO(fileName, fieldTypes[0], fileName);
-                
+
                 AssetDatabase.Refresh();
-                
+
                 Debug.Log($"[CsvTableSO] {fileName} table generated successfully");
+                return true;
             }
             catch (Exception e)
             {
                 Debug.LogError($"[CsvTableSO] Error processing {fileName}.csv: {e.Message}");
+                return false;
             }
         }
 
-        public static void UpdateCsvData(string csvPath)
+        public static bool UpdateCsvData(string csvPath)
         {
             string fileName = Path.GetFileNameWithoutExtension(csvPath);
 
@@ -65,9 +67,8 @@ namespace TableSO.Scripts.Generator
 
                 if (lines.Length < 2)
                 {
-                    Debug.LogError(
-                        $"[CsvTableSO] {fileName}.csv requires correct format: row 1 for variable names, row 2 for type names");
-                    return;
+                    Debug.LogError($"[CsvTableSO] {fileName}.csv requires correct format: row 1 for variable names, row 2 for type names");
+                    return false;
                 }
 
                 string[] fieldNames = FilterCommentColumns(ParseCSVLine(lines[0]), out int[] activeIndices1);
@@ -76,23 +77,25 @@ namespace TableSO.Scripts.Generator
                 if (fieldNames.Length != fieldTypes.Length)
                 {
                     Debug.LogError($"[CsvTableSO] {fileName}.csv: Variable name count and type count do not match");
-                    return;
+                    return false;
                 }
 
                 if (!ValidateIDField(fieldNames[0], fieldTypes[0], fileName))
-                    return;
+                    return false;
 
                 if (!ValidateFieldTypes(fieldTypes, fileName))
-                    return;
+                    return false;
 
                 GenerateDataClass(fileName, fieldNames, fieldTypes);
                 AssetDatabase.Refresh();
-                
+
                 Debug.Log($"[CsvTableSO] {fileName} data updated successfully");
-            } 
+                return true;
+            }
             catch (Exception e)
             {
                 Debug.LogError($"[CsvTableSO] Error processing {fileName}.csv: {e.Message}");
+                return false;
             }
         }
 
@@ -168,15 +171,7 @@ namespace TableSO.Scripts.Generator
             // Check if enum type
             if (IsEnumType(idFieldType))
             {
-                if (ValidateEnumType(idFieldType))
-                {
-                    return true;
-                }
-                else
-                {
-                    Debug.LogError($"[CsvTableSO] {fileName}.csv: Cannot find enum type '{idFieldType}' for ID field");
-                    return false;
-                }
+                return ValidateEnumType(idFieldType);
             }
 
             Debug.LogError($"[CsvTableSO] {fileName}.csv: ID field must be int, string, or enum type. Current: {idFieldType}");
@@ -198,10 +193,7 @@ namespace TableSO.Scripts.Generator
                     if (IsEnumType(elementType))
                     {
                         if (!ValidateEnumType(elementType))
-                        {
-                            Debug.LogError($"[CsvTableSO] {fileName}.csv: Cannot find enum type '{elementType}' (field {i + 1})");
                             return false;
-                        }
                     }
                     // Check basic array type
                     else if (!IsValidBasicType(elementType))
@@ -214,10 +206,7 @@ namespace TableSO.Scripts.Generator
                 else if (IsEnumType(fieldType))
                 {
                     if (!ValidateEnumType(fieldType))
-                    {
-                        Debug.LogError($"[CsvTableSO] {fileName}.csv: Cannot find enum type '{fieldType}' (field {i + 1})");
                         return false;
-                    }
                 }
                 else if (!IsValidBasicType(fieldType))
                 {
@@ -249,9 +238,9 @@ namespace TableSO.Scripts.Generator
         private static bool IsValidBasicType(string type)
         {
             string normalizedType = type.ToLower().Trim();
-            return normalizedType == "int" || normalizedType == "float" || 
-                   normalizedType == "string" || normalizedType == "bool" || 
-                   normalizedType == "double";
+            return normalizedType == "int" || normalizedType == "float" ||
+                   normalizedType == "string" || normalizedType == "bool" ||
+                   normalizedType == "double" || normalizedType == "object";
         }
 
         private static bool ValidateEnumType(string enumTypeName)
@@ -477,6 +466,7 @@ namespace TableSO.Scripts.Generator
                 case "string": return "string";
                 case "bool": return "bool";
                 case "double": return "double";
+                case "object": return "object";
                 default: return csvType.Trim();
             }
         }

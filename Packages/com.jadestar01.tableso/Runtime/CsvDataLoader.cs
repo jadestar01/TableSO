@@ -301,6 +301,7 @@ namespace TableSO.Scripts.Generator
                 case "string": return typeof(string);
                 case "bool": return typeof(bool);
                 case "double": return typeof(double);
+                case "object": return typeof(object);
                 default:
                     Type foundType = FindUserDefinedType(typeString);
                     return foundType ?? typeof(string);
