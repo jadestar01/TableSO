@@ -1,3 +1,10 @@
+## [1.0.7](https://github.com/jadestar01/TableSO/compare/v1.0.6...v1.0.7) (2026-07-15)
+
+
+### Bug Fixes
+
+* strip surrounding quotes and unescape doubled quotes in ParseCsvLine (RFC 4180) ([c20894e](https://github.com/jadestar01/TableSO/commit/c20894ea0773919f278ab0c308e9b3f06c8ff7f1))
+
 ## [1.0.6](https://github.com/jadestar01/TableSO/compare/v1.0.5...v1.0.6) (2026-03-06)
 
 
