@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using TableSO.FileUtility;
 using UnityEngine;
 using System.Linq;
@@ -231,8 +232,8 @@ namespace TableSO.Scripts.Generator
         private static string[] ParseCsvLine(string line)
         {
             List<string> fields = new List<string>(16);
+            StringBuilder field = new StringBuilder();
             bool inQuotes = false;
-            int fieldStart = 0;
 
             for (int i = 0; i < line.Length; i++)
             {
@@ -240,24 +241,30 @@ namespace TableSO.Scripts.Generator
 
                 if (c == '"')
                 {
-                    inQuotes = !inQuotes;
+                    // RFC 4180: 인용 필드 내부의 ""는 리터럴 " (여닫는 따옴표는 값에서 제외)
+                    if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        field.Append('"');
+                        i++;
+                    }
+                    else
+                    {
+                        inQuotes = !inQuotes;
+                    }
                 }
                 else if (c == ',' && !inQuotes)
                 {
-                    fields.Add(line.Substring(fieldStart, i - fieldStart).Trim());
-                    fieldStart = i + 1;
+                    fields.Add(field.ToString().Trim());
+                    field.Clear();
+                }
+                else
+                {
+                    field.Append(c);
                 }
             }
 
             // Add last field
-            if (fieldStart < line.Length)
-            {
-                fields.Add(line.Substring(fieldStart).Trim());
-            }
-            else
-            {
-                fields.Add(string.Empty);
-            }
+            fields.Add(field.ToString().Trim());
 
             return fields.ToArray();
         }
